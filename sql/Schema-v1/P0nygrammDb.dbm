@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+CAUTION: Do not modify this file unless you know what you are doing.
+         Unexpected results may occur if the code is changed deliberately.
+-->
+<dbmodel pgmodeler-ver="0.9.2" last-position="0,0" last-zoom="1" max-obj-count="13"
+	 default-schema="public" default-owner="postgres">
+<database name="p0nygramm" is-template="false" allow-conns="true">
+	<role name="postgres"/>
+</database>
+
+<schema name="public" layer="0" fill-color="#e1e1e1" sql-disabled="true">
+</schema>
+
+<table name="users" layer="0" collapse-mode="2" max-obj-count="3">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="1300" y="360"/>
+	<column name="user_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="user_name" not-null="true">
+		<type name="varchar" length="32"/>
+	</column>
+	<column name="user_pass" not-null="true">
+		<type name="varchar" length="64"/>
+		<comment><![CDATA[Hashed password]]></comment>
+	</column>
+	<constraint name="users_pk" type="pk-constr" table="public.users">
+		<columns names="user_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="uploads" layer="0" collapse-mode="2" max-obj-count="6">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="820" y="660"/>
+	<column name="upload_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="upload_filename" not-null="true">
+		<type name="varchar" length="64"/>
+	</column>
+	<column name="upload_timestamp" not-null="true" default-value="now">
+		<type name="timestamp with time zone" length="0" with-timezone="true"/>
+	</column>
+	<column name="upload_upvotes" not-null="true" default-value="0">
+		<type name="integer" length="0"/>
+		<comment><![CDATA[To display the votes fastly]]></comment>
+	</column>
+	<column name="uploader" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="uploads_pk" type="pk-constr" table="public.uploads">
+		<columns names="upload_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="comments" layer="0" collapse-mode="2" max-obj-count="6">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="620" y="60"/>
+	<column name="comment_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="comment_timestamp" not-null="true" default-value="now">
+		<type name="timestamp with time zone" length="0" with-timezone="true"/>
+	</column>
+	<column name="comment_upvotes" not-null="true" default-value="0">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="comment_poster" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="comment_upload" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="comments_pk" type="pk-constr" table="public.comments">
+		<columns names="comment_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="votes_uploads" layer="0" collapse-mode="2" max-obj-count="4">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="1300" y="660"/>
+	<column name="vote_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="vote_number" not-null="true" default-value="0">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="vote_user" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="vote_upload" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="votes_uploads_pk" type="pk-constr" table="public.votes_uploads">
+		<columns names="vote_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="votes_comments" layer="0" collapse-mode="2" max-obj-count="4">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="1160" y="60"/>
+	<column name="vote_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="vote_number" not-null="true" default-value="0">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="vote_user" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="vote_comment" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="votes_comments_pk" type="pk-constr" table="public.votes_comments">
+		<columns names="vote_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="tags" layer="0" collapse-mode="2" max-obj-count="3">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="60" y="700"/>
+	<column name="tag_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="tag_text" not-null="true">
+		<type name="varchar" length="64"/>
+	</column>
+	<column name="tag_poster" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="taggs_pk" type="pk-constr" table="public.tags">
+		<columns names="tag_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="tag_upload_map" layer="0" collapse-mode="2" max-obj-count="4">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="400" y="660"/>
+	<column name="tum_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="tag_upvotes" not-null="true" default-value="0">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="tag_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="upload_id" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="tag_upload_map_pk" type="pk-constr" table="public.tag_upload_map">
+		<columns names="tum_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="tag_votes" layer="0" collapse-mode="2" max-obj-count="4">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="420" y="320"/>
+	<column name="vote_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="vote_number" not-null="true" default-value="0">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="vote_user" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="vote_tagmap" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="tag_votes_pk" type="pk-constr" table="public.tag_votes">
+		<columns names="vote_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<constraint name="uploader_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.uploads">
+	<columns names="uploader" ref-type="src-columns"/>
+	<columns names="user_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.comments">
+	<columns names="comment_poster" ref-type="src-columns"/>
+	<columns names="user_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="upload_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.uploads" table="public.comments">
+	<columns names="comment_upload" ref-type="src-columns"/>
+	<columns names="upload_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.votes_uploads">
+	<columns names="vote_user" ref-type="src-columns"/>
+	<columns names="user_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="upload_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.uploads" table="public.votes_uploads">
+	<columns names="vote_upload" ref-type="src-columns"/>
+	<columns names="upload_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.votes_comments">
+	<columns names="vote_user" ref-type="src-columns"/>
+	<columns names="user_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="comment_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.comments" table="public.votes_comments">
+	<columns names="vote_comment" ref-type="src-columns"/>
+	<columns names="comment_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="tag_link" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.tags" table="public.tag_upload_map">
+	<columns names="tag_id" ref-type="src-columns"/>
+	<columns names="tag_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="upload_link" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.uploads" table="public.tag_upload_map">
+	<columns names="upload_id" ref-type="src-columns"/>
+	<columns names="upload_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.tag_votes">
+	<columns names="vote_user" ref-type="src-columns"/>
+	<columns names="user_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="tagmap_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.tag_upload_map" table="public.tag_votes">
+	<columns names="vote_tagmap" ref-type="src-columns"/>
+	<columns names="tum_id" ref-type="dst-columns"/>
+</constraint>
+
+<relationship name="rel_uploads_users" type="relfk" layer="0"
+	 src-table="public.uploads"
+	 dst-table="public.users" reference-fk="uploader_fk"
+	 src-required="false" dst-required="false"/>
+
+<relationship name="rel_comments_users" type="relfk" layer="0"
+	 src-table="public.comments"
+	 dst-table="public.users" reference-fk="user_fk"
+	 src-required="false" dst-required="false"/>
+
+<relationship name="rel_comments_uploads" type="relfk" layer="0"
+	 src-table="public.comments"
+	 dst-table="public.uploads" reference-fk="upload_fk"
+	 src-required="false" dst-required="false"/>
+
+<relationship name="rel_votes_users" type="relfk" layer="0"
+	 src-table="public.votes_uploads"
+	 dst-table="public.users" reference-fk="user_fk"
+	 src-required="false" dst-required="false"/>
+
+<relationship name="rel_votes_uploads" type="relfk" layer="0"
+	 src-table="public.votes_uploads"
+	 dst-table="public.uploads" reference-fk="upload_fk"
+	 src-required="false" dst-required="false"/>
+
+<relationship name="rel_votes_comments_users" type="relfk" layer="0"
+	 src-table="public.votes_comments"
+	 dst-table="public.users" reference-fk="user_fk"
+	 src-required="false" dst-required="false">
+	<label ref-type="name-label">
+		<position x="-0.494999" y="-4.1083"/>
+	</label>
+</relationship>
+
+<relationship name="rel_votes_comments_comments" type="relfk" layer="0"
+	 src-table="public.votes_comments"
+	 dst-table="public.comments" reference-fk="comment_fk"
+	 src-required="false" dst-required="false">
+	<label ref-type="name-label">
+		<position x="-0.0618579" y="1.84581"/>
+	</label>
+</relationship>
+
+<relationship name="rel_tag_upload_map_tags" type="relfk" layer="0"
+	 src-table="public.tag_upload_map"
+	 dst-table="public.tags" reference-fk="tag_link"
+	 src-required="false" dst-required="false">
+	<label ref-type="name-label">
+		<position x="3.23574" y="-8.355"/>
+	</label>
+</relationship>
+
+<relationship name="rel_tag_upload_map_uploads" type="relfk" layer="0"
+	 src-table="public.tag_upload_map"
+	 dst-table="public.uploads" reference-fk="upload_link"
+	 src-required="false" dst-required="false">
+	<label ref-type="name-label">
+		<position x="0.365639" y="1.5283"/>
+	</label>
+</relationship>
+
+<relationship name="rel_tag_votes_users" type="relfk" layer="0"
+	 src-table="public.tag_votes"
+	 dst-table="public.users" reference-fk="user_fk"
+	 src-required="false" dst-required="false"/>
+
+<relationship name="rel_tag_votes_tag_upload_map" type="relfk" layer="0"
+	 src-table="public.tag_votes"
+	 dst-table="public.tag_upload_map" reference-fk="tagmap_fk"
+	 src-required="false" dst-required="false"/>
+
+</dbmodel>
