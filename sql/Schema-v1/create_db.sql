@@ -34,7 +34,7 @@ COMMENT ON COLUMN public.users.user_pass IS E'Hashed password';
 CREATE TABLE public.uploads (
 	upload_id serial NOT NULL,
 	upload_filename varchar(64) NOT NULL,
-	upload_timestamp timestamp with time zone NOT NULL DEFAULT now,
+	upload_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
 	upload_upvotes integer NOT NULL DEFAULT 0,
 	uploader integer NOT NULL,
 	CONSTRAINT uploads_pk PRIMARY KEY (upload_id)
@@ -50,7 +50,7 @@ COMMENT ON COLUMN public.uploads.upload_upvotes IS E'To display the votes fastly
 -- DROP TABLE IF EXISTS public.comments CASCADE;
 CREATE TABLE public.comments (
 	comment_id serial NOT NULL,
-	comment_timestamp timestamp with time zone NOT NULL DEFAULT now,
+	comment_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
 	comment_upvotes integer NOT NULL DEFAULT 0,
 	comment_poster integer NOT NULL,
 	comment_upload integer NOT NULL,
@@ -130,6 +130,38 @@ CREATE TABLE public.tag_votes (
 -- ALTER TABLE public.tag_votes OWNER TO postgres;
 -- ddl-end --
 
+-- object: public.user_banns | type: TABLE --
+-- DROP TABLE IF EXISTS public.user_banns CASCADE;
+CREATE TABLE public.user_banns (
+	ban_id serial NOT NULL,
+	ban_reason varchar(64) NOT NULL DEFAULT 'Willkür',
+	ban_start timestamp with time zone NOT NULL DEFAULT Now(),
+	ban_duration integer NOT NULL DEFAULT 24,
+	ban_user integer NOT NULL,
+	CONSTRAINT user_banns_pk PRIMARY KEY (ban_id)
+
+);
+-- ddl-end --
+COMMENT ON COLUMN public.user_banns.ban_duration IS E'Ban duration in hours';
+-- ddl-end --
+-- ALTER TABLE public.user_banns OWNER TO postgres;
+-- ddl-end --
+
+-- object: public.project_kvconfig | type: TABLE --
+-- DROP TABLE IF EXISTS public.project_kvconfig CASCADE;
+CREATE TABLE public.project_kvconfig (
+	kv_key varchar(64) NOT NULL,
+	kv_value varchar(64) NOT NULL,
+	CONSTRAINT project_kvconfig_pk PRIMARY KEY (kv_key)
+
+);
+-- ddl-end --
+-- ALTER TABLE public.project_kvconfig OWNER TO postgres;
+-- ddl-end --
+
+INSERT INTO public.project_kvconfig (kv_key, kv_value) VALUES (E'schema_version', E'1');
+-- ddl-end --
+
 -- object: uploader_fk | type: CONSTRAINT --
 -- ALTER TABLE public.uploads DROP CONSTRAINT IF EXISTS uploader_fk CASCADE;
 ALTER TABLE public.uploads ADD CONSTRAINT uploader_fk FOREIGN KEY (uploader)
@@ -204,6 +236,13 @@ ON DELETE CASCADE ON UPDATE CASCADE;
 -- ALTER TABLE public.tag_votes DROP CONSTRAINT IF EXISTS tagmap_fk CASCADE;
 ALTER TABLE public.tag_votes ADD CONSTRAINT tagmap_fk FOREIGN KEY (vote_tagmap)
 REFERENCES public.tag_upload_map (tum_id) MATCH FULL
+ON DELETE CASCADE ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: user_fk | type: CONSTRAINT --
+-- ALTER TABLE public.user_banns DROP CONSTRAINT IF EXISTS user_fk CASCADE;
+ALTER TABLE public.user_banns ADD CONSTRAINT user_fk FOREIGN KEY (ban_user)
+REFERENCES public.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
