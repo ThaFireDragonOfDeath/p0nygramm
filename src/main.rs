@@ -49,12 +49,12 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .register_data(handlebars_ref.clone())
+            .app_data(handlebars_ref.clone())
             .service(fs::Files::new("/static", "./static/webcontent/").index_file("index.html"))
             .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
             .service(index)
     })
     .bind("127.0.0.1:8080")?
-    .start()
+    .run()
     .await
 }
