@@ -1,0 +1,5 @@
+SED := sed
+
+.PHONY: clean
+clean:
+	rm -f const-config.toml

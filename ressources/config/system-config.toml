@@ -1,0 +1,16 @@
+# Contains the default config (includes in binary)
+# Configs can be overlayed with the user config file
+
+[network]
+ip_addr = "127.0.0.1"
+port = "8080"
+
+[postgres]
+host = "127.0.0.1"
+port = "5432"
+user = "postgres"
+password = ""
+
+[memcached]
+host = "127.0.0.1"
+port = "12345"
