@@ -1,3 +1,7 @@
+# Programms
+CARGO := cargo
+CP := cp -f
+
 # Directory of this makefile (ends without '/')
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -9,13 +13,27 @@ PROJECT_NAME := p0nygramm
 INSTALL_DIR := /srv
 CONFIG_DIR_NAME := config
 STATIC_WEBCONTENT_DIR_NAME := webcontent
+TEMPLATES_DIR_NAME := template
 UPLOADS_DIR_NAME := uploads
 BUILDMODE := debug
 
+# Path variables
 PROJECT_PATH := $(INSTALL_DIR)/$(PROJECT_NAME)
 CONFIG_PATH := $(PROJECT_PATH)/$(CONFIG_DIR_NAME)
 STATIC_WEBCONTENT_PATH := $(PROJECT_PATH)/$(STATIC_WEBCONTENT_DIR_NAME)
+TEMPLATES_PATH := $(PROJECT_PATH)/$(TEMPLATES_DIR_NAME)
 UPLOADS_PATH := $(PROJECT_PATH)/$(UPLOADS_DIR_NAME)
+
+# Build options
+CARGOFLAGS := --target-manifest $(MAKEFILE_DIR)
+
+ifeq ($(BUILDMODE),release)
+CARGOFLAGS += --release
+endif
+
+$(PROJECT_NAME):
+	$(CARGO) build $(CARGOFLAGS)
+	$(CP) $(MAKEFILE_DIR)/target/$(PROJECT_NAME) $(MAKEFILE_DIR)/$(PROJECT_NAME)
 
 .PHONY: create-dir-structure
 create-dir-structure:
@@ -24,4 +42,4 @@ create-dir-structure:
 
 .PHONY: parse-template
 parse-template:
-	$(MAKE) -C $(MAKEFILE_DIR)/ressources/config
+	$(MAKE) CP='$(CP)' -C $(MAKEFILE_DIR)/ressources/config

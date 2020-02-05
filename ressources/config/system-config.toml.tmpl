@@ -1,6 +1,11 @@
 # Contains the default config (includes in binary)
 # Configs can be overlayed with the user config file
 
+[filesystem]
+static_webcontent_path = "%static_webcontent_path%"
+template_path = "%templates_path%"
+uploads_path = "%uploads_path%"
+
 [network]
 ip_addr = "127.0.0.1"
 port = "8080"
