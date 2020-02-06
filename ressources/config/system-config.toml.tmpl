@@ -1,21 +1,30 @@
 # Contains the default config (includes in binary)
 # Configs can be overlayed with the user config file
 
+# Set the paths of the static webcontent, template and upload files
 [filesystem]
 static_webcontent_path = "%static_webcontent_path%"
 template_path = "%templates_path%"
 uploads_path = "%uploads_path%"
 
+# Set on which ip and port %project_name% will listen
 [network]
 ip_addr = "127.0.0.1"
 port = "8080"
 
+# Set the postgessql db connection parameters
 [postgres]
 host = "127.0.0.1"
 port = "5432"
+unix_socket_dir = "/run/postgres" # The socket file is unix_socket_dir/db_name
+connection_method = "tcp" # Can be either 'tcp' or 'unix_socket'
 user = "postgres"
 password = ""
+db_name = "%project_name%"
 
-[memcached]
+# Set the redis db connection parameters
+[redis]
 host = "127.0.0.1"
-port = "12345"
+port = "6379"
+unix_socket_file = "/tmp/redis.sock"
+connection_method = "tcp" # Can be either 'tcp' or 'unix_socket'

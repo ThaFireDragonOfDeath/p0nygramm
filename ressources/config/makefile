@@ -1,14 +1,15 @@
+# Programms
 SED := sed
 
+# TOML Template files
+TOML_TEMPLATES := const-config.toml system-config.toml
+
 .PHONY: all
-all: const-config.toml system-config.toml
+all: $(TOML_TEMPLATES)
 
-const-config.toml:
-	$(CP) const-config.toml.tmpl const-config.toml
-
-system-config.toml:
-	$(CP) system-config.toml.tmpl system-config.toml
+%.toml: %.toml.tmpl
+	$(CP) $< $@
 
 .PHONY: clean
 clean:
-	$(RM) const-config.toml
+	$(RM) *.toml

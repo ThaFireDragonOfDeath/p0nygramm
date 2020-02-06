@@ -31,6 +31,11 @@ ifeq ($(BUILDMODE),release)
 CARGOFLAGS += --release
 endif
 
+# Add user provided cargo flags
+ifneq ($(EXTRA_CARGOFLAGS),)
+CARGOFLAGS += $(EXTRA_CARGOFLAGS)
+endif
+
 $(PROJECT_NAME):
 	$(CARGO) build $(CARGOFLAGS)
 	$(CP) $(MAKEFILE_DIR)/target/$(PROJECT_NAME) $(MAKEFILE_DIR)/$(PROJECT_NAME)
@@ -40,6 +45,10 @@ create-dir-structure:
 	mkdir -p $(PROJECT_PATH)
 	mkdir -p $(CONFIG_PATH)
 
-.PHONY: parse-template
-parse-template:
-	$(MAKE) CP='$(CP)' -C $(MAKEFILE_DIR)/ressources/config
+.PHONY: parse-templates
+parse-templates:
+	$(MAKE) CP='$(CP)' -C $(MAKEFILE_DIR)/ressources/config all
+
+.PHONY: clean-templates
+clean-templates:
+	$(MAKE) -C $(MAKEFILE_DIR)/ressources/config clean
