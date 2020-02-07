@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.2" last-position="0,0" last-zoom="1" max-obj-count="14"
+<dbmodel pgmodeler-ver="0.9.2" last-position="167,669" last-zoom="1" max-obj-count="15"
 	 default-schema="public" default-owner="postgres">
 <database name="p0nygramm" is-template="false" allow-conns="true">
 	<role name="postgres"/>
@@ -226,6 +226,35 @@ schema_version•1]]>
 	</initial-data>
 </table>
 
+<table name="upload_jobs" layer="0" collapse-mode="2" max-obj-count="7">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="1140" y="940"/>
+	<column name="upload_job_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="tmp_file_name" not-null="true">
+		<type name="varchar" length="64"/>
+	</column>
+	<column name="target_file_name" not-null="true">
+		<type name="varchar" length="64"/>
+	</column>
+	<column name="upload_job_state" not-null="true" default-value="0">
+		<type name="smallint" length="0"/>
+		<comment><![CDATA[0 = Queue, 1 = Processing, 2 = Success, 3 = Failed]]></comment>
+	</column>
+	<column name="upload_job_error_code" not-null="true" default-value="0">
+		<type name="smallint" length="0"/>
+		<comment><![CDATA[0 = No error, 1 = To big, 2 = Wrong format, 3 = Convert error]]></comment>
+	</column>
+	<column name="uploader" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="upload_jobs_pk" type="pk-constr" table="public.upload_jobs">
+		<columns names="upload_job_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
 <constraint name="uploader_fk" type="fk-constr" comparison-type="MATCH FULL"
 	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.uploads">
 	<columns names="uploader" ref-type="src-columns"/>
@@ -295,6 +324,12 @@ schema_version•1]]>
 <constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
 	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.user_banns">
 	<columns names="ban_user" ref-type="src-columns"/>
+	<columns names="user_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="uploader_fk" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.upload_jobs">
+	<columns names="uploader" ref-type="src-columns"/>
 	<columns names="user_id" ref-type="dst-columns"/>
 </constraint>
 
@@ -373,5 +408,14 @@ schema_version•1]]>
 	 src-table="public.user_banns"
 	 dst-table="public.users" reference-fk="user_fk"
 	 src-required="false" dst-required="false"/>
+
+<relationship name="rel_upload_jobs_users" type="relfk" layer="0"
+	 src-table="public.upload_jobs"
+	 dst-table="public.users" reference-fk="uploader_fk"
+	 src-required="false" dst-required="false">
+	<label ref-type="name-label">
+		<position x="43.1407" y="129.767"/>
+	</label>
+</relationship>
 
 </dbmodel>
