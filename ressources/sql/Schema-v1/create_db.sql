@@ -20,7 +20,8 @@ CREATE TABLE public.users (
 	user_id serial NOT NULL,
 	user_name varchar(32) NOT NULL,
 	user_pass varchar(64) NOT NULL,
-	CONSTRAINT users_pk PRIMARY KEY (user_id)
+	CONSTRAINT users_pk PRIMARY KEY (user_id),
+	CONSTRAINT user_name_unique UNIQUE (user_name)
 
 );
 -- ddl-end --
@@ -37,7 +38,8 @@ CREATE TABLE public.uploads (
 	upload_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
 	upload_upvotes integer NOT NULL DEFAULT 0,
 	uploader integer NOT NULL,
-	CONSTRAINT uploads_pk PRIMARY KEY (upload_id)
+	CONSTRAINT uploads_pk PRIMARY KEY (upload_id),
+	CONSTRAINT upload_filename_unique UNIQUE (upload_filename)
 
 );
 -- ddl-end --
@@ -94,8 +96,8 @@ CREATE TABLE public.votes_comments (
 CREATE TABLE public.tags (
 	tag_id serial NOT NULL,
 	tag_text varchar(64) NOT NULL,
-	tag_poster integer NOT NULL,
-	CONSTRAINT taggs_pk PRIMARY KEY (tag_id)
+	CONSTRAINT taggs_pk PRIMARY KEY (tag_id),
+	CONSTRAINT tag_text_unique UNIQUE (tag_text)
 
 );
 -- ddl-end --
@@ -107,6 +109,7 @@ CREATE TABLE public.tags (
 CREATE TABLE public.tag_upload_map (
 	tum_id serial NOT NULL,
 	tag_upvotes integer NOT NULL DEFAULT 0,
+	tag_poster integer NOT NULL,
 	tag_id integer NOT NULL,
 	upload_id integer NOT NULL,
 	CONSTRAINT tag_upload_map_pk PRIMARY KEY (tum_id)
@@ -228,6 +231,13 @@ ON DELETE CASCADE ON UPDATE CASCADE;
 -- ALTER TABLE public.votes_comments DROP CONSTRAINT IF EXISTS comment_fk CASCADE;
 ALTER TABLE public.votes_comments ADD CONSTRAINT comment_fk FOREIGN KEY (vote_comment)
 REFERENCES public.comments (comment_id) MATCH FULL
+ON DELETE CASCADE ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: tag_poster_fk | type: CONSTRAINT --
+-- ALTER TABLE public.tag_upload_map DROP CONSTRAINT IF EXISTS tag_poster_fk CASCADE;
+ALTER TABLE public.tag_upload_map ADD CONSTRAINT tag_poster_fk FOREIGN KEY (tag_poster)
+REFERENCES public.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 

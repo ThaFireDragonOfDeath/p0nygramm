@@ -1,0 +1,1 @@
+insert into public.uploads (upload_filename, uploader) values ($1::varchar, $2::int4);
