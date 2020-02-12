@@ -54,6 +54,7 @@ CREATE TABLE public.comments (
 	comment_id serial NOT NULL,
 	comment_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
 	comment_upvotes integer NOT NULL DEFAULT 0,
+	comment_text text NOT NULL,
 	comment_poster integer NOT NULL,
 	comment_upload integer NOT NULL,
 	CONSTRAINT comments_pk PRIMARY KEY (comment_id)
@@ -165,26 +166,6 @@ CREATE TABLE public.project_kvconfig (
 INSERT INTO public.project_kvconfig (kv_key, kv_value) VALUES (E'schema_version', E'1');
 -- ddl-end --
 
--- object: public.upload_jobs | type: TABLE --
--- DROP TABLE IF EXISTS public.upload_jobs CASCADE;
-CREATE TABLE public.upload_jobs (
-	upload_job_id serial NOT NULL,
-	tmp_file_name varchar(64) NOT NULL,
-	target_file_name varchar(64) NOT NULL,
-	upload_job_state smallint NOT NULL DEFAULT 0,
-	upload_job_error_code smallint NOT NULL DEFAULT 0,
-	uploader integer NOT NULL,
-	CONSTRAINT upload_jobs_pk PRIMARY KEY (upload_job_id)
-
-);
--- ddl-end --
-COMMENT ON COLUMN public.upload_jobs.upload_job_state IS E'0 = Queue, 1 = Processing, 2 = Success, 3 = Failed';
--- ddl-end --
-COMMENT ON COLUMN public.upload_jobs.upload_job_error_code IS E'0 = No error, 1 = To big, 2 = Wrong format, 3 = Convert error';
--- ddl-end --
--- ALTER TABLE public.upload_jobs OWNER TO postgres;
--- ddl-end --
-
 -- object: uploader_fk | type: CONSTRAINT --
 -- ALTER TABLE public.uploads DROP CONSTRAINT IF EXISTS uploader_fk CASCADE;
 ALTER TABLE public.uploads ADD CONSTRAINT uploader_fk FOREIGN KEY (uploader)
@@ -272,13 +253,6 @@ ON DELETE CASCADE ON UPDATE CASCADE;
 -- object: user_fk | type: CONSTRAINT --
 -- ALTER TABLE public.user_banns DROP CONSTRAINT IF EXISTS user_fk CASCADE;
 ALTER TABLE public.user_banns ADD CONSTRAINT user_fk FOREIGN KEY (ban_user)
-REFERENCES public.users (user_id) MATCH FULL
-ON DELETE CASCADE ON UPDATE CASCADE;
--- ddl-end --
-
--- object: uploader_fk | type: CONSTRAINT --
--- ALTER TABLE public.upload_jobs DROP CONSTRAINT IF EXISTS uploader_fk CASCADE;
-ALTER TABLE public.upload_jobs ADD CONSTRAINT uploader_fk FOREIGN KEY (uploader)
 REFERENCES public.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --

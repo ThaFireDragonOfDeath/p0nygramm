@@ -1,1 +1,0 @@
-insert into public.users (user_name, user_pass) values ($1::varchar, $2::varchar);a

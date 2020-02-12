@@ -1,0 +1,1 @@
+INSERT INTO public.users (user_name, user_pass) VALUES ($1::VARCHAR, $2::VARCHAR);

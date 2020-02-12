@@ -2,7 +2,7 @@
 <project version="4">
   <component name="DBNavigator.Project.DataEditorManager">
     <record-view-column-sorting-type value="BY_INDEX" />
-    <value-preview-text-wrapping value="true" />
+    <value-preview-text-wrapping value="false" />
     <value-preview-pinned value="false" />
   </component>
   <component name="DBNavigator.Project.DataExportManager">
@@ -25,9 +25,9 @@
     <show-object-properties value="true" />
     <loaded-nodes>
       <connection connection-id="810bd708-470e-4211-a933-d27833ddb4cd">
-        <schema name="information_schema" object-types="table, view, function" />
-        <schema name="pg_catalog" object-types="table, view, function" />
-        <schema name="public" object-types="table, view, function, column" />
+        <schema name="information_schema" object-types="function, table, view" />
+        <schema name="pg_catalog" object-types="function, table, view" />
+        <schema name="public" object-types="column, function, sequence, table, view" />
       </connection>
     </loaded-nodes>
   </component>
@@ -46,10 +46,11 @@
     <last-used-providers />
   </component>
   <component name="DBNavigator.Project.FileConnectionMappingManager">
-    <mapping file-url="file://$PROJECT_DIR$/ressources/sql/Schema-v1/add-user.sql" connection-id="810bd708-470e-4211-a933-d27833ddb4cd" session-id="MAIN" current-schema="information_schema" />
-    <mapping file-url="file://$PROJECT_DIR$/ressources/sql/Schema-v1/add-upload.sql" connection-id="810bd708-470e-4211-a933-d27833ddb4cd" session-id="MAIN" current-schema="public" />
+    <mapping file-url="file://$PROJECT_DIR$/ressources/sql/Schema-v1/add_user.sql" connection-id="810bd708-470e-4211-a933-d27833ddb4cd" session-id="MAIN" current-schema="information_schema" />
+    <mapping file-url="file://$PROJECT_DIR$/ressources/sql/Schema-v1/add_upload.sql" connection-id="810bd708-470e-4211-a933-d27833ddb4cd" session-id="MAIN" current-schema="public" />
     <mapping file-url="file://$PROJECT_DIR$/ressources/sql/Schema-v1/create_db.sql" connection-id="810bd708-470e-4211-a933-d27833ddb4cd" session-id="MAIN" current-schema="information_schema" />
-    <mapping file-url="file://$PROJECT_DIR$/ressources/sql/Schema-v1/add-comment.sql" connection-id="810bd708-470e-4211-a933-d27833ddb4cd" session-id="MAIN" current-schema="information_schema" />
+    <mapping file-url="file://$PROJECT_DIR$/ressources/sql/Schema-v1/get_comments_for_upload.sql" connection-id="810bd708-470e-4211-a933-d27833ddb4cd" session-id="MAIN" current-schema="information_schema" />
+    <mapping file-url="file://$PROJECT_DIR$/ressources/sql/Schema-v1/add_comment.sql" connection-id="810bd708-470e-4211-a933-d27833ddb4cd" session-id="MAIN" current-schema="information_schema" />
   </component>
   <component name="DBNavigator.Project.MethodExecutionManager">
     <method-browser />
