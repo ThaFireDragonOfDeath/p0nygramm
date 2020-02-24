@@ -1,8 +1,13 @@
 # Contains the default config (includes in binary)
 # Configs can be overlayed with the user config file
 
+# Set the application configs
+[application]
+max_upload_size = "20" # Maximum filesize of uploads in MB
+
 # Set the paths of the static webcontent, template and upload files
 [filesystem]
+ffprobe_path = "/usr/bin/ffprobe" # Path to ffprobe binary (part of ffmpeg)
 static_webcontent_path = "%static_webcontent_path%"
 template_path = "%templates_path%"
 uploads_path = "%uploads_path%"

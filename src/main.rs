@@ -29,7 +29,7 @@ use actix_files as fs;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(move || {
+    HttpServer::new( || {
         App::new()
             .service(fs::Files::new("/", "./static/webcontent/").index_file("index.html"))
             .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))

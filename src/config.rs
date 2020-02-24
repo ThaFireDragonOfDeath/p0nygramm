@@ -15,6 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+extern crate toml;
+
+use toml::{Value, de::Error};
+
 enum ConnectionMethod {
     Tcp,
     Udp,
@@ -23,10 +27,54 @@ enum ConnectionMethod {
 
 struct ConfigField<T> {
     value: T,
-    is_set: bool,   //Once a field is set, it can't be changed anymore
+    is_ro: bool,   //Once a field is set, it can't be changed anymore
+}
+
+impl<T> ConfigField<T> {
+    pub fn get_value(&self) -> T {
+        return &self.value;
+    }
+
+    pub fn new_empty(value: T) -> ConfigField<T> {
+        ConfigField {
+            value,
+            is_ro: false,
+        }
+    }
+
+    pub fn set_value(&mut self, value: T) {
+        let is_ro: bool = self.is_ro;
+
+        if !is_ro {
+            self.value = value;
+            self.is_ro = true;
+        }
+    }
+}
+
+struct Application {
+    max_upload_size: ConfigField<u16>,
+}
+
+impl Application {
+    pub fn new() -> Application {
+        Application {
+            max_upload_size: ConfigField::new_empty(0),
+        }
+    }
+
+    pub fn parse_toml(&mut self, toml_string: String) {
+        let toml_obj: Value = toml::from_str(toml_string.as_str())?;
+
+        let toml_max_upload_size = toml_obj["Application"]["max_upload_size"].as_integer();
+        if toml_max_upload_size.is_some() {
+            self.max_upload_size.set_value(toml_max_upload_size.unwrap() as u16);
+        }
+    }
 }
 
 struct FilesystemConfig {
+    ffprobe_path: ConfigField<String>,
     userconfig_filepath: ConfigField<String>,
     static_webcontent_path: ConfigField<String>,
     template_path: ConfigField<String>,
@@ -57,6 +105,7 @@ struct RedisConfig {
 }
 
 struct ProjectConfig {
+    application_config: Application,
     filesystem_config: FilesystemConfig,
     network_config: NetworkConfig,
     postgres_config: PostgresConfig,
