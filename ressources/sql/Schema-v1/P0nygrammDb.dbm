@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.9.2" last-position="336,403" last-zoom="1" max-obj-count="15"
+<dbmodel pgmodeler-ver="0.9.2" last-position="180,0" last-zoom="0.9" max-obj-count="15"
 	 default-schema="public" default-owner="postgres">
 <database name="p0nygramm" is-template="false" allow-conns="true">
 	<role name="postgres"/>
@@ -12,7 +12,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <schema name="public" layer="0" fill-color="#e1e1e1" sql-disabled="true">
 </schema>
 
-<table name="users" layer="0" collapse-mode="2" max-obj-count="3">
+<table name="users" layer="0" collapse-mode="2" max-obj-count="4">
 	<schema name="public"/>
 	<role name="postgres"/>
 	<position x="1040" y="380"/>
@@ -26,6 +26,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="varchar" length="64"/>
 		<comment><![CDATA[Hashed password]]></comment>
 	</column>
+	<column name="user_is_mod" not-null="true" default-value="false">
+		<type name="bool" length="0"/>
+	</column>
 	<constraint name="users_pk" type="pk-constr" table="public.users">
 		<columns names="user_id" ref-type="src-columns"/>
 	</constraint>
@@ -34,7 +37,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="uploads" layer="0" collapse-mode="2" max-obj-count="6">
+<table name="uploads" layer="0" collapse-mode="2" max-obj-count="4">
 	<schema name="public"/>
 	<role name="postgres"/>
 	<position x="820" y="660"/>
@@ -47,10 +50,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="upload_timestamp" not-null="true" default-value="Now()">
 		<type name="timestamp with time zone" length="0" with-timezone="true"/>
 	</column>
-	<column name="upload_upvotes" not-null="true" default-value="0">
-		<type name="integer" length="0"/>
-		<comment><![CDATA[To display the votes fastly]]></comment>
-	</column>
 	<column name="uploader" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
@@ -62,7 +61,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="comments" layer="0" collapse-mode="2" max-obj-count="7">
+<table name="comments" layer="0" collapse-mode="2" max-obj-count="6">
 	<schema name="public"/>
 	<role name="postgres"/>
 	<position x="660" y="60"/>
@@ -71,9 +70,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<column name="comment_timestamp" not-null="true" default-value="Now()">
 		<type name="timestamp with time zone" length="0" with-timezone="true"/>
-	</column>
-	<column name="comment_upvotes" not-null="true" default-value="0">
-		<type name="integer" length="0"/>
 	</column>
 	<column name="comment_text" not-null="true">
 		<type name="text" length="0"/>
@@ -149,15 +145,12 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="tag_upload_map" layer="0" collapse-mode="2" max-obj-count="6">
+<table name="tag_upload_map" layer="0" collapse-mode="2" max-obj-count="4">
 	<schema name="public"/>
 	<role name="postgres"/>
 	<position x="400" y="660"/>
 	<column name="tum_id" not-null="true">
 		<type name="serial" length="0"/>
-	</column>
-	<column name="tag_upvotes" not-null="true" default-value="0">
-		<type name="integer" length="0"/>
 	</column>
 	<column name="tag_poster" not-null="true">
 		<type name="integer" length="0"/>

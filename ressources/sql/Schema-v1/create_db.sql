@@ -20,6 +20,7 @@ CREATE TABLE public.users (
 	user_id serial NOT NULL,
 	user_name varchar(32) NOT NULL,
 	user_pass varchar(64) NOT NULL,
+	user_is_mod bool NOT NULL DEFAULT false,
 	CONSTRAINT users_pk PRIMARY KEY (user_id),
 	CONSTRAINT user_name_unique UNIQUE (user_name)
 
@@ -36,14 +37,11 @@ CREATE TABLE public.uploads (
 	upload_id serial NOT NULL,
 	upload_filename varchar(64) NOT NULL,
 	upload_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
-	upload_upvotes integer NOT NULL DEFAULT 0,
 	uploader integer NOT NULL,
 	CONSTRAINT uploads_pk PRIMARY KEY (upload_id),
 	CONSTRAINT upload_filename_unique UNIQUE (upload_filename)
 
 );
--- ddl-end --
-COMMENT ON COLUMN public.uploads.upload_upvotes IS E'To display the votes fastly';
 -- ddl-end --
 -- ALTER TABLE public.uploads OWNER TO postgres;
 -- ddl-end --
@@ -53,7 +51,6 @@ COMMENT ON COLUMN public.uploads.upload_upvotes IS E'To display the votes fastly
 CREATE TABLE public.comments (
 	comment_id serial NOT NULL,
 	comment_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
-	comment_upvotes integer NOT NULL DEFAULT 0,
 	comment_text text NOT NULL,
 	comment_poster integer NOT NULL,
 	comment_upload integer NOT NULL,
@@ -109,7 +106,6 @@ CREATE TABLE public.tags (
 -- DROP TABLE IF EXISTS public.tag_upload_map CASCADE;
 CREATE TABLE public.tag_upload_map (
 	tum_id serial NOT NULL,
-	tag_upvotes integer NOT NULL DEFAULT 0,
 	tag_poster integer NOT NULL,
 	tag_id integer NOT NULL,
 	upload_id integer NOT NULL,
