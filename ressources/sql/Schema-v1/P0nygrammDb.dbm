@@ -45,7 +45,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="serial" length="0"/>
 	</column>
 	<column name="upload_filename" not-null="true">
-		<type name="varchar" length="64"/>
+		<type name="varchar" length="70"/>
 	</column>
 	<column name="upload_timestamp" not-null="true" default-value="Now()">
 		<type name="timestamp with time zone" length="0" with-timezone="true"/>
@@ -135,7 +135,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="serial" length="0"/>
 	</column>
 	<column name="tag_text" not-null="true">
-		<type name="varchar" length="64"/>
+		<type name="varchar" length="70"/>
 	</column>
 	<constraint name="taggs_pk" type="pk-constr" table="public.tags">
 		<columns names="tag_id" ref-type="src-columns"/>

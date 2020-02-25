@@ -22,19 +22,43 @@ pub fn check_and_escape_comment(comment: &str) -> Option<String> {
     return None;
 }
 
-pub fn check_password(username: &str) -> bool {
-    let username_lenght = username.len();
+pub fn check_password(tag: &str) -> bool {
+    let tag_length = tag.len();
 
     // A password can be 64 characters long
-    if username_lenght <= 64 {
-        let username_chars = username.chars();
+    if tag_length <= 64 {
+        let tag_chars = tag.chars();
 
         // A password can only have alphanumeric characters and ascii punctuations (like !;:% etc.)
-        for username_char in username_chars {
-            let char_is_alphanumeric = username_char.is_alphanumeric();
-            let char_is_ascii_punctuation = username_char.is_ascii_punctuation();
+        for tag_char in tag_chars {
+            let char_is_alphanumeric = tag_char.is_alphanumeric();
+            let char_is_ascii_punctuation = tag_char.is_ascii_punctuation();
 
             if !char_is_alphanumeric && !char_is_ascii_punctuation {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+pub fn check_tag(tag: &str) -> bool {
+    let tag_length = tag.len();
+
+    // A tag can be 64 characters long
+    if tag_length <= 64 {
+        let tag_chars = tag.chars();
+
+        // A tag can only have ascii alphanumeric characters and simple whitespaces
+        for tag_char in tag_chars {
+            let char_is_ascii_alphanumeric = tag_char.is_ascii_alphanumeric();
+            let char_is_space = tag_char == ' ';
+
+            if !char_is_ascii_alphanumeric && !char_is_space {
                 return false;
             }
         }

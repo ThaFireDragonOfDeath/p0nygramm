@@ -35,7 +35,7 @@ COMMENT ON COLUMN public.users.user_pass IS E'Hashed password';
 -- DROP TABLE IF EXISTS public.uploads CASCADE;
 CREATE TABLE public.uploads (
 	upload_id serial NOT NULL,
-	upload_filename varchar(64) NOT NULL,
+	upload_filename varchar(70) NOT NULL,
 	upload_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
 	uploader integer NOT NULL,
 	CONSTRAINT uploads_pk PRIMARY KEY (upload_id),
@@ -93,7 +93,7 @@ CREATE TABLE public.votes_comments (
 -- DROP TABLE IF EXISTS public.tags CASCADE;
 CREATE TABLE public.tags (
 	tag_id serial NOT NULL,
-	tag_text varchar(64) NOT NULL,
+	tag_text varchar(70) NOT NULL,
 	CONSTRAINT taggs_pk PRIMARY KEY (tag_id),
 	CONSTRAINT tag_text_unique UNIQUE (tag_text)
 
