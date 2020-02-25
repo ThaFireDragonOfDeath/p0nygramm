@@ -16,6 +16,7 @@
  */
 
 mod config;
+mod security;
 
 #[macro_use]
 extern crate actix_web;

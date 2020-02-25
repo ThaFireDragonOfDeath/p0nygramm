@@ -30,9 +30,9 @@ struct ConfigField<T> {
     is_ro: bool,   //Once a field is set, it can't be changed anymore
 }
 
-impl<T> ConfigField<T> {
+impl<T: Clone> ConfigField<T> {
     pub fn get_value(&self) -> T {
-        return &self.value;
+        return self.value.clone();
     }
 
     pub fn new_empty(value: T) -> ConfigField<T> {
@@ -63,10 +63,11 @@ impl Application {
         }
     }
 
-    pub fn parse_toml(&mut self, toml_string: String) {
-        let toml_obj: Value = toml::from_str(toml_string.as_str())?;
+    pub fn parse_toml(&mut self, toml_obj: &Value) {
+        //let toml_obj: Value = toml::from_str(toml_string.as_str())?;
 
         let toml_max_upload_size = toml_obj["Application"]["max_upload_size"].as_integer();
+        
         if toml_max_upload_size.is_some() {
             self.max_upload_size.set_value(toml_max_upload_size.unwrap() as u16);
         }
@@ -77,8 +78,41 @@ struct FilesystemConfig {
     ffprobe_path: ConfigField<String>,
     userconfig_filepath: ConfigField<String>,
     static_webcontent_path: ConfigField<String>,
-    template_path: ConfigField<String>,
     uploads_path: ConfigField<String>,
+}
+
+impl FilesystemConfig {
+    pub fn new() -> FilesystemConfig {
+        FilesystemConfig {
+            ffprobe_path: ConfigField::new_empty(String::new()),
+            userconfig_filepath: ConfigField::new_empty(String::new()),
+            static_webcontent_path: ConfigField::new_empty(String::new()),
+            uploads_path: ConfigField::new_empty(String::new()),
+        }
+    }
+
+    pub fn parse_toml(&mut self, toml_obj: &Value) {
+        let ffprobe_path = toml_obj["FilesystemConfig"]["ffprobe_path"].as_str();
+        let userconfig_filepath = toml_obj["FilesystemConfig"]["userconfig_filepath"].as_str();
+        let static_webcontent_path = toml_obj["FilesystemConfig"]["static_webcontent_path"].as_str();
+        let uploads_path = toml_obj["FilesystemConfig"]["uploads_path"].as_str();
+
+        if ffprobe_path.is_some() {
+            self.ffprobe_path.set_value(ffprobe_path.unwrap().to_owned());
+        }
+
+        if userconfig_filepath.is_some() {
+            self.userconfig_filepath.set_value(userconfig_filepath.unwrap().to_owned());
+        }
+
+        if static_webcontent_path.is_some() {
+            self.static_webcontent_path.set_value(static_webcontent_path.unwrap().to_owned());
+        }
+
+        if uploads_path.is_some() {
+            self.uploads_path.set_value(uploads_path.unwrap().to_owned());
+        }
+    }
 }
 
 struct NetworkConfig {
