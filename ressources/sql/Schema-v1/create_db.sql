@@ -18,8 +18,8 @@
 -- DROP TABLE IF EXISTS public.users CASCADE;
 CREATE TABLE public.users (
 	user_id serial NOT NULL,
-	user_name varchar(32) NOT NULL,
-	user_pass varchar(64) NOT NULL,
+	user_name varchar(40) NOT NULL,
+	user_pass varchar(70) NOT NULL,
 	user_is_mod bool NOT NULL DEFAULT false,
 	CONSTRAINT users_pk PRIMARY KEY (user_id),
 	CONSTRAINT user_name_unique UNIQUE (user_name)
@@ -134,7 +134,7 @@ CREATE TABLE public.tag_votes (
 -- DROP TABLE IF EXISTS public.user_banns CASCADE;
 CREATE TABLE public.user_banns (
 	ban_id serial NOT NULL,
-	ban_reason varchar(64) NOT NULL DEFAULT 'Willkür',
+	ban_reason text NOT NULL DEFAULT 'Willkür',
 	ban_start timestamp with time zone NOT NULL DEFAULT Now(),
 	ban_duration integer NOT NULL DEFAULT 24,
 	ban_user integer NOT NULL,
