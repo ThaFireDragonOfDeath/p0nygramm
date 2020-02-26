@@ -19,7 +19,10 @@ extern crate toml;
 
 use toml::{Value, de::Error};
 use std::convert::TryFrom;
-use crate::config::ConnectionMethod::{Tcp, Udp, UnixSocket};
+use crate::config::ConnectionMethod::{Tcp, UnixSocket};
+use std::path::Path;
+use std::fs::File;
+use std::io::Read;
 
 #[derive(Copy, Clone)]
 enum ConnectionMethod {
@@ -38,7 +41,7 @@ impl TryFrom<&str> for ConnectionMethod {
             return Ok(Tcp);
         }
         else if value_lowercase == "udp" {
-            return Ok(Udp);
+            return Err("UDP is not supported");
         }
         else if value_lowercase == "unixsocket" {
             return Ok(UnixSocket);
@@ -75,20 +78,18 @@ impl<T: Clone> ConfigField<T> {
     }
 }
 
-struct Application {
+struct ApplicationConfig {
     max_upload_size: ConfigField<u16>,
 }
 
-impl Application {
-    pub fn new() -> Application {
-        Application {
+impl ApplicationConfig {
+    pub fn new() -> ApplicationConfig {
+        ApplicationConfig {
             max_upload_size: ConfigField::new_empty(0),
         }
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        //let toml_obj: Value = toml::from_str(toml_string.as_str())?;
-
         let toml_max_upload_size = toml_obj["Application"]["max_upload_size"].as_integer();
         
         if toml_max_upload_size.is_some() {
@@ -99,7 +100,7 @@ impl Application {
 
 struct FilesystemConfig {
     ffprobe_path: ConfigField<String>,
-    userconfig_filepath: ConfigField<String>,
+    default_userconfig_filepath: ConfigField<String>,
     static_webcontent_path: ConfigField<String>,
     uploads_path: ConfigField<String>,
 }
@@ -108,7 +109,7 @@ impl FilesystemConfig {
     pub fn new() -> FilesystemConfig {
         FilesystemConfig {
             ffprobe_path: ConfigField::new_empty(String::new()),
-            userconfig_filepath: ConfigField::new_empty(String::new()),
+            default_userconfig_filepath: ConfigField::new_empty(String::new()),
             static_webcontent_path: ConfigField::new_empty(String::new()),
             uploads_path: ConfigField::new_empty(String::new()),
         }
@@ -116,7 +117,7 @@ impl FilesystemConfig {
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
         let ffprobe_path = toml_obj["FilesystemConfig"]["ffprobe_path"].as_str();
-        let userconfig_filepath = toml_obj["FilesystemConfig"]["userconfig_filepath"].as_str();
+        let default_userconfig_filepath = toml_obj["FilesystemConfig"]["default_userconfig_filepath"].as_str();
         let static_webcontent_path = toml_obj["FilesystemConfig"]["static_webcontent_path"].as_str();
         let uploads_path = toml_obj["FilesystemConfig"]["uploads_path"].as_str();
 
@@ -124,8 +125,8 @@ impl FilesystemConfig {
             self.ffprobe_path.set_value(ffprobe_path.unwrap().to_owned());
         }
 
-        if userconfig_filepath.is_some() {
-            self.userconfig_filepath.set_value(userconfig_filepath.unwrap().to_owned());
+        if default_userconfig_filepath.is_some() {
+            self.default_userconfig_filepath.set_value(default_userconfig_filepath.unwrap().to_owned());
         }
 
         if static_webcontent_path.is_some() {
@@ -245,10 +246,105 @@ struct RedisConfig {
     connection_method: ConfigField<ConnectionMethod>,
 }
 
+impl RedisConfig {
+    pub fn new() -> RedisConfig {
+        RedisConfig {
+            host: ConfigField::new_empty(String::new()),
+            port: ConfigField::new_empty(0),
+            unix_socket_file: ConfigField::new_empty(String::new()),
+            connection_method: ConfigField::new_empty(Tcp),
+        }
+    }
+
+    pub fn parse_toml(&mut self, toml_obj: &Value) {
+        let host = toml_obj["RedisConfig"]["host"].as_str();
+        let port = toml_obj["RedisConfig"]["port"].as_integer();
+        let unix_socket_file = toml_obj["RedisConfig"]["unix_socket_file"].as_str();
+        let connection_method = toml_obj["RedisConfig"]["connection_method"].as_str();
+
+        if host.is_some() {
+            self.host.set_value(host.unwrap().to_owned());
+        }
+
+        if port.is_some() {
+            self.port.set_value(port.unwrap() as u16);
+        }
+
+        if unix_socket_file.is_some() {
+            self.unix_socket_file.set_value(unix_socket_file.unwrap().to_owned());
+        }
+
+        if connection_method.is_some() {
+            let connection_method_str = connection_method.unwrap();
+            let connection_method_obj = ConnectionMethod::try_from(connection_method_str);
+            if connection_method_obj.is_ok() {
+                self.connection_method.set_value(connection_method_obj.unwrap());
+            }
+        }
+    }
+}
+
 struct ProjectConfig {
-    application_config: Application,
+    application_config: ApplicationConfig,
     filesystem_config: FilesystemConfig,
     network_config: NetworkConfig,
     postgres_config: PostgresConfig,
     redis_config: RedisConfig,
+}
+
+impl ProjectConfig {
+    pub fn init() -> Option<ProjectConfig> {
+        let const_config_str = include_str!("../ressources/config/const-config.toml");
+        let system_config_str = include_str!("../ressources/config/system-config.toml");
+
+        let const_config_toml_obj: Result<Value, Error> = toml::from_str(const_config_str);
+        let system_config_toml_obj: Result<Value, Error> = toml::from_str(system_config_str);
+
+        if const_config_toml_obj.is_ok() && system_config_toml_obj.is_ok() {
+            let mut prj_config = ProjectConfig {
+                application_config: ApplicationConfig::new(),
+                filesystem_config: FilesystemConfig::new(),
+                network_config: NetworkConfig::new(),
+                postgres_config: PostgresConfig::new(),
+                redis_config: RedisConfig::new(),
+            };
+
+            prj_config.parse_toml(&const_config_toml_obj.unwrap());
+
+            let userconfig_path_str = prj_config.filesystem_config.default_userconfig_filepath.get_value();
+            let userconfig_path = Path::new(userconfig_path_str.as_str());
+
+            if userconfig_path.is_file() {
+                let userconfig_file = File::open(userconfig_path);
+
+                if userconfig_file.is_ok() {
+                    let mut userconfig_toml_str = String::new();
+                    let read_success = userconfig_file.unwrap().read_to_string(&mut userconfig_toml_str);
+
+                    if read_success.is_ok() {
+                        let userconfig_toml_obj: Result<Value, Error> = toml::from_str(userconfig_toml_str.as_str());
+
+                        if userconfig_toml_obj.is_ok() {
+                            prj_config.parse_toml(&userconfig_toml_obj.unwrap());
+                        }
+                    }
+                }
+            }
+
+            prj_config.parse_toml(&system_config_toml_obj.unwrap());
+
+            Some(prj_config)
+        }
+        else {
+            None
+        }
+    }
+
+    pub fn parse_toml(&mut self, toml_obj: &Value) {
+        self.application_config.parse_toml(toml_obj);
+        self.filesystem_config.parse_toml(toml_obj);
+        self.network_config.parse_toml(toml_obj);
+        self.postgres_config.parse_toml(toml_obj);
+        self.redis_config.parse_toml(toml_obj);
+    }
 }
