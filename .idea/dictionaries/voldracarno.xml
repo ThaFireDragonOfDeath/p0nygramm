@@ -1,10 +1,12 @@
 <component name="ProjectDictionaryState">
   <dictionary name="voldracarno">
     <words>
+      <w>addr</w>
       <w>ffprobe</w>
       <w>filepath</w>
       <w>htmlescape</w>
       <w>toml</w>
+      <w>unixsocket</w>
       <w>userconfig</w>
       <w>webcontent</w>
     </words>
