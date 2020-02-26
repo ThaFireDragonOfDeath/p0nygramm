@@ -51,7 +51,7 @@ impl TryFrom<&str> for ConnectionMethod {
     }
 }
 
-struct ConfigField<T> {
+pub struct ConfigField<T> {
     value: T,
     is_ro: bool,   //Once a field is set, it can't be changed anymore
 }
@@ -78,8 +78,8 @@ impl<T: Clone> ConfigField<T> {
     }
 }
 
-struct ApplicationConfig {
-    max_upload_size: ConfigField<u16>,
+pub struct ApplicationConfig {
+    pub max_upload_size: ConfigField<u16>,
 }
 
 impl ApplicationConfig {
@@ -98,11 +98,11 @@ impl ApplicationConfig {
     }
 }
 
-struct FilesystemConfig {
-    ffprobe_path: ConfigField<String>,
-    default_userconfig_filepath: ConfigField<String>,
-    static_webcontent_path: ConfigField<String>,
-    uploads_path: ConfigField<String>,
+pub struct FilesystemConfig {
+    pub ffprobe_path: ConfigField<String>,
+    pub default_userconfig_filepath: ConfigField<String>,
+    pub static_webcontent_path: ConfigField<String>,
+    pub uploads_path: ConfigField<String>,
 }
 
 impl FilesystemConfig {
@@ -139,9 +139,9 @@ impl FilesystemConfig {
     }
 }
 
-struct NetworkConfig {
-    ip_addr: ConfigField<String>,
-    port: ConfigField<u16>,
+pub struct NetworkConfig {
+    pub ip_addr: ConfigField<String>,
+    pub port: ConfigField<u16>,
 }
 
 impl NetworkConfig {
@@ -166,15 +166,15 @@ impl NetworkConfig {
     }
 }
 
-struct PostgresConfig {
-    host: ConfigField<String>,
-    port: ConfigField<u16>,
-    unix_socket_dir: ConfigField<String>,
-    connection_method: ConfigField<ConnectionMethod>,
-    user: ConfigField<String>,
-    password: ConfigField<String>,
-    db_name: ConfigField<String>,
-    required_schema_version: ConfigField<u32>,
+pub struct PostgresConfig {
+    pub host: ConfigField<String>,
+    pub port: ConfigField<u16>,
+    pub unix_socket_dir: ConfigField<String>,
+    pub connection_method: ConfigField<ConnectionMethod>,
+    pub user: ConfigField<String>,
+    pub password: ConfigField<String>,
+    pub db_name: ConfigField<String>,
+    pub required_schema_version: ConfigField<u32>,
 }
 
 impl PostgresConfig {
@@ -239,11 +239,11 @@ impl PostgresConfig {
     }
 }
 
-struct RedisConfig {
-    host: ConfigField<String>,
-    port: ConfigField<u16>,
-    unix_socket_file: ConfigField<String>,
-    connection_method: ConfigField<ConnectionMethod>,
+pub struct RedisConfig {
+    pub host: ConfigField<String>,
+    pub port: ConfigField<u16>,
+    pub unix_socket_file: ConfigField<String>,
+    pub connection_method: ConfigField<ConnectionMethod>,
 }
 
 impl RedisConfig {
@@ -284,12 +284,12 @@ impl RedisConfig {
     }
 }
 
-struct ProjectConfig {
-    application_config: ApplicationConfig,
-    filesystem_config: FilesystemConfig,
-    network_config: NetworkConfig,
-    postgres_config: PostgresConfig,
-    redis_config: RedisConfig,
+pub struct ProjectConfig {
+    pub application_config: ApplicationConfig,
+    pub filesystem_config: FilesystemConfig,
+    pub network_config: NetworkConfig,
+    pub postgres_config: PostgresConfig,
+    pub redis_config: RedisConfig,
 }
 
 impl ProjectConfig {
