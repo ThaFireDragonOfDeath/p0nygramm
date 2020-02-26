@@ -25,7 +25,7 @@ use std::fs::File;
 use std::io::Read;
 
 #[derive(Copy, Clone)]
-enum ConnectionMethod {
+pub enum ConnectionMethod {
     Tcp,
     Udp,
     UnixSocket,
