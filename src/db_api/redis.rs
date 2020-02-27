@@ -16,12 +16,15 @@
  */
 
 use redis::{Client, Connection};
+use crate::config::ProjectConfig;
 
-struct RedisConnection {
+pub struct RedisConnection {
     redis_client: Client,
     redis_connection: Connection,
 }
 
 impl RedisConnection {
-
+    pub fn new(project_config: &ProjectConfig) -> Option<RedisConnection> {
+        None
+    }
 }

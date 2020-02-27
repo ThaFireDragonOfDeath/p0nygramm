@@ -15,9 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+use crate::db_api::postgres::PostgresConnection;
+use crate::db_api::redis::RedisConnection;
+use crate::config::ProjectConfig;
+
 mod postgres;
 mod redis;
 
-struct DbConnection {
+pub struct DbConnection {
+    postgres_connection: Option<PostgresConnection>,
+    redis_connection: Option<RedisConnection>,
+}
 
+impl DbConnection {
+    pub fn new(project_config: &ProjectConfig) -> DbConnection {
+        DbConnection {
+            postgres_connection: PostgresConnection::new(project_config),
+            redis_connection: RedisConnection::new(project_config),
+        }
+    }
 }

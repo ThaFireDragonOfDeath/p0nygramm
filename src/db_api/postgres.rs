@@ -16,11 +16,14 @@
  */
 
 use tokio_postgres::{NoTls, Error, Client};
+use crate::config::ProjectConfig;
 
-struct PostgresConnection {
+pub struct PostgresConnection {
     postgres_client: Client,
 }
 
 impl PostgresConnection {
-
+    pub fn new(project_config: &ProjectConfig) -> Option<PostgresConnection> {
+        None
+    }
 }
