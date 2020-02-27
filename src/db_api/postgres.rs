@@ -15,29 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-mod config;
-mod db_api;
-mod js_api;
-mod security;
+use tokio_postgres::{NoTls, Error, Client};
 
-#[macro_use]
-extern crate actix_web;
+struct PostgresConnection {
+    postgres_client: Client,
+}
 
-#[macro_use]
-extern crate serde_json;
+impl PostgresConnection {
 
-use actix_web::web;
-use actix_web::{App, HttpResponse, HttpServer};
-use actix_files as fs;
-
-#[actix_rt::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new( || {
-        App::new()
-            .service(fs::Files::new("/", "./static/webcontent/").index_file("index.html"))
-            .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
-    })
-    .bind("127.0.0.1:8080")?
-    .run()
-    .await
 }
