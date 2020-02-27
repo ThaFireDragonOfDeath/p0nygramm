@@ -37,7 +37,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="uploads" layer="0" collapse-mode="2" max-obj-count="4">
+<table name="uploads" layer="0" collapse-mode="2" max-obj-count="6">
 	<schema name="public"/>
 	<role name="postgres"/>
 	<position x="820" y="660"/>
@@ -49,6 +49,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<column name="upload_timestamp" not-null="true" default-value="Now()">
 		<type name="timestamp with time zone" length="0" with-timezone="true"/>
+	</column>
+	<column name="upload_is_nsfw" not-null="true" default-value="false">
+		<type name="bool" length="0"/>
 	</column>
 	<column name="uploader" not-null="true">
 		<type name="integer" length="0"/>

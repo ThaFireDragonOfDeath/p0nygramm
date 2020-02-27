@@ -37,6 +37,7 @@ CREATE TABLE public.uploads (
 	upload_id serial NOT NULL,
 	upload_filename varchar(70) NOT NULL,
 	upload_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
+	upload_is_nsfw bool NOT NULL DEFAULT false,
 	uploader integer NOT NULL,
 	CONSTRAINT uploads_pk PRIMARY KEY (upload_id),
 	CONSTRAINT upload_filename_unique UNIQUE (upload_filename)

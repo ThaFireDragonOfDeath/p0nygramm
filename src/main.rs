@@ -23,6 +23,8 @@ mod security;
 #[macro_use]
 extern crate actix_web;
 
+extern crate chrono;
+
 #[macro_use]
 extern crate serde_json;
 

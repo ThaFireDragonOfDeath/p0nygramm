@@ -5,6 +5,7 @@
       <w>ffprobe</w>
       <w>filepath</w>
       <w>htmlescape</w>
+      <w>nsfw</w>
       <w>toml</w>
       <w>unixsocket</w>
       <w>userconfig</w>

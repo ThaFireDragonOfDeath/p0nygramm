@@ -18,9 +18,43 @@
 use crate::db_api::postgres::PostgresConnection;
 use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
+use crate::db_api::DbApiErrorType::UnknownError;
 
 mod postgres;
 mod redis;
+
+pub enum DbApiErrorType {
+    UnknownError,
+    ConnectionError,
+    ParameterError,
+    NoResult,
+}
+
+// Result structures
+pub struct DbApiError {
+    pub error_type: DbApiErrorType,
+    pub error_msg: String,
+}
+
+impl DbApiError {
+    pub fn new(error_type: DbApiErrorType, error_msg: &str) -> DbApiError {
+        DbApiError {
+            error_type,
+            error_msg: error_msg.to_owned(),
+        }
+    }
+}
+
+pub struct UploadPreview {
+    pub upload_id: u32,
+    pub upload_is_nsfw: bool,
+    pub upload_prv_url: String,
+    pub upload_url: String,
+}
+
+pub struct UploadPrvList {
+    pub uploads: Vec<UploadPreview>,
+}
 
 pub struct DbConnection {
     postgres_connection: Option<PostgresConnection>,
@@ -28,10 +62,18 @@ pub struct DbConnection {
 }
 
 impl DbConnection {
+    pub fn get_uploads(start_id: u32, amount: u16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+        Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
+    }
+
     pub fn new(project_config: &ProjectConfig) -> DbConnection {
         DbConnection {
             postgres_connection: PostgresConnection::new(project_config),
             redis_connection: RedisConnection::new(project_config),
         }
+    }
+
+    pub fn search_uploads(search_string: &str, start_id: u32, amount: u16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+        Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
     }
 }
