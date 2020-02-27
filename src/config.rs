@@ -80,20 +80,27 @@ impl<T: Clone> ConfigField<T> {
 
 pub struct ApplicationConfig {
     pub max_upload_size: ConfigField<u16>,
+    pub session_private_key: ConfigField<String>,
 }
 
 impl ApplicationConfig {
     pub fn new() -> ApplicationConfig {
         ApplicationConfig {
             max_upload_size: ConfigField::new_empty(0),
+            session_private_key: ConfigField::new_empty(String::new()),
         }
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let toml_max_upload_size = toml_obj["Application"]["max_upload_size"].as_integer();
+        let max_upload_size = toml_obj["Application"]["max_upload_size"].as_integer();
+        let session_private_key = toml_obj["Application"]["session_private_key"].as_str();
         
-        if toml_max_upload_size.is_some() {
-            self.max_upload_size.set_value(toml_max_upload_size.unwrap() as u16);
+        if max_upload_size.is_some() {
+            self.max_upload_size.set_value(max_upload_size.unwrap() as u16);
+        }
+
+        if session_private_key.is_some() {
+            self.session_private_key.set_value(session_private_key.unwrap().to_owned());
         }
     }
 }
