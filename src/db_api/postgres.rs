@@ -73,8 +73,7 @@ impl PostgresConnection {
 
             Some(postgres_connection_object)
         }
-        else {
-            None
-        }
+
+        None
     }
 }

@@ -62,34 +62,6 @@ CREATE TABLE public.comments (
 -- ALTER TABLE public.comments OWNER TO postgres;
 -- ddl-end --
 
--- object: public.votes_uploads | type: TABLE --
--- DROP TABLE IF EXISTS public.votes_uploads CASCADE;
-CREATE TABLE public.votes_uploads (
-	vote_id serial NOT NULL,
-	vote_number integer NOT NULL DEFAULT 0,
-	vote_user integer NOT NULL,
-	vote_upload integer NOT NULL,
-	CONSTRAINT votes_uploads_pk PRIMARY KEY (vote_id)
-
-);
--- ddl-end --
--- ALTER TABLE public.votes_uploads OWNER TO postgres;
--- ddl-end --
-
--- object: public.votes_comments | type: TABLE --
--- DROP TABLE IF EXISTS public.votes_comments CASCADE;
-CREATE TABLE public.votes_comments (
-	vote_id serial NOT NULL,
-	vote_number integer NOT NULL DEFAULT 0,
-	vote_user integer NOT NULL,
-	vote_comment integer NOT NULL,
-	CONSTRAINT votes_comments_pk PRIMARY KEY (vote_id)
-
-);
--- ddl-end --
--- ALTER TABLE public.votes_comments OWNER TO postgres;
--- ddl-end --
-
 -- object: public.tags | type: TABLE --
 -- DROP TABLE IF EXISTS public.tags CASCADE;
 CREATE TABLE public.tags (
@@ -115,20 +87,6 @@ CREATE TABLE public.tag_upload_map (
 );
 -- ddl-end --
 -- ALTER TABLE public.tag_upload_map OWNER TO postgres;
--- ddl-end --
-
--- object: public.tag_votes | type: TABLE --
--- DROP TABLE IF EXISTS public.tag_votes CASCADE;
-CREATE TABLE public.tag_votes (
-	vote_id serial NOT NULL,
-	vote_number integer NOT NULL DEFAULT 0,
-	vote_user integer NOT NULL,
-	vote_tagmap integer NOT NULL,
-	CONSTRAINT tag_votes_pk PRIMARY KEY (vote_id)
-
-);
--- ddl-end --
--- ALTER TABLE public.tag_votes OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.user_banns | type: TABLE --
@@ -163,6 +121,22 @@ CREATE TABLE public.project_kvconfig (
 INSERT INTO public.project_kvconfig (kv_key, kv_value) VALUES (E'schema_version', E'1');
 -- ddl-end --
 
+-- object: public.votes | type: TABLE --
+-- DROP TABLE IF EXISTS public.votes CASCADE;
+CREATE TABLE public.votes (
+	vote_id serial NOT NULL,
+	vote_comment integer DEFAULT NULL,
+	vote_tagmap integer DEFAULT NULL,
+	vote_upload integer DEFAULT NULL,
+	vote_number integer NOT NULL DEFAULT 0,
+	vote_user integer NOT NULL,
+	CONSTRAINT vote_obj_map_pk PRIMARY KEY (vote_id)
+
+);
+-- ddl-end --
+-- ALTER TABLE public.votes OWNER TO postgres;
+-- ddl-end --
+
 -- object: uploader_fk | type: CONSTRAINT --
 -- ALTER TABLE public.uploads DROP CONSTRAINT IF EXISTS uploader_fk CASCADE;
 ALTER TABLE public.uploads ADD CONSTRAINT uploader_fk FOREIGN KEY (uploader)
@@ -181,34 +155,6 @@ ON DELETE CASCADE ON UPDATE CASCADE;
 -- ALTER TABLE public.comments DROP CONSTRAINT IF EXISTS upload_fk CASCADE;
 ALTER TABLE public.comments ADD CONSTRAINT upload_fk FOREIGN KEY (comment_upload)
 REFERENCES public.uploads (upload_id) MATCH FULL
-ON DELETE CASCADE ON UPDATE CASCADE;
--- ddl-end --
-
--- object: user_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_uploads DROP CONSTRAINT IF EXISTS user_fk CASCADE;
-ALTER TABLE public.votes_uploads ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
-REFERENCES public.users (user_id) MATCH FULL
-ON DELETE CASCADE ON UPDATE CASCADE;
--- ddl-end --
-
--- object: upload_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_uploads DROP CONSTRAINT IF EXISTS upload_fk CASCADE;
-ALTER TABLE public.votes_uploads ADD CONSTRAINT upload_fk FOREIGN KEY (vote_upload)
-REFERENCES public.uploads (upload_id) MATCH FULL
-ON DELETE CASCADE ON UPDATE CASCADE;
--- ddl-end --
-
--- object: user_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_comments DROP CONSTRAINT IF EXISTS user_fk CASCADE;
-ALTER TABLE public.votes_comments ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
-REFERENCES public.users (user_id) MATCH FULL
-ON DELETE CASCADE ON UPDATE CASCADE;
--- ddl-end --
-
--- object: comment_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_comments DROP CONSTRAINT IF EXISTS comment_fk CASCADE;
-ALTER TABLE public.votes_comments ADD CONSTRAINT comment_fk FOREIGN KEY (vote_comment)
-REFERENCES public.comments (comment_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
@@ -234,22 +180,36 @@ ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: user_fk | type: CONSTRAINT --
--- ALTER TABLE public.tag_votes DROP CONSTRAINT IF EXISTS user_fk CASCADE;
-ALTER TABLE public.tag_votes ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
+-- ALTER TABLE public.user_banns DROP CONSTRAINT IF EXISTS user_fk CASCADE;
+ALTER TABLE public.user_banns ADD CONSTRAINT user_fk FOREIGN KEY (ban_user)
 REFERENCES public.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
--- object: tagmap_fk | type: CONSTRAINT --
--- ALTER TABLE public.tag_votes DROP CONSTRAINT IF EXISTS tagmap_fk CASCADE;
-ALTER TABLE public.tag_votes ADD CONSTRAINT tagmap_fk FOREIGN KEY (vote_tagmap)
+-- object: upload_fk | type: CONSTRAINT --
+-- ALTER TABLE public.votes DROP CONSTRAINT IF EXISTS upload_fk CASCADE;
+ALTER TABLE public.votes ADD CONSTRAINT upload_fk FOREIGN KEY (vote_upload)
+REFERENCES public.uploads (upload_id) MATCH FULL
+ON DELETE CASCADE ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: comment_fk | type: CONSTRAINT --
+-- ALTER TABLE public.votes DROP CONSTRAINT IF EXISTS comment_fk CASCADE;
+ALTER TABLE public.votes ADD CONSTRAINT comment_fk FOREIGN KEY (vote_comment)
+REFERENCES public.comments (comment_id) MATCH FULL
+ON DELETE CASCADE ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: tag_fk | type: CONSTRAINT --
+-- ALTER TABLE public.votes DROP CONSTRAINT IF EXISTS tag_fk CASCADE;
+ALTER TABLE public.votes ADD CONSTRAINT tag_fk FOREIGN KEY (vote_tagmap)
 REFERENCES public.tag_upload_map (tum_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: user_fk | type: CONSTRAINT --
--- ALTER TABLE public.user_banns DROP CONSTRAINT IF EXISTS user_fk CASCADE;
-ALTER TABLE public.user_banns ADD CONSTRAINT user_fk FOREIGN KEY (ban_user)
+-- ALTER TABLE public.votes DROP CONSTRAINT IF EXISTS user_fk CASCADE;
+ALTER TABLE public.votes ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
 REFERENCES public.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
