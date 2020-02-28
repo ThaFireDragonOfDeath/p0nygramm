@@ -77,7 +77,7 @@ impl DbConnection {
     pub async fn new(project_config: &ProjectConfig) -> DbConnection {
         DbConnection {
             postgres_connection: PostgresConnection::new(project_config).await,
-            redis_connection: RedisConnection::new(project_config),
+            redis_connection: RedisConnection::new(project_config).await,
         }
     }
 
