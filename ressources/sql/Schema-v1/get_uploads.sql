@@ -1,4 +1,4 @@
--- Input: upload_id (start id), amount (how many entries will be returned), show nsfw
+-- Input: upload_id (start id), max_count (how many entries will be returned), show nsfw
 -- Returns: upload_id, upload_filename, upload_is_nsfw
 SELECT u.upload_id, u.upload_filename, u.upload_id_nsfw
 FROM uploads u

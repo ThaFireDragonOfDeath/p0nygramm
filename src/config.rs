@@ -24,7 +24,7 @@ use std::path::Path;
 use std::fs::File;
 use std::io::Read;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum ConnectionMethod {
     Tcp,
     Udp,

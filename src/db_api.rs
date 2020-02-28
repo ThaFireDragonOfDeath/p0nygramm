@@ -62,18 +62,26 @@ pub struct DbConnection {
 }
 
 impl DbConnection {
-    pub fn get_uploads(start_id: u32, amount: u16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+    pub fn get_uploads(&self, start_id: u32, max_count: u16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
         Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
     }
 
-    pub fn new(project_config: &ProjectConfig) -> DbConnection {
+    pub fn have_postgres_connection(&self) -> bool {
+        self.postgres_connection.is_some()
+    }
+
+    pub fn have_redis_connection(&self) -> bool {
+        self.redis_connection.is_some()
+    }
+
+    pub async fn new(project_config: &ProjectConfig) -> DbConnection {
         DbConnection {
-            postgres_connection: PostgresConnection::new(project_config),
+            postgres_connection: PostgresConnection::new(project_config).await,
             redis_connection: RedisConnection::new(project_config),
         }
     }
 
-    pub fn search_uploads(search_string: &str, start_id: u32, amount: u16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+    pub fn search_uploads(&self, search_string: &str, start_id: u32, amount: u16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
         Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
     }
 }
