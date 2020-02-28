@@ -71,9 +71,9 @@ impl PostgresConnection {
                 postgres_client: client,
             };
 
-            Some(postgres_connection_object)
+            return Some(postgres_connection_object);
         }
 
-        None
+        return None;
     }
 }
