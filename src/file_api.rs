@@ -15,34 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-mod config;
-mod db_api;
-mod file_api;
-mod js_api;
-mod security;
+pub fn get_url_from_filename(filename: &str) -> String {
+    format!("./uploads/{}", filename)
+}
 
-#[macro_use]
-extern crate actix_web;
+pub fn get_preview_url_from_filename(filename: &str) -> String {
+    let filename_point_pos = filename.rfind('.').unwrap();
+    let (file_name, file_ext) = filename.split_at(filename_point_pos);
 
-//extern crate chrono;
-extern crate tokio;
-
-#[macro_use]
-extern crate serde_json;
-
-use actix_web::web;
-use actix_web::{App, HttpResponse, HttpServer};
-use actix_files as fs;
-
-#[actix_rt::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new( || {
-        App::new()
-            .service(fs::Files::new("/", "./static/webcontent/").index_file("index.html"))
-            .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
-            .service(fs::Files::new("/prv", "./static/uploads-prv/").index_file("index.html"))
-    })
-    .bind("127.0.0.1:8080")?
-    .run()
-    .await
+    format!("./prv/{}.{}", file_name, ".jpg")
 }

@@ -16,17 +16,55 @@
  */
 
 use tokio_postgres::{NoTls, Error, Client, Config};
+use tokio_postgres::types::ToSql;
 use crate::config::ProjectConfig;
 use tokio_postgres::config::SslMode::Disable;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::Path;
 use std::time::Duration;
+use crate::db_api::{UploadPrvList, DbApiError, UploadPreview};
+use crate::db_api::DbApiErrorType::{UnknownError, QueryError};
+
+macro_rules! db_schema_version {
+    () => { 1 };
+}
+
+macro_rules! get_filepath {
+    ($filename:expr) => {
+        concat!("../../ressources/sql/Schema-v", db_schema_version!(), "/", $filename)
+    };
+}
 
 pub struct PostgresConnection {
     postgres_client: Client,
 }
 
 impl PostgresConnection {
+    pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+        let sql_cmd = include_str!(get_filepath!("get_uploads.sql"));
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&start_id, &max_count, &show_nsfw];
+        let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            let result_rows_vec = result_rows.unwrap();
+            let return_vec: Vec<UploadPreview> = Vec::new();
+
+            if !result_rows_vec.is_empty() {
+                for row in result_rows_vec {
+                    //row.get()
+                }
+            }
+            else {
+                return Ok(UploadPrvList{ uploads: return_vec });
+            }
+        }
+        else {
+            return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+        }
+
+        return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+    }
+
     pub async fn new(project_config: &ProjectConfig) -> Option<PostgresConnection> {
         let host = project_config.postgres_config.host.get_value();
         let unix_socket_dir = project_config.postgres_config.unix_socket_dir.get_value();

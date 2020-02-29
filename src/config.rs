@@ -27,7 +27,6 @@ use std::io::Read;
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum ConnectionMethod {
     Tcp,
-    Udp,
     UnixSocket,
 }
 
