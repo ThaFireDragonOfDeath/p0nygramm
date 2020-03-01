@@ -24,6 +24,7 @@ mod security;
 #[macro_use]
 extern crate actix_web;
 
+extern crate argonautica;
 //extern crate chrono;
 extern crate tokio;
 

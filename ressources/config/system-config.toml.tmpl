@@ -4,7 +4,6 @@
 # Set the application configs
 [application]
 max_upload_size = "20" # Maximum filesize of uploads in MB
-session_private_key = "" # Private key to secure sessions (have to be a minimum lenght of 32 bytes)
 
 # Set the paths of the static webcontent, template and upload files
 [filesystem]
@@ -33,3 +32,8 @@ host = "127.0.0.1"
 port = "6379"
 unix_socket_file = "/tmp/redis.sock"
 connection_method = "tcp" # Can be either 'tcp' or 'unix_socket'
+
+# Set security relevant options
+[security]
+session_private_key = "" # Private key to secure cookie sessions (have to be a minimum length of 32 bytes)
+password_hash_key = "" # Private key to secure hash passwords (argon2 secret key feature) (minimal length: 8 bytes)

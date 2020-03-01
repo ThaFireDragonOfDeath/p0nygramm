@@ -17,6 +17,8 @@
 
 extern crate v_htmlescape;
 use v_htmlescape::escape;
+use argonautica::{Hasher, Verifier};
+use argonautica::config::Variant;
 
 pub fn check_and_escape_comment(comment: &str) -> Option<String> {
     let comment_length = comment.len();
@@ -111,5 +113,44 @@ pub fn check_username(username: &str) -> bool {
     }
     else {
         return false;
+    }
+}
+
+pub fn hash_password(password: &str, secret_key: &str) -> Option<String> {
+    let mut argon2_hasher = Hasher::default();
+
+    // Don't block all CPU cores
+    argon2_hasher.configure_lanes(2);
+    argon2_hasher.configure_threads(2);
+
+    argon2_hasher.with_password(password);
+    argon2_hasher.with_secret_key(secret_key);
+
+    let hash_result = argon2_hasher.hash();
+
+    if hash_result.is_ok() {
+        return Some(hash_result.unwrap());
+    }
+    else {
+        return None;
+    }
+}
+
+pub fn verify_password(password: &str, secret_key: &str) -> Option<bool> {
+    let mut argon2_verifier = Verifier::default();
+
+    // Don't block all CPU cores
+    argon2_verifier.configure_threads(2);
+
+    argon2_verifier.with_password(password);
+    argon2_verifier.with_secret_key(secret_key);
+
+    let verify_result = argon2_verifier.verify();
+
+    if verify_result.is_ok() {
+        return Some(verify_result.unwrap());
+    }
+    else {
+        return None;
     }
 }

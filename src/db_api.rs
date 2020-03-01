@@ -18,63 +18,20 @@
 use crate::db_api::postgres::PostgresConnection;
 use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
-use crate::db_api::DbApiErrorType::{UnknownError, ConnectionError};
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
+use crate::db_api::result::{UploadPrvList, DbApiError};
+use crate::db_api::result::DbApiErrorType::{UnknownError, ConnectionError};
 
 mod postgres;
 mod redis;
+mod result;
 
 macro_rules! check_postgres_connection {
     ($self:ident) => {
-        if $self.postgres_connection.is_none() {
+        if $self.have_postgres_connection() {
             return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
         }
     };
-}
-
-pub enum DbApiErrorType {
-    UnknownError,
-    ConnectionError,
-    ParameterError,
-    QueryError,
-    NoResult,
-}
-
-// Result structures
-pub struct DbApiError {
-    pub error_type: DbApiErrorType,
-    pub error_msg: String,
-}
-
-impl DbApiError {
-    pub fn new(error_type: DbApiErrorType, error_msg: &str) -> DbApiError {
-        DbApiError {
-            error_type,
-            error_msg: error_msg.to_owned(),
-        }
-    }
-}
-
-pub struct UploadPreview {
-    pub upload_id: i32,
-    pub upload_is_nsfw: bool,
-    pub upload_prv_url: String,
-    pub upload_url: String,
-}
-
-impl UploadPreview {
-    pub fn new(upload_id: i32, upload_is_nsfw: bool, upload_filename: String) -> UploadPreview {
-        UploadPreview {
-            upload_id,
-            upload_is_nsfw,
-            upload_prv_url: get_preview_url_from_filename(upload_filename.as_str()),
-            upload_url: get_url_from_filename(upload_filename.as_str()),
-        }
-    }
-}
-
-pub struct UploadPrvList {
-    pub uploads: Vec<UploadPreview>,
 }
 
 pub struct DbConnection {

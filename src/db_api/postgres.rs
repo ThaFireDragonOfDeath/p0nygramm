@@ -22,8 +22,8 @@ use tokio_postgres::config::SslMode::Disable;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::Path;
 use std::time::Duration;
-use crate::db_api::{UploadPrvList, DbApiError, UploadPreview};
-use crate::db_api::DbApiErrorType::{UnknownError, QueryError};
+use crate::db_api::result::{UploadPrvList, DbApiError, UploadPreview};
+use crate::db_api::result::DbApiErrorType::{QueryError, UnknownError};
 
 macro_rules! db_schema_version {
     () => { 1 };

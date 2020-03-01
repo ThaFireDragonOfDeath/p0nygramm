@@ -79,27 +79,20 @@ impl<T: Clone> ConfigField<T> {
 
 pub struct ApplicationConfig {
     pub max_upload_size: ConfigField<u16>,
-    pub session_private_key: ConfigField<String>,
 }
 
 impl ApplicationConfig {
     pub fn new() -> ApplicationConfig {
         ApplicationConfig {
             max_upload_size: ConfigField::new_empty(0),
-            session_private_key: ConfigField::new_empty(String::new()),
         }
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let max_upload_size = toml_obj["Application"]["max_upload_size"].as_integer();
-        let session_private_key = toml_obj["Application"]["session_private_key"].as_str();
+        let max_upload_size = toml_obj["application"]["max_upload_size"].as_integer();
         
         if max_upload_size.is_some() {
             self.max_upload_size.set_value(max_upload_size.unwrap() as u16);
-        }
-
-        if session_private_key.is_some() {
-            self.session_private_key.set_value(session_private_key.unwrap().to_owned());
         }
     }
 }
@@ -122,10 +115,10 @@ impl FilesystemConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let ffprobe_path = toml_obj["FilesystemConfig"]["ffprobe_path"].as_str();
-        let default_userconfig_filepath = toml_obj["FilesystemConfig"]["default_userconfig_filepath"].as_str();
-        let static_webcontent_path = toml_obj["FilesystemConfig"]["static_webcontent_path"].as_str();
-        let uploads_path = toml_obj["FilesystemConfig"]["uploads_path"].as_str();
+        let ffprobe_path = toml_obj["filesystem"]["ffprobe_path"].as_str();
+        let default_userconfig_filepath = toml_obj["filesystem"]["default_userconfig_filepath"].as_str();
+        let static_webcontent_path = toml_obj["filesystem"]["static_webcontent_path"].as_str();
+        let uploads_path = toml_obj["filesystem"]["uploads_path"].as_str();
 
         if ffprobe_path.is_some() {
             self.ffprobe_path.set_value(ffprobe_path.unwrap().to_owned());
@@ -159,8 +152,8 @@ impl NetworkConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let ip_addr = toml_obj["NetworkConfig"]["ip_addr"].as_str();
-        let port = toml_obj["NetworkConfig"]["port"].as_integer();
+        let ip_addr = toml_obj["network"]["ip_addr"].as_str();
+        let port = toml_obj["network"]["port"].as_integer();
 
         if ip_addr.is_some() {
             self.ip_addr.set_value(ip_addr.unwrap().to_owned());
@@ -198,14 +191,14 @@ impl PostgresConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let host = toml_obj["PostgresConfig"]["host"].as_str();
-        let port = toml_obj["PostgresConfig"]["port"].as_integer();
-        let unix_socket_dir = toml_obj["PostgresConfig"]["unix_socket_dir"].as_str();
-        let connection_method = toml_obj["PostgresConfig"]["connection_method"].as_str();
-        let user = toml_obj["PostgresConfig"]["user"].as_str();
-        let password = toml_obj["PostgresConfig"]["password"].as_str();
-        let db_name = toml_obj["PostgresConfig"]["db_name"].as_str();
-        let required_schema_version = toml_obj["PostgresConfig"]["required_schema_version"].as_integer();
+        let host = toml_obj["postgres"]["host"].as_str();
+        let port = toml_obj["postgres"]["port"].as_integer();
+        let unix_socket_dir = toml_obj["postgres"]["unix_socket_dir"].as_str();
+        let connection_method = toml_obj["postgres"]["connection_method"].as_str();
+        let user = toml_obj["postgres"]["user"].as_str();
+        let password = toml_obj["postgres"]["password"].as_str();
+        let db_name = toml_obj["postgres"]["db_name"].as_str();
+        let required_schema_version = toml_obj["postgres"]["required_schema_version"].as_integer();
 
         if host.is_some() {
             self.host.set_value(host.unwrap().to_owned());
@@ -263,10 +256,10 @@ impl RedisConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let host = toml_obj["RedisConfig"]["host"].as_str();
-        let port = toml_obj["RedisConfig"]["port"].as_integer();
-        let unix_socket_file = toml_obj["RedisConfig"]["unix_socket_file"].as_str();
-        let connection_method = toml_obj["RedisConfig"]["connection_method"].as_str();
+        let host = toml_obj["redis"]["host"].as_str();
+        let port = toml_obj["redis"]["port"].as_integer();
+        let unix_socket_file = toml_obj["redis"]["unix_socket_file"].as_str();
+        let connection_method = toml_obj["redis"]["connection_method"].as_str();
 
         if host.is_some() {
             self.host.set_value(host.unwrap().to_owned());
@@ -290,12 +283,40 @@ impl RedisConfig {
     }
 }
 
+pub struct SecurityConfig {
+    pub password_hash_key: ConfigField<String>,
+    pub session_private_key: ConfigField<String>,
+}
+
+impl SecurityConfig {
+    pub fn new() -> SecurityConfig {
+        SecurityConfig {
+            password_hash_key: ConfigField::new_empty(String::new()),
+            session_private_key: ConfigField::new_empty(String::new()),
+        }
+    }
+
+    pub fn parse_toml(&mut self, toml_obj: &Value) {
+        let password_hash_key = toml_obj["security"]["password_hash_key"].as_str();
+        let session_private_key = toml_obj["security"]["session_private_key"].as_str();
+
+        if password_hash_key.is_some() {
+            self.password_hash_key.set_value(password_hash_key.unwrap().to_owned());
+        }
+
+        if session_private_key.is_some() {
+            self.session_private_key.set_value(session_private_key.unwrap().to_owned());
+        }
+    }
+}
+
 pub struct ProjectConfig {
     pub application_config: ApplicationConfig,
     pub filesystem_config: FilesystemConfig,
     pub network_config: NetworkConfig,
     pub postgres_config: PostgresConfig,
     pub redis_config: RedisConfig,
+    pub security_config: SecurityConfig,
 }
 
 impl ProjectConfig {
@@ -313,6 +334,7 @@ impl ProjectConfig {
                 network_config: NetworkConfig::new(),
                 postgres_config: PostgresConfig::new(),
                 redis_config: RedisConfig::new(),
+                security_config: SecurityConfig::new(),
             };
 
             prj_config.parse_toml(&const_config_toml_obj.unwrap());
@@ -352,5 +374,6 @@ impl ProjectConfig {
         self.network_config.parse_toml(toml_obj);
         self.postgres_config.parse_toml(toml_obj);
         self.redis_config.parse_toml(toml_obj);
+        self.security_config.parse_toml(toml_obj);
     }
 }
