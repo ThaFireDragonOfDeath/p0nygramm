@@ -46,6 +46,16 @@ pub struct SessionData {
     pub expire_datetime: DateTime<Local>,
 }
 
+impl SessionData {
+    pub fn new(session_id: String, user_id: i32, expire_datetime: DateTime<Local>) -> SessionData {
+        SessionData {
+            session_id,
+            user_id,
+            expire_datetime,
+        }
+    }
+}
+
 pub struct UploadPreview {
     pub upload_id: i32,
     pub upload_is_nsfw: bool,

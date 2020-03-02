@@ -15,18 +15,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-use redis::{Client, ConnectionInfo, ConnectionAddr};
-use redis::aio::Connection;
+use redis::{Client, ConnectionInfo, ConnectionAddr, AsyncCommands, RedisResult};
+use redis::aio::{Connection, MultiplexedConnection};
 use crate::config::ProjectConfig;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::PathBuf;
+use crate::db_api::result::{SessionData, DbApiError};
+use crate::db_api::result::DbApiErrorType::{UnknownError, NoResult};
 
 pub struct RedisConnection {
     redis_client: Client,
-    redis_connection: Connection,
 }
 
 impl RedisConnection {
+    pub async fn get_session_data(&self, session_id: &str) -> Result<SessionData, DbApiError> {
+        let redis_connection = self.redis_client.get_async_connection().await;
+
+        if redis_connection.is_ok() {
+            let mut redis_connection = redis_connection.unwrap();
+            let redis_key_userid = format!("sessions.{}.user_id", session_id);
+            let redis_key_expire = format!("sessions.{}.expire", session_id);
+
+            let query_result = redis::pipe().atomic()
+                .get(redis_key_userid)
+                .get(redis_key_expire)
+                .query_async::<Connection, (i32, String)>(&mut redis_connection)
+                .await;
+
+            if query_result.is_ok() {
+                //let (user_id, session_expire) = query_result.unwrap();
+                return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+            }
+            else {
+                return Err(DbApiError::new(NoResult, "Session ID ist ungültig"));
+            }
+
+            return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+        }
+        else {
+            return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+        }
+    }
+
     pub async fn new(project_config: &ProjectConfig) -> Option<RedisConnection> {
         let host = project_config.redis_config.host.get_value();
         let unix_socket_file = project_config.redis_config.unix_socket_file.get_value();
@@ -60,7 +90,6 @@ impl RedisConnection {
 
                 let redis_connection_obj = RedisConnection {
                     redis_client: client,
-                    redis_connection: connection,
                 };
 
                 return Some(redis_connection_obj);
