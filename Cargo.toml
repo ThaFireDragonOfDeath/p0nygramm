@@ -20,9 +20,9 @@ argonautica = { version = "0.2.0", features = ["simd"] }
 chrono = "0.4.10"
 futures-core = "0.3.4"
 #handlebars = "3.0.1"
-redis = "0.15.1"
+redis = { version = "0.15.1", features = ["tokio-rt-core"] }
 serde_json = "1.0.46"
-tokio = { version = "0.2.12", features = ["rt-core"] }
+tokio = { version = "0.2.13", features = ["rt-core"] }
 tokio-postgres = "0.5.2"
 toml = "0.5.6"
 v_htmlescape = "0.4.5"

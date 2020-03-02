@@ -25,36 +25,30 @@ use crate::db_api::result::DbApiErrorType::{UnknownError, NoResult};
 
 pub struct RedisConnection {
     redis_client: Client,
+    redis_connection: MultiplexedConnection,
 }
 
 impl RedisConnection {
     pub async fn get_session_data(&self, session_id: &str) -> Result<SessionData, DbApiError> {
-        let redis_connection = self.redis_client.get_async_connection().await;
+        let mut redis_connection = self.redis_connection.clone();
+        let redis_key_userid = format!("sessions.{}.user_id", session_id);
+        let redis_key_expire = format!("sessions.{}.expire", session_id);
 
-        if redis_connection.is_ok() {
-            let mut redis_connection = redis_connection.unwrap();
-            let redis_key_userid = format!("sessions.{}.user_id", session_id);
-            let redis_key_expire = format!("sessions.{}.expire", session_id);
+        let query_result = redis::pipe().atomic()
+            .get(redis_key_userid)
+            .get(redis_key_expire)
+            .query_async::<MultiplexedConnection, (i32, String)>(&mut redis_connection)
+            .await;
 
-            let query_result = redis::pipe().atomic()
-                .get(redis_key_userid)
-                .get(redis_key_expire)
-                .query_async::<Connection, (i32, String)>(&mut redis_connection)
-                .await;
-
-            if query_result.is_ok() {
-                //let (user_id, session_expire) = query_result.unwrap();
-                return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
-            }
-            else {
-                return Err(DbApiError::new(NoResult, "Session ID ist ungültig"));
-            }
-
+        if query_result.is_ok() {
+            //let (user_id, session_expire) = query_result.unwrap();
             return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
         }
         else {
-            return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+            return Err(DbApiError::new(NoResult, "Session ID ist ungültig"));
         }
+
+        return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
     }
 
     pub async fn new(project_config: &ProjectConfig) -> Option<RedisConnection> {
@@ -83,13 +77,14 @@ impl RedisConnection {
 
         if client.is_ok() {
             let client = client.unwrap();
-            let mut connection = client.get_async_connection().await;
+            let mut connection = client.get_multiplexed_tokio_connection().await;
 
             if connection.is_ok() {
                 let mut connection = connection.unwrap();
 
                 let redis_connection_obj = RedisConnection {
                     redis_client: client,
+                    redis_connection: connection,
                 };
 
                 return Some(redis_connection_obj);
