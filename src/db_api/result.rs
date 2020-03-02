@@ -16,6 +16,7 @@
  */
 
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
+use chrono::{DateTime, Local};
 
 pub enum DbApiErrorType {
     UnknownError,
@@ -37,6 +38,12 @@ impl DbApiError {
             error_msg: error_msg.to_owned(),
         }
     }
+}
+
+pub struct SessionData {
+    pub session_id: String,
+    pub user_id: i32,
+    pub expire_datetime: DateTime<Local>,
 }
 
 pub struct UploadPreview {

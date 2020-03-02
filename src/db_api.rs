@@ -19,7 +19,7 @@ use crate::db_api::postgres::PostgresConnection;
 use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
-use crate::db_api::result::{UploadPrvList, DbApiError};
+use crate::db_api::result::{UploadPrvList, DbApiError, SessionData};
 use crate::db_api::result::DbApiErrorType::{UnknownError, ConnectionError};
 
 mod postgres;
@@ -34,12 +34,26 @@ macro_rules! check_postgres_connection {
     };
 }
 
+macro_rules! check_redis_connection {
+    ($self:ident) => {
+        if $self.have_redis_connection() {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Redis Server vorhanden!"));
+        }
+    };
+}
+
 pub struct DbConnection {
     postgres_connection: Option<PostgresConnection>,
     redis_connection: Option<RedisConnection>,
 }
 
 impl DbConnection {
+    pub fn get_session_data(&self, session_id: &str) -> Result<SessionData, DbApiError> {
+        check_redis_connection!(self);
+
+        return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+    }
+
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
         check_postgres_connection!(self);
 
@@ -54,11 +68,23 @@ impl DbConnection {
         self.redis_connection.is_some()
     }
 
-    pub async fn new(project_config: &ProjectConfig) -> DbConnection {
-        DbConnection {
-            postgres_connection: PostgresConnection::new(project_config).await,
-            redis_connection: RedisConnection::new(project_config).await,
+    pub async fn new(project_config: &ProjectConfig, require_postgres: bool, require_redis: bool) -> Result<DbConnection, DbApiError> {
+        let postgres_connection = PostgresConnection::new(project_config).await;
+        let redis_connection = RedisConnection::new(project_config).await;
+
+        if postgres_connection.is_none() && require_postgres {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
         }
+        else if redis_connection.is_none() && require_redis {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Redis Server vorhanden!"));
+        }
+
+        let db_connection = DbConnection {
+            postgres_connection,
+            redis_connection,
+        };
+
+        return Ok(db_connection);
     }
 
     pub fn search_uploads(&self, search_string: &str, start_id: i32, amount: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
