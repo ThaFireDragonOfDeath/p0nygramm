@@ -22,6 +22,7 @@ use crate::config::ConnectionMethod::Tcp;
 use std::path::PathBuf;
 use crate::db_api::result::{SessionData, DbApiError};
 use crate::db_api::result::DbApiErrorType::{UnknownError, NoResult};
+use chrono::{ParseResult, DateTime, FixedOffset, Local};
 
 pub struct RedisConnection {
     redis_client: Client,
@@ -41,14 +42,24 @@ impl RedisConnection {
             .await;
 
         if query_result.is_ok() {
-            //let (user_id, session_expire) = query_result.unwrap();
-            return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
-        }
-        else {
-            return Err(DbApiError::new(NoResult, "Session ID ist ungültig"));
+            let (user_id, session_expire_str) : (i32, String) = query_result.unwrap();
+
+            if user_id > 0 && session_expire_str != "" {
+                let session_expire = DateTime::parse_from_rfc3339(session_expire_str.as_str());
+
+                if session_expire.is_ok() {
+                    let current_time = Local::now();
+                    let session_expire_local = session_expire.unwrap().with_timezone(&current_time.timezone());
+
+                    if current_time < session_expire_local {
+                        let session_data = SessionData::new(session_id.to_owned(), user_id, session_expire_local);
+                        return Ok(session_data);
+                    }
+                }
+            }
         }
 
-        return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+        return Err(DbApiError::new(NoResult, "Session ID ist ungültig"));
     }
 
     pub async fn new(project_config: &ProjectConfig) -> Option<RedisConnection> {
