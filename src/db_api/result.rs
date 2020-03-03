@@ -41,17 +41,19 @@ impl DbApiError {
 }
 
 pub struct SessionData {
+    pub expire_datetime: DateTime<Local>,
+    pub is_lts: bool,
     pub session_id: String,
     pub user_id: i32,
-    pub expire_datetime: DateTime<Local>,
 }
 
 impl SessionData {
-    pub fn new(session_id: String, user_id: i32, expire_datetime: DateTime<Local>) -> SessionData {
+    pub fn new(session_id: String, user_id: i32, expire_datetime: DateTime<Local>, is_lts: bool) -> SessionData {
         SessionData {
+            expire_datetime,
+            is_lts,
             session_id,
             user_id,
-            expire_datetime,
         }
     }
 }

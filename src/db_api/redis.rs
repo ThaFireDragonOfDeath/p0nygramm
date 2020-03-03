@@ -15,14 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-use redis::{Client, ConnectionInfo, ConnectionAddr, AsyncCommands, RedisResult};
+use redis::{Client, ConnectionInfo, ConnectionAddr, AsyncCommands, RedisResult, Commands, RedisFuture};
 use redis::aio::{Connection, MultiplexedConnection};
 use crate::config::ProjectConfig;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::PathBuf;
 use crate::db_api::result::{SessionData, DbApiError};
 use crate::db_api::result::DbApiErrorType::{UnknownError, NoResult};
-use chrono::{ParseResult, DateTime, FixedOffset, Local};
+use chrono::{ParseResult, DateTime, FixedOffset, Local, Duration};
 
 pub struct RedisConnection {
     redis_client: Client,
@@ -34,15 +34,17 @@ impl RedisConnection {
         let mut redis_connection = self.redis_connection.clone();
         let redis_key_userid = format!("sessions.{}.user_id", session_id);
         let redis_key_expire = format!("sessions.{}.expire", session_id);
+        let redis_key_lts = format!("sessions.{}.lts", session_id); // Is long time session (aka keep logged in)
 
         let query_result = redis::pipe().atomic()
             .get(redis_key_userid)
             .get(redis_key_expire)
-            .query_async::<MultiplexedConnection, (i32, String)>(&mut redis_connection)
+            .get(redis_key_lts)
+            .query_async::<MultiplexedConnection, (i32, String, bool)>(&mut redis_connection)
             .await;
 
         if query_result.is_ok() {
-            let (user_id, session_expire_str) : (i32, String) = query_result.unwrap();
+            let (user_id, session_expire_str, is_lts) : (i32, String, bool) = query_result.unwrap();
 
             if user_id > 0 && session_expire_str != "" {
                 let session_expire = DateTime::parse_from_rfc3339(session_expire_str.as_str());
@@ -52,7 +54,8 @@ impl RedisConnection {
                     let session_expire_local = session_expire.unwrap().with_timezone(&current_time.timezone());
 
                     if current_time < session_expire_local {
-                        let session_data = SessionData::new(session_id.to_owned(), user_id, session_expire_local);
+                        let session_data = SessionData::new(session_id.to_owned(), user_id, session_expire_local, is_lts);
+                        self.renew_session(&session_data, false).await;
                         return Ok(session_data);
                     }
                 }
@@ -103,5 +106,59 @@ impl RedisConnection {
         }
 
         return None;
+    }
+
+    pub async fn renew_session(&self, session_data: &SessionData, force_renew: bool) -> bool {
+        let mut redis_connection = self.redis_connection.clone();
+        let redis_key_lts = format!("sessions.{}.lts", session_data.session_id); // Is long time session (aka keep logged in)
+
+        // Session duration in hours
+        let lts_duration : u32 = 24 * 30; // Long time session are valid for 30 days without activity
+        let sts_duration : u32 = 24; // Short time sessions are valid for 1 day without activity
+
+        // Session reload break point
+        let lts_break_point : u32 = lts_duration / 2; // If the session have only 15 days remaining, the session will be renewed
+        let sts_break_point : u32 = sts_duration / 2; // If the session have only 12 hours remaining, the session will be renewed
+
+        let current_time = Local::now();
+        let mut renew_session = false;
+
+        if force_renew {
+            renew_session = true;
+        }
+        else {
+            let expire_time = session_data.expire_datetime;
+
+            let future_time = if session_data.is_lts {
+                current_time + Duration::hours(lts_break_point as i64)
+            }
+            else {
+                current_time + Duration::hours(sts_break_point as i64)
+            };
+
+            if expire_time < future_time {
+                renew_session = true
+            }
+        }
+
+        if renew_session {
+            let new_expire_time = if session_data.is_lts {
+                current_time + Duration::hours(lts_duration as i64)
+            }
+            else {
+                current_time + Duration::hours(sts_duration as i64)
+            };
+
+            let query_result : RedisResult<()> = redis_connection.set(redis_key_lts, new_expire_time.to_rfc3339()).await;
+
+            if query_result.is_ok() {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
