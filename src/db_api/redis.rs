@@ -23,6 +23,8 @@ use std::path::PathBuf;
 use crate::db_api::result::{SessionData, DbApiError};
 use crate::db_api::result::DbApiErrorType::{UnknownError, NoResult};
 use chrono::{ParseResult, DateTime, FixedOffset, Local, Duration};
+use rand::{thread_rng, Rng};
+use rand::distributions::Alphanumeric;
 
 pub struct RedisConnection {
     redis_client: Client,
@@ -30,6 +32,38 @@ pub struct RedisConnection {
 }
 
 impl RedisConnection {
+    pub async fn check_session_exist(&self, session_id: &str) -> Result<bool, DbApiError> {
+        Ok(true) // TODO: Implement
+    }
+
+    pub async fn create_session(&self, user_id: i32, is_lts: bool) -> Result<SessionData, DbApiError> {
+        let mut redis_connection = self.redis_connection.clone();
+        let mut session_exist = true;
+        let mut rand_session_id: String;
+        let max_try : u8 = 10;
+        let mut current_iteration : u8 = 0;
+
+        while session_exist {
+            rand_session_id = thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(32)
+                .collect();
+
+            session_exist = self.check_session_exist(rand_session_id.as_str()).await.unwrap_or(true);
+
+            if current_iteration < max_try {
+                current_iteration += 1;
+            }
+            else {
+                return Err(DbApiError::new(NoResult, "Session ID ist ungültig"));
+            }
+        }
+
+        // TODO: Finish implementation
+
+        Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
+    }
+
     pub async fn get_session_data(&self, session_id: &str) -> Result<SessionData, DbApiError> {
         let mut redis_connection = self.redis_connection.clone();
         let redis_key_userid = format!("sessions.{}.user_id", session_id);

@@ -18,6 +18,7 @@
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
 use chrono::{DateTime, Local};
 
+#[derive(Copy, Clone)]
 pub enum DbApiErrorType {
     UnknownError,
     ConnectionError,
@@ -26,6 +27,7 @@ pub enum DbApiErrorType {
     NoResult,
 }
 
+#[derive(Clone)]
 pub struct DbApiError {
     pub error_type: DbApiErrorType,
     pub error_msg: String,
@@ -40,6 +42,7 @@ impl DbApiError {
     }
 }
 
+#[derive(Clone)]
 pub struct SessionData {
     pub expire_datetime: DateTime<Local>,
     pub is_lts: bool,
@@ -58,6 +61,7 @@ impl SessionData {
     }
 }
 
+#[derive(Clone)]
 pub struct UploadPreview {
     pub upload_id: i32,
     pub upload_is_nsfw: bool,
@@ -76,6 +80,7 @@ impl UploadPreview {
     }
 }
 
+#[derive(Clone)]
 pub struct UploadPrvList {
     pub uploads: Vec<UploadPreview>,
 }

@@ -48,10 +48,18 @@ pub struct DbConnection {
 }
 
 impl DbConnection {
-    pub fn get_session_data(&self, session_id: &str) -> Result<SessionData, DbApiError> {
+    pub async fn get_session_data(&self, session_id: &str, force_session_renew: bool) -> Result<SessionData, DbApiError> {
         check_redis_connection!(self);
+        let redis_connection = self.redis_connection.as_ref().unwrap();
+        let session_data = redis_connection.get_session_data(session_id).await;
 
-        return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+        if session_data.is_ok() {
+            let session_data = session_data.as_ref().ok().unwrap();
+
+            redis_connection.renew_session(session_data, force_session_renew).await;
+        }
+
+        return session_data;
     }
 
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {

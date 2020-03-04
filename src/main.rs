@@ -24,12 +24,15 @@ mod security;
 #[macro_use]
 extern crate actix_web;
 
-extern crate argonautica;
-extern crate chrono;
-extern crate tokio;
-
 #[macro_use]
 extern crate serde_json;
+
+extern crate argonautica;
+extern crate chrono;
+extern crate rand;
+extern crate tokio;
+
+
 
 use actix_web::web;
 use actix_web::{App, HttpResponse, HttpServer};
