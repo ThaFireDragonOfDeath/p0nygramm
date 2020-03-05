@@ -39,8 +39,8 @@ impl RedisConnection {
     pub async fn create_session(&self, user_id: i32, is_lts: bool) -> Result<SessionData, DbApiError> {
         let mut redis_connection = self.redis_connection.clone();
         let mut session_exist = true;
-        let mut rand_session_id: String;
-        let max_try : u8 = 10;
+        let mut rand_session_id: String = String::new();
+        let max_try : u8 = 5;
         let mut current_iteration : u8 = 0;
 
         while session_exist {
@@ -55,11 +55,22 @@ impl RedisConnection {
                 current_iteration += 1;
             }
             else {
-                return Err(DbApiError::new(NoResult, "Session ID ist ungültig"));
+                return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
             }
         }
 
-        // TODO: Finish implementation
+        if rand_session_id != "" {
+            let redis_key_userid = format!("sessions.{}.user_id", rand_session_id);
+            let redis_key_lts = format!("sessions.{}.lts", rand_session_id); // Is long time session (aka keep logged in)
+
+            /*let query_result = redis::pipe().atomic()
+                .set(redis_key_userid, user_id).ignore()
+                .set(redis_key_lts).ignore()
+                .query_async::<MultiplexedConnection, (i32, String, bool)>(&mut redis_connection)
+                .await;*/
+
+            // TODO: Finish implementation
+        }
 
         Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
     }
@@ -67,32 +78,24 @@ impl RedisConnection {
     pub async fn get_session_data(&self, session_id: &str) -> Result<SessionData, DbApiError> {
         let mut redis_connection = self.redis_connection.clone();
         let redis_key_userid = format!("sessions.{}.user_id", session_id);
-        let redis_key_expire = format!("sessions.{}.expire", session_id);
         let redis_key_lts = format!("sessions.{}.lts", session_id); // Is long time session (aka keep logged in)
 
         let query_result = redis::pipe().atomic()
-            .get(redis_key_userid)
-            .get(redis_key_expire)
-            .get(redis_key_lts)
-            .query_async::<MultiplexedConnection, (i32, String, bool)>(&mut redis_connection)
+            .get(redis_key_userid.as_str())
+            .ttl(redis_key_userid.as_str())
+            .get(redis_key_lts.as_str())
+            .query_async::<MultiplexedConnection, (i32, i32, bool)>(&mut redis_connection)
             .await;
 
         if query_result.is_ok() {
-            let (user_id, session_expire_str, is_lts) : (i32, String, bool) = query_result.unwrap();
+            let (user_id, session_ttl, is_lts) : (i32, i32, bool) = query_result.unwrap();
 
-            if user_id > 0 && session_expire_str != "" {
-                let session_expire = DateTime::parse_from_rfc3339(session_expire_str.as_str());
+            if user_id > 0 && session_ttl > 10 {
+                let current_time = Local::now();
+                let session_expire = current_time + Duration::seconds(session_ttl as i64);
+                let session_data = SessionData::new(session_id.to_owned(), user_id, session_expire, is_lts);
 
-                if session_expire.is_ok() {
-                    let current_time = Local::now();
-                    let session_expire_local = session_expire.unwrap().with_timezone(&current_time.timezone());
-
-                    if current_time < session_expire_local {
-                        let session_data = SessionData::new(session_id.to_owned(), user_id, session_expire_local, is_lts);
-                        self.renew_session(&session_data, false).await;
-                        return Ok(session_data);
-                    }
-                }
+                return Ok(session_data);
             }
         }
 
@@ -144,6 +147,7 @@ impl RedisConnection {
 
     pub async fn renew_session(&self, session_data: &SessionData, force_renew: bool) -> bool {
         let mut redis_connection = self.redis_connection.clone();
+        let redis_key_userid = format!("sessions.{}.user_id", session_data.session_id);
         let redis_key_lts = format!("sessions.{}.lts", session_data.session_id); // Is long time session (aka keep logged in)
 
         // Session duration in hours
@@ -183,7 +187,13 @@ impl RedisConnection {
                 current_time + Duration::hours(sts_duration as i64)
             };
 
-            let query_result : RedisResult<()> = redis_connection.set(redis_key_lts, new_expire_time.to_rfc3339()).await;
+            let new_ttl = new_expire_time.signed_duration_since(current_time).num_seconds().abs() as usize;
+
+            let query_result = redis::pipe().atomic()
+                .expire(redis_key_userid, new_ttl)
+                .expire(redis_key_lts, new_ttl)
+                .query_async::<MultiplexedConnection, ((),())>(&mut redis_connection)
+                .await;
 
             if query_result.is_ok() {
                 return true;
