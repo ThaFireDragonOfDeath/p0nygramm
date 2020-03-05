@@ -61,6 +61,29 @@ impl SessionData {
     }
 }
 
+#[derive(Copy, Clone)]
+pub enum SessionErrorType {
+    UnknownError,
+    DbError,
+    SessionExpired,
+    SessionInvalid,
+}
+
+#[derive(Clone)]
+pub struct SessionError {
+    pub error_type: SessionErrorType,
+    pub error_msg: String,
+}
+
+impl SessionError {
+    pub fn new(error_type: SessionErrorType, error_msg: &str) -> SessionError {
+        SessionError {
+            error_type,
+            error_msg: error_msg.to_owned(),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct UploadPreview {
     pub upload_id: i32,

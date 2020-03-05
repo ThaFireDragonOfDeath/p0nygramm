@@ -19,28 +19,13 @@ use crate::db_api::postgres::PostgresConnection;
 use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
-use crate::db_api::result::{UploadPrvList, DbApiError, SessionData};
+use crate::db_api::result::{UploadPrvList, DbApiError, SessionData, SessionError};
 use crate::db_api::result::DbApiErrorType::{UnknownError, ConnectionError};
+use crate::db_api::result::SessionErrorType::DbError;
 
 mod postgres;
 mod redis;
 mod result;
-
-macro_rules! check_postgres_connection {
-    ($self:ident) => {
-        if $self.have_postgres_connection() {
-            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
-        }
-    };
-}
-
-macro_rules! check_redis_connection {
-    ($self:ident) => {
-        if $self.have_redis_connection() {
-            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Redis Server vorhanden!"));
-        }
-    };
-}
 
 pub struct DbConnection {
     postgres_connection: Option<PostgresConnection>,
@@ -48,8 +33,11 @@ pub struct DbConnection {
 }
 
 impl DbConnection {
-    pub async fn get_session_data(&self, session_id: &str, force_session_renew: bool) -> Result<SessionData, DbApiError> {
-        check_redis_connection!(self);
+    pub async fn get_session_data(&self, session_id: &str, force_session_renew: bool) -> Result<SessionData, SessionError> {
+        if !self.have_redis_connection() {
+            return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
+        }
+
         let redis_connection = self.redis_connection.as_ref().unwrap();
         let session_data = redis_connection.get_session_data(session_id).await;
 
@@ -63,7 +51,9 @@ impl DbConnection {
     }
 
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
-        check_postgres_connection!(self);
+        if !self.have_postgres_connection() {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
+        }
 
         return self.postgres_connection.as_ref().unwrap().get_uploads(start_id, max_count, show_nsfw).await;
     }
@@ -96,6 +86,8 @@ impl DbConnection {
     }
 
     pub fn search_uploads(&self, search_string: &str, start_id: i32, amount: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+        // TODO: Implement
+
         Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
     }
 }

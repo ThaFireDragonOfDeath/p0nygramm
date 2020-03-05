@@ -15,16 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-use redis::{Client, ConnectionInfo, ConnectionAddr, AsyncCommands, RedisResult, Commands, RedisFuture};
+use redis::{Client, ConnectionInfo, ConnectionAddr, AsyncCommands, RedisResult, Commands, RedisFuture, ErrorKind};
 use redis::aio::{Connection, MultiplexedConnection};
 use crate::config::ProjectConfig;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::PathBuf;
-use crate::db_api::result::{SessionData, DbApiError};
+use crate::db_api::result::{SessionData, DbApiError, SessionError, SessionErrorType};
 use crate::db_api::result::DbApiErrorType::{UnknownError, NoResult};
 use chrono::{ParseResult, DateTime, FixedOffset, Local, Duration};
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
+use crate::db_api::result::SessionErrorType::{DbError, SessionInvalid};
 
 pub struct RedisConnection {
     redis_client: Client,
@@ -32,11 +33,38 @@ pub struct RedisConnection {
 }
 
 impl RedisConnection {
-    pub async fn check_session_exist(&self, session_id: &str) -> Result<bool, DbApiError> {
-        Ok(true) // TODO: Implement
+    pub async fn check_session_exist(&self, session_id: &str) -> Result<bool, SessionError> {
+        let mut redis_connection = self.redis_connection.clone();
+        let redis_key_userid = format!("sessions.{}.user_id", session_id);
+
+        let query_result : RedisResult<(i32, i32)> = redis::pipe().atomic()
+            .get(redis_key_userid.as_str())
+            .ttl(redis_key_userid.as_str())
+            .query_async::<MultiplexedConnection, (i32, i32)>(&mut redis_connection)
+            .await;
+
+        if query_result.is_ok() {
+            let (user_id, session_ttl) = query_result.unwrap();
+
+            if user_id > 0 && session_ttl > 30 {
+                return Ok(true);
+            }
+        }
+        else {
+            let error_kind = query_result.err().unwrap().kind();
+
+            if error_kind == ErrorKind::TypeError {
+                return Ok(false);
+            }
+            else {
+                return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
+            }
+        }
+
+        return Err(SessionError::new(SessionErrorType::UnknownError, "Unbekannter Fehler"));
     }
 
-    pub async fn create_session(&self, user_id: i32, is_lts: bool) -> Result<SessionData, DbApiError> {
+    pub async fn create_session(&self, user_id: i32, is_lts: bool) -> Result<SessionData, SessionError> {
         let mut redis_connection = self.redis_connection.clone();
         let mut session_exist = true;
         let mut rand_session_id: String = String::new();
@@ -55,27 +83,47 @@ impl RedisConnection {
                 current_iteration += 1;
             }
             else {
-                return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+                return Err(SessionError::new(SessionErrorType::UnknownError, "Unbekannter Fehler"));
             }
         }
 
         if rand_session_id != "" {
             let redis_key_userid = format!("sessions.{}.user_id", rand_session_id);
             let redis_key_lts = format!("sessions.{}.lts", rand_session_id); // Is long time session (aka keep logged in)
+            let current_time = Local::now();
 
-            /*let query_result = redis::pipe().atomic()
-                .set(redis_key_userid, user_id).ignore()
-                .set(redis_key_lts).ignore()
-                .query_async::<MultiplexedConnection, (i32, String, bool)>(&mut redis_connection)
-                .await;*/
+            // Session duration in hours
+            let lts_duration : u32 = 24 * 30; // Long time session are valid for 30 days without activity
+            let sts_duration : u32 = 24; // Short time sessions are valid for 1 day without activity
 
-            // TODO: Finish implementation
+            let expire_time = if is_lts {
+                current_time + Duration::hours(lts_duration as i64)
+            }
+            else {
+                current_time + Duration::hours(sts_duration as i64)
+            };
+
+            let new_ttl = expire_time.signed_duration_since(current_time).num_seconds().abs() as usize;
+
+            let query_result = redis::pipe().atomic()
+                .set_ex(redis_key_userid, user_id, new_ttl)
+                .set_ex(redis_key_lts, is_lts, new_ttl)
+                .query_async::<MultiplexedConnection, ((), ())>(&mut redis_connection)
+                .await;
+
+            if query_result.is_ok() {
+                let session_data = SessionData::new(rand_session_id, user_id, expire_time, is_lts);
+                return Ok(session_data);
+            }
+            else {
+                return Err(SessionError::new(DbError, "Erstellen der Redis Einträge fehlgeschlagen"));
+            }
         }
 
-        Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
+        return Err(SessionError::new(DbError, "Erstellen der Redis Einträge fehlgeschlagen"));
     }
 
-    pub async fn get_session_data(&self, session_id: &str) -> Result<SessionData, DbApiError> {
+    pub async fn get_session_data(&self, session_id: &str) -> Result<SessionData, SessionError> {
         let mut redis_connection = self.redis_connection.clone();
         let redis_key_userid = format!("sessions.{}.user_id", session_id);
         let redis_key_lts = format!("sessions.{}.lts", session_id); // Is long time session (aka keep logged in)
@@ -90,7 +138,7 @@ impl RedisConnection {
         if query_result.is_ok() {
             let (user_id, session_ttl, is_lts) : (i32, i32, bool) = query_result.unwrap();
 
-            if user_id > 0 && session_ttl > 10 {
+            if user_id > 0 && session_ttl > 30 {
                 let current_time = Local::now();
                 let session_expire = current_time + Duration::seconds(session_ttl as i64);
                 let session_data = SessionData::new(session_id.to_owned(), user_id, session_expire, is_lts);
@@ -98,8 +146,18 @@ impl RedisConnection {
                 return Ok(session_data);
             }
         }
+        else {
+            let error_kind = query_result.err().unwrap().kind();
 
-        return Err(DbApiError::new(NoResult, "Session ID ist ungültig"));
+            if error_kind == ErrorKind::TypeError {
+                return Err(SessionError::new(SessionInvalid, "Session ID ist ungültig"));
+            }
+            else {
+                return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
+            }
+        }
+
+        return Err(SessionError::new(SessionErrorType::UnknownError, "Unbekannter Fehler"));
     }
 
     pub async fn new(project_config: &ProjectConfig) -> Option<RedisConnection> {
