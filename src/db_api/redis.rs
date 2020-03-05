@@ -27,6 +27,9 @@ use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
 use crate::db_api::result::SessionErrorType::{DbError, SessionInvalid};
 
+const LTS_DURATION : u32 = 24 * 30; // Long time session are valid for 30 days without activity
+const STS_DURATION : u32 = 24; // Short time sessions are valid for 1 day without activity
+
 pub struct RedisConnection {
     redis_client: Client,
     redis_connection: MultiplexedConnection,
@@ -92,15 +95,11 @@ impl RedisConnection {
             let redis_key_lts = format!("sessions.{}.lts", rand_session_id); // Is long time session (aka keep logged in)
             let current_time = Local::now();
 
-            // Session duration in hours
-            let lts_duration : u32 = 24 * 30; // Long time session are valid for 30 days without activity
-            let sts_duration : u32 = 24; // Short time sessions are valid for 1 day without activity
-
             let expire_time = if is_lts {
-                current_time + Duration::hours(lts_duration as i64)
+                current_time + Duration::hours(LTS_DURATION as i64)
             }
             else {
-                current_time + Duration::hours(sts_duration as i64)
+                current_time + Duration::hours(STS_DURATION as i64)
             };
 
             let new_ttl = expire_time.signed_duration_since(current_time).num_seconds().abs() as usize;
@@ -208,13 +207,9 @@ impl RedisConnection {
         let redis_key_userid = format!("sessions.{}.user_id", session_data.session_id);
         let redis_key_lts = format!("sessions.{}.lts", session_data.session_id); // Is long time session (aka keep logged in)
 
-        // Session duration in hours
-        let lts_duration : u32 = 24 * 30; // Long time session are valid for 30 days without activity
-        let sts_duration : u32 = 24; // Short time sessions are valid for 1 day without activity
-
         // Session reload break point
-        let lts_break_point : u32 = lts_duration / 2; // If the session have only 15 days remaining, the session will be renewed
-        let sts_break_point : u32 = sts_duration / 2; // If the session have only 12 hours remaining, the session will be renewed
+        let lts_break_point : u32 = LTS_DURATION / 2; // If the session have only 15 days remaining, the session will be renewed
+        let sts_break_point : u32 = STS_DURATION / 2; // If the session have only 12 hours remaining, the session will be renewed
 
         let current_time = Local::now();
         let mut renew_session = false;
@@ -239,10 +234,10 @@ impl RedisConnection {
 
         if renew_session {
             let new_expire_time = if session_data.is_lts {
-                current_time + Duration::hours(lts_duration as i64)
+                current_time + Duration::hours(LTS_DURATION as i64)
             }
             else {
-                current_time + Duration::hours(sts_duration as i64)
+                current_time + Duration::hours(STS_DURATION as i64)
             };
 
             let new_ttl = new_expire_time.signed_duration_since(current_time).num_seconds().abs() as usize;
