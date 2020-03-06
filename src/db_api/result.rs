@@ -18,6 +18,19 @@
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
 use chrono::{DateTime, Local};
 
+#[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
+pub struct CommentData {
+    comment_id: i32,
+    comment_timestamp: DateTime<Local>,
+    comment_text: String,
+    comment_poster: i32,
+    comment_upvotes: i32,
+}
+
+pub struct CommentList {
+    comment_list: Vec<CommentData>,
+}
+
 #[derive(Copy, Clone)]
 pub enum DbApiErrorType {
     UnknownError,
@@ -82,6 +95,31 @@ impl SessionError {
             error_msg: error_msg.to_owned(),
         }
     }
+}
+
+#[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
+pub struct TagData {
+    pub tag_id: i32,
+    pub tum_id: i32,
+    pub tag_text: String,
+    pub tag_poster: i32,
+    pub tag_upvotes: i32,
+}
+
+pub struct TagList {
+    pub tag_list: Vec<TagData>,
+}
+
+#[derive(Clone)]
+pub struct UploadData {
+    pub upload_id: i32,
+    pub upload_is_nsfw: bool,
+    pub upload_url: String,
+    pub uploader: i32,
+    pub upload_timestamp: DateTime<Local>,
+    pub upload_upvotes: i32,
+    pub tag_list: TagList,
+    pub comment_list: CommentList,
 }
 
 #[derive(Clone)]
