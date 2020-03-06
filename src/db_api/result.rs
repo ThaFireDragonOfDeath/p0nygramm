@@ -27,8 +27,30 @@ pub struct CommentData {
     comment_upvotes: i32,
 }
 
+impl CommentData {
+    pub fn new(comment_id: i32, comment_timestamp: DateTime<Local>, comment_text: &str,
+               comment_poster: i32, comment_upvotes: i32,) -> CommentData {
+        CommentData {
+            comment_id,
+            comment_timestamp,
+            comment_text: comment_text.to_owned(),
+            comment_poster,
+            comment_upvotes,
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct CommentList {
     comment_list: Vec<CommentData>,
+}
+
+impl CommentList {
+    pub fn new() -> CommentList {
+        CommentList {
+            comment_list: Vec::new(),
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -106,8 +128,29 @@ pub struct TagData {
     pub tag_upvotes: i32,
 }
 
+impl TagData {
+    pub fn new(tag_id: i32, tum_id: i32, tag_text: &str, tag_poster: i32, tag_upvotes: i32) -> TagData {
+        TagData {
+            tag_id,
+            tum_id,
+            tag_text: tag_text.to_owned(),
+            tag_poster,
+            tag_upvotes,
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct TagList {
     pub tag_list: Vec<TagData>,
+}
+
+impl TagList {
+    pub fn new() -> TagList {
+        TagList {
+            tag_list: Vec::new(),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -120,6 +163,22 @@ pub struct UploadData {
     pub upload_upvotes: i32,
     pub tag_list: TagList,
     pub comment_list: CommentList,
+}
+
+impl UploadData {
+    pub fn new(upload_id: i32, upload_is_nsfw: bool, upload_url: String, uploader: i32,
+               upload_timestamp: DateTime<Local>, upload_upvotes: i32) -> UploadData {
+        UploadData {
+            upload_id,
+            upload_is_nsfw,
+            upload_url,
+            uploader,
+            upload_timestamp,
+            upload_upvotes,
+            tag_list: TagList::new(),
+            comment_list: CommentList::new(),
+        }
+    }
 }
 
 #[derive(Clone)]
