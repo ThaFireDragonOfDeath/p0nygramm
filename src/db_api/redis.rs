@@ -28,6 +28,7 @@ use rand::distributions::Alphanumeric;
 use crate::db_api::result::SessionErrorType::{DbError, SessionInvalid};
 
 const LTS_DURATION : u32 = 24 * 30; // Long time session are valid for 30 days without activity
+const TTL_BUFFER: u8 = 30; // If the value ttl is smaller than this value, the session counts as expired
 const STS_DURATION : u32 = 24; // Short time sessions are valid for 1 day without activity
 
 pub struct RedisConnection {
@@ -102,7 +103,7 @@ impl RedisConnection {
                 current_time + Duration::hours(STS_DURATION as i64)
             };
 
-            let new_ttl = expire_time.signed_duration_since(current_time).num_seconds().abs() as usize;
+            let new_ttl = (expire_time.signed_duration_since(current_time).num_seconds().abs() as usize) + TTL_BUFFER as usize;
 
             let query_result = redis::pipe().atomic()
                 .set_ex(redis_key_userid, user_id, new_ttl)
@@ -137,7 +138,7 @@ impl RedisConnection {
         if query_result.is_ok() {
             let (user_id, session_ttl, is_lts) : (i32, i32, bool) = query_result.unwrap();
 
-            if user_id > 0 && session_ttl > 30 {
+            if user_id > 0 && session_ttl > TTL_BUFFER as i32 {
                 let current_time = Local::now();
                 let session_expire = current_time + Duration::seconds(session_ttl as i64);
                 let session_data = SessionData::new(session_id.to_owned(), user_id, session_expire, is_lts);
