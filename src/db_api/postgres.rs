@@ -47,16 +47,19 @@ impl PostgresConnection {
 
         if result_rows.is_ok() {
             let result_rows_vec = result_rows.unwrap();
-            let return_vec: Vec<UploadPreview> = Vec::new();
+            let mut return_vec: Vec<UploadPreview> = Vec::new();
 
             if !result_rows_vec.is_empty() {
                 for row in result_rows_vec {
-                    //row.get()
+                    let upload_id = row.get(0);
+                    let upload_filename = row.get(1);
+                    let upload_is_nsfw = row.get(2);
+                    let upload_preview = UploadPreview::new(upload_id, upload_is_nsfw, upload_filename);
+                    return_vec.push(upload_preview);
                 }
             }
-            else {
-                return Ok(UploadPrvList{ uploads: return_vec });
-            }
+
+            return Ok(UploadPrvList{ uploads: return_vec });
         }
         else {
             return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
