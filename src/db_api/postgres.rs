@@ -22,7 +22,7 @@ use tokio_postgres::config::SslMode::Disable;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::Path;
 use std::time::Duration;
-use crate::db_api::result::{UploadPrvList, DbApiError, UploadPreview};
+use crate::db_api::result::{UploadPrvList, DbApiError, UploadPreview, UploadData};
 use crate::db_api::result::DbApiErrorType::{QueryError, UnknownError};
 
 macro_rules! db_schema_version {
@@ -40,6 +40,12 @@ pub struct PostgresConnection {
 }
 
 impl PostgresConnection {
+    pub async fn get_upload_data(&self, upload_id: i32) -> Result<UploadData, DbApiError> {
+        let sql_cmd_upload_data = include_str!(get_filepath!("get_uploads.sql"));
+        let sql_cmd_tag_data = include_str!(get_filepath!("get_uploads.sql"));
+        let sql_cmd_comment_data = include_str!(get_filepath!("get_comments_for_upload.sql"));
+    }
+
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
         let sql_cmd = include_str!(get_filepath!("get_uploads.sql"));
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[&start_id, &max_count, &show_nsfw];
