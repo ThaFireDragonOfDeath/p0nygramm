@@ -158,7 +158,8 @@ pub struct UploadData {
     pub upload_id: i32,
     pub upload_is_nsfw: bool,
     pub upload_url: String,
-    pub uploader: i32,
+    pub uploader_id: i32,
+    pub uploader_username: String,
     pub upload_timestamp: DateTime<Local>,
     pub upload_upvotes: i32,
     pub tag_list: TagList,
@@ -166,18 +167,27 @@ pub struct UploadData {
 }
 
 impl UploadData {
-    pub fn new(upload_id: i32, upload_is_nsfw: bool, upload_url: String, uploader: i32,
-               upload_timestamp: DateTime<Local>, upload_upvotes: i32) -> UploadData {
+    pub fn new(upload_id: i32, upload_is_nsfw: bool, upload_filename: &str, uploader_id: i32,
+               uploader_username: &str, upload_timestamp: DateTime<Local>, upload_upvotes: i32) -> UploadData {
         UploadData {
             upload_id,
             upload_is_nsfw,
-            upload_url,
-            uploader,
+            upload_url: get_url_from_filename(upload_filename),
+            uploader_id,
+            uploader_username: uploader_username.to_owned(),
             upload_timestamp,
             upload_upvotes,
             tag_list: TagList::new(),
             comment_list: CommentList::new(),
         }
+    }
+
+    pub fn add_comment(&mut self) {
+        // TODO
+    }
+
+    pub fn add_tag(&mut self) {
+        // TODO
     }
 }
 

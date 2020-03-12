@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-use tokio_postgres::{NoTls, Error, Client, Config};
+use tokio_postgres::{NoTls, Error, Client, Config, Statement};
 use tokio_postgres::types::ToSql;
 use crate::config::ProjectConfig;
 use tokio_postgres::config::SslMode::Disable;
@@ -24,6 +24,9 @@ use std::path::Path;
 use std::time::Duration;
 use crate::db_api::result::{UploadPrvList, DbApiError, UploadPreview, UploadData};
 use crate::db_api::result::DbApiErrorType::{QueryError, UnknownError};
+use chrono::{DateTime, Local};
+use futures::future;
+use std::future::Future;
 
 macro_rules! db_schema_version {
     () => { 1 };
@@ -42,8 +45,47 @@ pub struct PostgresConnection {
 impl PostgresConnection {
     pub async fn get_upload_data(&self, upload_id: i32) -> Result<UploadData, DbApiError> {
         let sql_cmd_upload_data = include_str!(get_filepath!("get_uploads.sql"));
-        let sql_cmd_tag_data = include_str!(get_filepath!("get_uploads.sql"));
         let sql_cmd_comment_data = include_str!(get_filepath!("get_comments_for_upload.sql"));
+        let sql_cmd_tag_data = include_str!(get_filepath!("get_uploads.sql"));
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&upload_id];
+
+        let prepared_statement : Result<(Statement, Statement, Statement), Error> = future::try_join3(
+            self.postgres_client.prepare(sql_cmd_upload_data),
+            self.postgres_client.prepare(sql_cmd_comment_data),
+            self.postgres_client.prepare(sql_cmd_tag_data)
+        ).await;
+
+        if prepared_statement.is_ok() {
+            let (sql_stm_1, sql_stm_2, sql_stm_3) = prepared_statement.unwrap();
+            let result_rows_up = self.postgres_client.query(&sql_stm_1, sql_parameters).await;
+            let result_rows_cm = self.postgres_client.query(&sql_stm_2, sql_parameters).await;
+            let result_rows_ta = self.postgres_client.query(&sql_stm_3, sql_parameters).await;
+
+            if result_rows_up.is_ok() && result_rows_cm.is_ok() && result_rows_ta.is_ok() {
+                let result_rows_up = result_rows_up.unwrap();
+                let result_rows_cm = result_rows_cm.unwrap();
+                let result_rows_ta = result_rows_ta.unwrap();
+
+                if result_rows_up.len() > 0 {
+                    let first_result_row = result_rows_up.get(0);
+
+                    if first_result_row.is_some() {
+                        let first_result_row = first_result_row.unwrap();
+                        let upload_filename : String = first_result_row.get(0);
+                        let upload_timestamp : DateTime<Local> = first_result_row.get(1);
+                        let upload_is_nsfw : bool = first_result_row.get(2);
+                        let uploader_id : i32 = first_result_row.get(3);
+                        let uploader_username : String = first_result_row.get(4);
+                        let upload_upvotes : i32 = first_result_row.get(5);
+
+                        let mut upload_data = UploadData::new(upload_id, upload_is_nsfw, upload_filename.as_str(),
+                                        uploader_id, uploader_username.as_str(), upload_timestamp, upload_upvotes);
+                    }
+                }
+            }
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
@@ -67,11 +109,8 @@ impl PostgresConnection {
 
             return Ok(UploadPrvList{ uploads: return_vec });
         }
-        else {
-            return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
-        }
 
-        return Err(DbApiError::new(UnknownError, "Unbekannter Fehler"));
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
     pub async fn new(project_config: &ProjectConfig) -> Option<PostgresConnection> {
