@@ -66,20 +66,37 @@ impl PostgresConnection {
                 let result_rows_cm = result_rows_cm.unwrap();
                 let result_rows_ta = result_rows_ta.unwrap();
 
-                if result_rows_up.len() > 0 {
-                    let first_result_row = result_rows_up.get(0);
+                if !result_rows_up.is_empty() {
+                    let first_result_row = result_rows_up.get(0).unwrap();
+                    let upload_filename : String = first_result_row.get(0);
+                    let upload_timestamp : DateTime<Local> = first_result_row.get(1);
+                    let upload_is_nsfw : bool = first_result_row.get(2);
+                    let uploader_id : i32 = first_result_row.get(3);
+                    let uploader_username : String = first_result_row.get(4);
+                    let upload_upvotes : i32 = first_result_row.get(5);
 
-                    if first_result_row.is_some() {
-                        let first_result_row = first_result_row.unwrap();
-                        let upload_filename : String = first_result_row.get(0);
-                        let upload_timestamp : DateTime<Local> = first_result_row.get(1);
-                        let upload_is_nsfw : bool = first_result_row.get(2);
-                        let uploader_id : i32 = first_result_row.get(3);
-                        let uploader_username : String = first_result_row.get(4);
-                        let upload_upvotes : i32 = first_result_row.get(5);
+                    let mut upload_data = UploadData::new(upload_id, upload_is_nsfw, upload_filename.as_str(),
+                                    uploader_id, uploader_username.as_str(), upload_timestamp, upload_upvotes);
 
-                        let mut upload_data = UploadData::new(upload_id, upload_is_nsfw, upload_filename.as_str(),
-                                        uploader_id, uploader_username.as_str(), upload_timestamp, upload_upvotes);
+                    // Process comments
+                    for row in result_rows_cm {
+                        let comment_timestamp : DateTime<Local> = row.get(0);
+                        let comment_text : String = row.get(1);
+                        let comment_poster_id : i32 = row.get(2);
+                        let comment_poster_username : String = row.get(3);
+                        let comment_upvotes : i32 = row.get(4);
+
+                        upload_data.add_comment(comment_timestamp, comment_text.as_str(),
+                                                comment_poster_id, comment_poster_username.as_str(),
+                                                comment_upvotes);
+                    }
+
+                    // Process tags
+                    for row in result_rows_ta {
+                        let tag_text : String = row.get(0);
+                        let tag_upvotes : i32 = row.get(1);
+
+                        upload_data.add_tag(tag_text.as_str(), tag_upvotes);
                     }
                 }
             }

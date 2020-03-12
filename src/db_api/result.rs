@@ -20,21 +20,21 @@ use chrono::{DateTime, Local};
 
 #[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub struct CommentData {
-    comment_id: i32,
     comment_timestamp: DateTime<Local>,
     comment_text: String,
-    comment_poster: i32,
+    comment_poster_id: i32,
+    comment_poster_username : String,
     comment_upvotes: i32,
 }
 
 impl CommentData {
-    pub fn new(comment_id: i32, comment_timestamp: DateTime<Local>, comment_text: &str,
-               comment_poster: i32, comment_upvotes: i32,) -> CommentData {
+    pub fn new(comment_timestamp: DateTime<Local>, comment_text: &str, comment_poster_id: i32,
+               comment_poster_username: &str, comment_upvotes: i32,) -> CommentData {
         CommentData {
-            comment_id,
             comment_timestamp,
             comment_text: comment_text.to_owned(),
-            comment_poster,
+            comment_poster_id,
+            comment_poster_username: comment_poster_username.to_owned(),
             comment_upvotes,
         }
     }
@@ -50,6 +50,10 @@ impl CommentList {
         CommentList {
             comment_list: Vec::new(),
         }
+    }
+
+    pub fn add_comment(&mut self, comment_data: CommentData) {
+        self.comment_list.push(comment_data);
     }
 }
 
@@ -121,20 +125,14 @@ impl SessionError {
 
 #[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub struct TagData {
-    pub tag_id: i32,
-    pub tum_id: i32,
     pub tag_text: String,
-    pub tag_poster: i32,
     pub tag_upvotes: i32,
 }
 
 impl TagData {
-    pub fn new(tag_id: i32, tum_id: i32, tag_text: &str, tag_poster: i32, tag_upvotes: i32) -> TagData {
+    pub fn new(tag_text: &str, tag_upvotes: i32) -> TagData {
         TagData {
-            tag_id,
-            tum_id,
             tag_text: tag_text.to_owned(),
-            tag_poster,
             tag_upvotes,
         }
     }
@@ -150,6 +148,10 @@ impl TagList {
         TagList {
             tag_list: Vec::new(),
         }
+    }
+
+    pub fn add_tag(&mut self, tag_data: TagData) {
+        self.tag_list.push(tag_data);
     }
 }
 
@@ -182,12 +184,18 @@ impl UploadData {
         }
     }
 
-    pub fn add_comment(&mut self) {
-        // TODO
+    pub fn add_comment(&mut self, comment_timestamp: DateTime<Local>, comment_text: &str,
+                       comment_poster_id: i32, comment_poster_username: &str, comment_upvotes: i32) {
+        let comment_data = CommentData::new(comment_timestamp, comment_text,
+                                            comment_poster_id, comment_poster_username, comment_upvotes);
+
+        self.comment_list.add_comment(comment_data);
     }
 
-    pub fn add_tag(&mut self) {
-        // TODO
+    pub fn add_tag(&mut self, tag_text: &str, tag_upvotes: i32) {
+        let tag_data = TagData::new(tag_text, tag_upvotes);
+
+        self.tag_list.add_tag(tag_data);
     }
 }
 
