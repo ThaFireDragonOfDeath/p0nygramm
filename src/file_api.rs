@@ -21,7 +21,7 @@ pub fn get_url_from_filename(filename: &str) -> String {
 
 pub fn get_preview_url_from_filename(filename: &str) -> String {
     let filename_point_pos = filename.rfind('.').unwrap();
-    let (file_name, file_ext) = filename.split_at(filename_point_pos);
+    let (file_name, _file_ext) = filename.split_at(filename_point_pos);
 
     format!("./prv/{}.{}", file_name, ".jpg")
 }

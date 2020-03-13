@@ -50,7 +50,7 @@ impl RedisConnection {
         if query_result.is_ok() {
             let (user_id, session_ttl) = query_result.unwrap();
 
-            if user_id > 0 && session_ttl > 30 {
+            if user_id > 0 && session_ttl > TTL_BUFFER as i32 {
                 return Ok(true);
             }
         }
@@ -167,7 +167,7 @@ impl RedisConnection {
         let db_nr = 0;
         let password: Option<String> = None;
         let connection_method = project_config.redis_config.connection_method.get_value();
-        let mut connection_addr: ConnectionAddr;
+        let connection_addr: ConnectionAddr;
 
         if connection_method == Tcp {
             connection_addr = ConnectionAddr::Tcp(host, port);
@@ -186,10 +186,10 @@ impl RedisConnection {
 
         if client.is_ok() {
             let client = client.unwrap();
-            let mut connection = client.get_multiplexed_tokio_connection().await;
+            let connection = client.get_multiplexed_tokio_connection().await;
 
             if connection.is_ok() {
-                let mut connection = connection.unwrap();
+                let connection = connection.unwrap();
 
                 let redis_connection_obj = RedisConnection {
                     redis_client: client,

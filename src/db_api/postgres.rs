@@ -60,7 +60,6 @@ impl PostgresConnection {
         let sql_cmd_add_tag_txt = include_str!(get_filepath!("add_tag_txt.sql"));
         let sql_cmd_add_tag = include_str!(get_filepath!("add_tag.sql"));
         let sql_parameters_1 : &[&(dyn ToSql + Sync)] = &[&tag_text]; // Used for get_tag_id and add_tag_txt
-        let sql_parameters_2 : &[&(dyn ToSql + Sync)] = &[&tag_text]; // Used for add_tag
         let mut tag_id : Option<i32> = None;
 
         // Get tag id
@@ -92,6 +91,7 @@ impl PostgresConnection {
         }
 
         if tag_id.is_some() {
+            let sql_parameters_2 : &[&(dyn ToSql + Sync)] = &[&tag_poster, &tag_id, &upload_id]; // Used for add_tag
             let insert_result = self.postgres_client.execute(sql_cmd_add_tag, sql_parameters_2).await;
 
             if insert_result.is_ok() {
