@@ -20,7 +20,7 @@ use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
 use crate::db_api::result::{UploadPrvList, DbApiError, SessionData, SessionError, UploadData};
-use crate::db_api::result::DbApiErrorType::{UnknownError, ConnectionError};
+use crate::db_api::result::DbApiErrorType::{UnknownError, ConnectionError, PartFail, QueryError};
 use crate::db_api::result::SessionErrorType::DbError;
 
 mod postgres;
@@ -39,6 +39,50 @@ impl DbConnection {
         }
 
         return self.postgres_connection.as_ref().unwrap().add_comment(comment_poster, comment_upload, comment_text).await;
+    }
+
+    pub async fn add_tags(&self, tags: Vec<&str>, tag_poster: i32, upload_id: i32) -> Result<(), DbApiError> {
+        /*
+        let tags_iter: dyn Iterator<&str> = tags.split(",");
+        for tag in tags_iter {
+            let mut current_tag: String = tag.to_owned();
+
+            // Remove all whitespaces from left
+            while current_tag[0..1].as_ref() = " " {
+                current_tag.remove(0);
+            }
+
+            // Remove all whitespaces from right
+            while current_tag[current_tag.len() - 2..current_tag.len() - 1].as_ref() = " " {
+                current_tag.remove(current_tag.len() - 1);
+            }
+        }
+        */
+
+        let mut part_fail = false;
+        let mut full_fail = true;
+
+        for tag in tags {
+            let postgres_result = self.postgres_connection.as_ref()
+                .unwrap().add_tag(tag, tag_poster, upload_id).await;
+
+            if postgres_result.is_ok() && full_fail {
+                full_fail = false;
+            }
+            else if !part_fail {
+                part_fail = true;
+            }
+        }
+
+        if part_fail {
+            return Err(DbApiError::new(PartFail, "Datenbank Fehler: Ein oder mehrere Tags konnten nicht hinzugefügt werden!"));
+        }
+        else if full_fail {
+            return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+        }
+        else {
+            return Ok(());
+        }
     }
 
     // Returns the upload_id of the new inserted upload or error

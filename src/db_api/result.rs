@@ -64,6 +64,7 @@ pub enum DbApiErrorType {
     ParameterError,
     QueryError,
     NoResult,
+    PartFail,
 }
 
 #[derive(Clone)]

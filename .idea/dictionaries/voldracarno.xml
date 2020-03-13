@@ -5,11 +5,13 @@
       <w>ffprobe</w>
       <w>filepath</w>
       <w>htmlescape</w>
+      <w>iter</w>
       <w>nsfw</w>
       <w>toml</w>
       <w>unixsocket</w>
       <w>upvotes</w>
       <w>userconfig</w>
+      <w>userid</w>
       <w>webcontent</w>
     </words>
   </dictionary>

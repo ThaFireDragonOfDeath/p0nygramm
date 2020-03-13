@@ -55,6 +55,53 @@ impl PostgresConnection {
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
+    pub async fn add_tag(&self, tag_text: &str, tag_poster: i32, upload_id: i32) -> Result<(), DbApiError> {
+        let sql_cmd_get_tag_id = include_str!(get_filepath!("get_tag_id.sql"));
+        let sql_cmd_add_tag_txt = include_str!(get_filepath!("add_tag_txt.sql"));
+        let sql_cmd_add_tag = include_str!(get_filepath!("add_tag.sql"));
+        let sql_parameters_1 : &[&(dyn ToSql + Sync)] = &[&tag_text]; // Used for get_tag_id and add_tag_txt
+        let sql_parameters_2 : &[&(dyn ToSql + Sync)] = &[&tag_text]; // Used for add_tag
+        let mut tag_id : Option<i32> = None;
+
+        // Get tag id
+        let result_tag_id = self.postgres_client.query(sql_cmd_get_tag_id, sql_parameters_1).await;
+
+        if result_tag_id.is_ok() {
+            let result_tag_id = result_tag_id.unwrap();
+            let first_row = result_tag_id.get(0);
+
+            if first_row.is_some() {
+                let first_row = first_row.unwrap();
+                tag_id = Some(first_row.get(0));
+            }
+        }
+
+        // Try to add tag text
+        if tag_id.is_none() {
+            let result_tag_id = self.postgres_client.query(sql_cmd_add_tag_txt, sql_parameters_1).await;
+
+            if result_tag_id.is_ok() {
+                let result_tag_id = result_tag_id.unwrap();
+                let first_row = result_tag_id.get(0);
+
+                if first_row.is_some() {
+                    let first_row = first_row.unwrap();
+                    tag_id = Some(first_row.get(0));
+                }
+            }
+        }
+
+        if tag_id.is_some() {
+            let insert_result = self.postgres_client.execute(sql_cmd_add_tag, sql_parameters_2).await;
+
+            if insert_result.is_ok() {
+                return Ok(());
+            }
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
     // Returns the upload_id of the new inserted upload or error
     pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
         let sql_cmd = include_str!(get_filepath!("add_upload.sql"));
