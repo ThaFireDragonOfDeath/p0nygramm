@@ -32,8 +32,6 @@ extern crate chrono;
 extern crate rand;
 extern crate tokio;
 
-
-
 use actix_web::web;
 use actix_web::{App, HttpResponse, HttpServer};
 use actix_files as fs;

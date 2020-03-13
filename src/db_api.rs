@@ -19,7 +19,7 @@ use crate::db_api::postgres::PostgresConnection;
 use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
-use crate::db_api::result::{UploadPrvList, DbApiError, SessionData, SessionError};
+use crate::db_api::result::{UploadPrvList, DbApiError, SessionData, SessionError, UploadData};
 use crate::db_api::result::DbApiErrorType::{UnknownError, ConnectionError};
 use crate::db_api::result::SessionErrorType::DbError;
 
@@ -33,6 +33,15 @@ pub struct DbConnection {
 }
 
 impl DbConnection {
+    // Returns the upload_id of the new inserted upload or error
+    pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
+        if !self.have_postgres_connection() {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
+        }
+
+        return self.postgres_connection.as_ref().unwrap().add_upload(upload_filename, upload_is_nsfw, uploader).await;
+    }
+
     pub async fn get_session_data(&self, session_id: &str, force_session_renew: bool) -> Result<SessionData, SessionError> {
         if !self.have_redis_connection() {
             return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
@@ -48,6 +57,14 @@ impl DbConnection {
         }
 
         return session_data;
+    }
+
+    pub async fn get_upload_data(&self, upload_id: i32) -> Result<UploadData, DbApiError> {
+        if !self.have_postgres_connection() {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
+        }
+
+        return self.postgres_connection.as_ref().unwrap().get_upload_data(upload_id).await;
     }
 
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
