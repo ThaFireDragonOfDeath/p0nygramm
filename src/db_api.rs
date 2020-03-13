@@ -33,6 +33,14 @@ pub struct DbConnection {
 }
 
 impl DbConnection {
+    pub async fn add_comment(&self, comment_poster: i32, comment_upload: i32, comment_text: &str) -> Result<(), DbApiError> {
+        if !self.have_postgres_connection() {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
+        }
+
+        return self.postgres_connection.as_ref().unwrap().add_comment(comment_poster, comment_upload, comment_text).await;
+    }
+
     // Returns the upload_id of the new inserted upload or error
     pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
         if !self.have_postgres_connection() {

@@ -43,6 +43,18 @@ pub struct PostgresConnection {
 }
 
 impl PostgresConnection {
+    pub async fn add_comment(&self, comment_poster: i32, comment_upload: i32, comment_text: &str) -> Result<(), DbApiError> {
+        let sql_cmd = include_str!(get_filepath!("add_comment.sql"));
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&comment_poster, &comment_upload, &comment_text];
+        let result_rows = self.postgres_client.execute(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
     // Returns the upload_id of the new inserted upload or error
     pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
         let sql_cmd = include_str!(get_filepath!("add_upload.sql"));
