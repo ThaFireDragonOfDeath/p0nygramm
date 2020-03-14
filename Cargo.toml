@@ -19,6 +19,7 @@ argonautica = { version = "0.2.0", features = ["simd"] }
 chrono = "0.4.10"
 futures = "0.3.4"
 #handlebars = "3.0.1"
+log = "0.4.8"
 rand = "0.7.3"
 redis = { version = "0.15.1", features = ["tokio-rt-core"] }
 serde_json = "1.0.46"

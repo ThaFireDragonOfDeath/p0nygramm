@@ -29,6 +29,7 @@ extern crate serde_json;
 
 extern crate argonautica;
 extern crate chrono;
+extern crate log;
 extern crate rand;
 extern crate tokio;
 

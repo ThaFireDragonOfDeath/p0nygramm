@@ -27,6 +27,7 @@ use crate::db_api::result::DbApiErrorType::{QueryError, UnknownError};
 use chrono::{DateTime, Local};
 use futures::future;
 use std::future::Future;
+use log::{trace, debug, info, warn, error};
 
 macro_rules! db_schema_version {
     () => { 1 };
@@ -44,6 +45,8 @@ pub struct PostgresConnection {
 
 impl PostgresConnection {
     pub async fn add_comment(&self, comment_poster: i32, comment_upload: i32, comment_text: &str) -> Result<(), DbApiError> {
+        debug!("Enter PostgresConnection::add_comment");
+
         let sql_cmd = include_str!(get_filepath!("add_comment.sql"));
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[&comment_poster, &comment_upload, &comment_text];
         let result_rows = self.postgres_client.execute(sql_cmd, sql_parameters).await;
@@ -52,10 +55,13 @@ impl PostgresConnection {
             return Ok(());
         }
 
+        error!("PostgresConnection::add_comment: Failed to execute sql statement");
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
     pub async fn add_tag(&self, tag_text: &str, tag_poster: i32, upload_id: i32) -> Result<(), DbApiError> {
+        debug!("Enter PostgresConnection::add_tag");
+
         let sql_cmd_get_tag_id = include_str!(get_filepath!("get_tag_id.sql"));
         let sql_cmd_add_tag_txt = include_str!(get_filepath!("add_tag_txt.sql"));
         let sql_cmd_add_tag = include_str!(get_filepath!("add_tag.sql"));
@@ -104,6 +110,8 @@ impl PostgresConnection {
 
     // Returns the upload_id of the new inserted upload or error
     pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
+        debug!("Enter PostgresConnection::add_upload");
+
         let sql_cmd = include_str!(get_filepath!("add_upload.sql"));
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[&upload_filename, &upload_is_nsfw, &uploader];
         let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
@@ -124,6 +132,8 @@ impl PostgresConnection {
     }
 
     pub async fn get_upload_data(&self, upload_id: i32) -> Result<UploadData, DbApiError> {
+        debug!("Enter PostgresConnection::get_upload_data");
+
         let sql_cmd_upload_data = include_str!(get_filepath!("get_uploads.sql"));
         let sql_cmd_comment_data = include_str!(get_filepath!("get_comments_for_upload.sql"));
         let sql_cmd_tag_data = include_str!(get_filepath!("get_uploads.sql"));
@@ -186,6 +196,8 @@ impl PostgresConnection {
     }
 
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+        debug!("Enter PostgresConnection::get_uploads");
+
         let sql_cmd = include_str!(get_filepath!("get_uploads.sql"));
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[&start_id, &max_count, &show_nsfw];
         let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
@@ -211,6 +223,8 @@ impl PostgresConnection {
     }
 
     pub async fn new(project_config: &ProjectConfig) -> Option<PostgresConnection> {
+        debug!("Enter PostgresConnection::new");
+
         let host = project_config.postgres_config.host.get_value();
         let unix_socket_dir = project_config.postgres_config.unix_socket_dir.get_value();
         let port = project_config.postgres_config.port.get_value();
