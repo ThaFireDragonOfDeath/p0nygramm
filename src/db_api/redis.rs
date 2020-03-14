@@ -26,6 +26,7 @@ use chrono::{ParseResult, DateTime, FixedOffset, Local, Duration};
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
 use crate::db_api::result::SessionErrorType::{DbError, SessionInvalid};
+use log::{trace, debug, info, warn, error};
 
 const LTS_DURATION : u32 = 24 * 30; // Long time session are valid for 30 days without activity
 const TTL_BUFFER: u8 = 30; // If the value ttl is smaller than this value, the session counts as expired
@@ -38,6 +39,8 @@ pub struct RedisConnection {
 
 impl RedisConnection {
     pub async fn check_session_exist(&self, session_id: &str) -> Result<bool, SessionError> {
+        trace!("Enter RedisConnection::check_session_exist");
+
         let mut redis_connection = self.redis_connection.clone();
         let redis_key_userid = format!("sessions.{}.user_id", session_id);
 
@@ -58,9 +61,12 @@ impl RedisConnection {
             let error_kind = query_result.err().unwrap().kind();
 
             if error_kind == ErrorKind::TypeError {
+                debug!("RedisConnection::check_session_exist: Got nil");
+
                 return Ok(false);
             }
             else {
+                error!("RedisConnection::check_session_exist: Failed to execute redis command");
                 return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
             }
         }
@@ -69,6 +75,8 @@ impl RedisConnection {
     }
 
     pub async fn create_session(&self, user_id: i32, is_lts: bool) -> Result<SessionData, SessionError> {
+        trace!("Enter RedisConnection::create_session");
+
         let mut redis_connection = self.redis_connection.clone();
         let mut session_exist = true;
         let mut rand_session_id: String = String::new();
@@ -84,9 +92,13 @@ impl RedisConnection {
             session_exist = self.check_session_exist(rand_session_id.as_str()).await.unwrap_or(true);
 
             if current_iteration < max_try {
+                warn!("RedisConnection::create_session: Got session id collision");
+
                 current_iteration += 1;
             }
             else {
+                error!("RedisConnection::create_session: Got to many session id collisions");
+
                 return Err(SessionError::new(SessionErrorType::UnknownError, "Unbekannter Fehler"));
             }
         }
@@ -116,14 +128,20 @@ impl RedisConnection {
                 return Ok(session_data);
             }
             else {
+                error!("RedisConnection::create_session: Failed to create redis entries");
+
                 return Err(SessionError::new(DbError, "Erstellen der Redis Einträge fehlgeschlagen"));
             }
         }
+
+        error!("RedisConnection::create_session: Unknown error in randomly created session id");
 
         return Err(SessionError::new(DbError, "Erstellen der Redis Einträge fehlgeschlagen"));
     }
 
     pub async fn get_session_data(&self, session_id: &str) -> Result<SessionData, SessionError> {
+        trace!("Enter RedisConnection::get_session_data");
+
         let mut redis_connection = self.redis_connection.clone();
         let redis_key_userid = format!("sessions.{}.user_id", session_id);
         let redis_key_lts = format!("sessions.{}.lts", session_id); // Is long time session (aka keep logged in)
@@ -145,22 +163,31 @@ impl RedisConnection {
 
                 return Ok(session_data);
             }
+            else {
+                info!("RedisConnection::get_session_data: Unknown or invalid session id");
+
+                return Err(SessionError::new(SessionInvalid, "Session ID ist ungültig"));
+            }
         }
         else {
             let error_kind = query_result.err().unwrap().kind();
 
             if error_kind == ErrorKind::TypeError {
+                info!("RedisConnection::get_session_data: Unknown or invalid session id");
+
                 return Err(SessionError::new(SessionInvalid, "Session ID ist ungültig"));
             }
             else {
+                error!("RedisConnection::get_session_data: Failed to execute Redis query");
+
                 return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
             }
         }
-
-        return Err(SessionError::new(SessionErrorType::UnknownError, "Unbekannter Fehler"));
     }
 
     pub async fn new(project_config: &ProjectConfig) -> Option<RedisConnection> {
+        trace!("Enter RedisConnection::new");
+
         let host = project_config.redis_config.host.get_value();
         let unix_socket_file = project_config.redis_config.unix_socket_file.get_value();
         let port = project_config.redis_config.port.get_value();
@@ -198,12 +225,19 @@ impl RedisConnection {
 
                 return Some(redis_connection_obj);
             }
+            else {
+                error!("RedisConnection::new: Failed to establish redis connection");
+            }
         }
+
+        error!("RedisConnection::new: Failed to construct redis client");
 
         return None;
     }
 
     pub async fn renew_session(&self, session_data: &SessionData, force_renew: bool) -> bool {
+        trace!("Enter RedisConnection::renew_session");
+
         let mut redis_connection = self.redis_connection.clone();
         let redis_key_userid = format!("sessions.{}.user_id", session_data.session_id);
         let redis_key_lts = format!("sessions.{}.lts", session_data.session_id); // Is long time session (aka keep logged in)
@@ -234,6 +268,8 @@ impl RedisConnection {
         }
 
         if renew_session {
+            debug!("RedisConnection::renew_session: Session needs to be renewed");
+
             let new_expire_time = if session_data.is_lts {
                 current_time + Duration::hours(LTS_DURATION as i64)
             }
@@ -253,8 +289,13 @@ impl RedisConnection {
                 return true;
             }
             else {
+                error!("RedisConnection::renew_session: Failed to execute Redis command");
+
                 return false;
             }
+        }
+        else {
+            debug!("RedisConnection::renew_session: Session don't needs to be renewed");
         }
 
         return true;

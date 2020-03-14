@@ -45,7 +45,7 @@ pub struct PostgresConnection {
 
 impl PostgresConnection {
     pub async fn add_comment(&self, comment_poster: i32, comment_upload: i32, comment_text: &str) -> Result<(), DbApiError> {
-        debug!("Enter PostgresConnection::add_comment");
+        trace!("Enter PostgresConnection::add_comment");
 
         let sql_cmd = include_str!(get_filepath!("add_comment.sql"));
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[&comment_poster, &comment_upload, &comment_text];
@@ -60,7 +60,7 @@ impl PostgresConnection {
     }
 
     pub async fn add_tag(&self, tag_text: &str, tag_poster: i32, upload_id: i32) -> Result<(), DbApiError> {
-        debug!("Enter PostgresConnection::add_tag");
+        trace!("Enter PostgresConnection::add_tag");
 
         let sql_cmd_get_tag_id = include_str!(get_filepath!("get_tag_id.sql"));
         let sql_cmd_add_tag_txt = include_str!(get_filepath!("add_tag_txt.sql"));
@@ -110,7 +110,7 @@ impl PostgresConnection {
 
     // Returns the upload_id of the new inserted upload or error
     pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
-        debug!("Enter PostgresConnection::add_upload");
+        trace!("Enter PostgresConnection::add_upload");
 
         let sql_cmd = include_str!(get_filepath!("add_upload.sql"));
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[&upload_filename, &upload_is_nsfw, &uploader];
@@ -126,13 +126,19 @@ impl PostgresConnection {
 
                 return Ok(upload_id);
             }
+            else {
+                error!("PostgresConnection::add_comment: Got no result sql statement");
+            }
+        }
+        else {
+            error!("PostgresConnection::add_upload: Failed to execute sql statement");
         }
 
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
     pub async fn get_upload_data(&self, upload_id: i32) -> Result<UploadData, DbApiError> {
-        debug!("Enter PostgresConnection::get_upload_data");
+        trace!("Enter PostgresConnection::get_upload_data");
 
         let sql_cmd_upload_data = include_str!(get_filepath!("get_uploads.sql"));
         let sql_cmd_comment_data = include_str!(get_filepath!("get_comments_for_upload.sql"));
@@ -189,14 +195,23 @@ impl PostgresConnection {
                         upload_data.add_tag(tag_text.as_str(), tag_upvotes);
                     }
                 }
+                else {
+                    error!("PostgresConnection::get_upload_data: Got no result from sql statement");
+                }
             }
+            else {
+                error!("PostgresConnection::get_upload_data: Failed to execute sql statement");
+            }
+        }
+        else {
+            error!("PostgresConnection::get_upload_data: Failed to form prepared statement");
         }
 
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
-        debug!("Enter PostgresConnection::get_uploads");
+        trace!("Enter PostgresConnection::get_uploads");
 
         let sql_cmd = include_str!(get_filepath!("get_uploads.sql"));
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[&start_id, &max_count, &show_nsfw];
@@ -215,15 +230,21 @@ impl PostgresConnection {
                     return_vec.push(upload_preview);
                 }
             }
+            else {
+                warn!("PostgresConnection::get_uploads: No uploads found"); // Usually this should only happen if there is nothing uploaded yet
+            }
 
             return Ok(UploadPrvList{ uploads: return_vec });
+        }
+        else {
+            error!("PostgresConnection::get_uploads: Failed to execute sql statement");
         }
 
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
     pub async fn new(project_config: &ProjectConfig) -> Option<PostgresConnection> {
-        debug!("Enter PostgresConnection::new");
+        trace!("Enter PostgresConnection::new");
 
         let host = project_config.postgres_config.host.get_value();
         let unix_socket_dir = project_config.postgres_config.unix_socket_dir.get_value();
@@ -260,7 +281,7 @@ impl PostgresConnection {
 
                 if active_connection.is_err() {
                     let connection_error = active_connection.unwrap_err();
-                    eprintln!("Postgres connection error: {}", connection_error);
+                    error!("PostgresConnection::new: Postgres connection error: {}", connection_error);
                 }
             });
 
@@ -269,6 +290,9 @@ impl PostgresConnection {
             };
 
             return Some(postgres_connection_object);
+        }
+        else {
+            error!("PostgresConnection::new: Failed to connect to postgres");
         }
 
         return None;

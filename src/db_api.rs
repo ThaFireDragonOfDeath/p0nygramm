@@ -35,7 +35,7 @@ pub struct DbConnection {
 
 impl DbConnection {
     pub async fn add_comment(&self, comment_poster: i32, comment_upload: i32, comment_text: &str) -> Result<(), DbApiError> {
-        debug!("Enter DbConnection::add_comment");
+        trace!("Enter DbConnection::add_comment");
 
         if !self.have_postgres_connection() {
             return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
@@ -45,7 +45,7 @@ impl DbConnection {
     }
 
     pub async fn add_tags(&self, tags: Vec<&str>, tag_poster: i32, upload_id: i32) -> Result<(), DbApiError> {
-        debug!("Enter DbConnection::add_tags");
+        trace!("Enter DbConnection::add_tags");
 
         /*
         let tags_iter: dyn Iterator<&str> = tags.split(",");
@@ -92,7 +92,7 @@ impl DbConnection {
 
     // Returns the upload_id of the new inserted upload or error
     pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
-        debug!("Enter DbConnection::add_upload");
+        trace!("Enter DbConnection::add_upload");
 
         if !self.have_postgres_connection() {
             return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
@@ -102,7 +102,7 @@ impl DbConnection {
     }
 
     pub async fn get_session_data(&self, session_id: &str, force_session_renew: bool) -> Result<SessionData, SessionError> {
-        debug!("Enter DbConnection::get_session_data");
+        trace!("Enter DbConnection::get_session_data");
 
         if !self.have_redis_connection() {
             return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
@@ -121,7 +121,7 @@ impl DbConnection {
     }
 
     pub async fn get_upload_data(&self, upload_id: i32) -> Result<UploadData, DbApiError> {
-        debug!("Enter DbConnection::get_upload_data");
+        trace!("Enter DbConnection::get_upload_data");
 
         if !self.have_postgres_connection() {
             return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
@@ -131,7 +131,7 @@ impl DbConnection {
     }
 
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
-        debug!("Enter DbConnection::get_uploads");
+        trace!("Enter DbConnection::get_uploads");
 
         if !self.have_postgres_connection() {
             return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
@@ -149,7 +149,7 @@ impl DbConnection {
     }
 
     pub async fn new(project_config: &ProjectConfig, require_postgres: bool, require_redis: bool) -> Result<DbConnection, DbApiError> {
-        debug!("Enter DbConnection::new");
+        trace!("Enter DbConnection::new");
 
         let postgres_connection = PostgresConnection::new(project_config).await;
         let redis_connection = RedisConnection::new(project_config).await;
@@ -170,7 +170,7 @@ impl DbConnection {
     }
 
     pub fn search_uploads(&self, search_string: &str, start_id: i32, amount: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
-        debug!("Enter DbConnection::search_uploads");
+        trace!("Enter DbConnection::search_uploads");
 
         // TODO: Implement
 
