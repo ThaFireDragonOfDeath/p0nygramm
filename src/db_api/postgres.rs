@@ -113,7 +113,8 @@ impl PostgresConnection {
         trace!("Enter PostgresConnection::add_upload");
 
         let sql_cmd = include_str!(get_filepath!("add_upload.sql"));
-        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&upload_filename, &upload_is_nsfw, &uploader];
+        let upload_is_sfw = !upload_is_nsfw;
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&upload_filename, &upload_is_sfw, &upload_is_nsfw, &uploader];
         let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
 
         if result_rows.is_ok() {
@@ -127,7 +128,7 @@ impl PostgresConnection {
                 return Ok(upload_id);
             }
             else {
-                error!("PostgresConnection::add_comment: Got no result sql statement");
+                error!("PostgresConnection::add_upload: Got no result from postgres");
             }
         }
         else {
