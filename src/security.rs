@@ -23,6 +23,7 @@ use crate::db_api::result::{SessionError, SessionData};
 use crate::db_api::DbConnection;
 use actix_session::Session;
 use crate::security::AccessLevel::User;
+use crate::db_api::result::SessionErrorType::NoSession;
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub enum AccessLevel {
@@ -127,7 +128,7 @@ pub fn check_username(username: &str) -> bool {
     }
 }
 
-pub async fn get_user_session(db_connection: &DbConnection, session: &Session, force_session_renew: bool) -> Result<(AccessLevel, Option<SessionData>), SessionError> {
+pub async fn get_user_session(db_connection: &DbConnection, session: &Session, force_session_renew: bool) -> Result<SessionData, SessionError> {
     let session_id = session.get::<String>("SESSION_ID");
 
     if session_id.is_ok() {
@@ -140,7 +141,7 @@ pub async fn get_user_session(db_connection: &DbConnection, session: &Session, f
                 let access_level = AccessLevel::User;
                 let session_data = session_data.ok().unwrap();
 
-                return Ok( (access_level, Some(session_data)) );
+                return Ok(session_data);
             }
             else {
                 let session_error = session_data.err().unwrap();
@@ -148,11 +149,13 @@ pub async fn get_user_session(db_connection: &DbConnection, session: &Session, f
             }
         }
         else {
-            return Ok( (AccessLevel::None, None) );
+            let session_error = SessionError::new(NoSession, "Keine Session ID gespeichert");
+            return Err(session_error);
         }
     }
     else {
-        return Ok( (AccessLevel::None, None) );
+        let session_error = SessionError::new(NoSession, "Keine Session ID gespeichert");
+        return Err(session_error);
     }
 }
 

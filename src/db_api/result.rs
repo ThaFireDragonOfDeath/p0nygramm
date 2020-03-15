@@ -102,12 +102,13 @@ impl SessionData {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum SessionErrorType {
     UnknownError,
     DbError,
     SessionExpired,
     SessionInvalid,
+    NoSession,
 }
 
 #[derive(Clone)]

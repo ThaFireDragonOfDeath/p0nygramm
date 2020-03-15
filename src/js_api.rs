@@ -24,6 +24,7 @@ use crate::js_api::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoRe
 use crate::security::get_user_session;
 use crate::security::AccessLevel::User;
 use crate::db_api::result::DbApiErrorType;
+use crate::db_api::result::SessionErrorType::DbError;
 
 #[derive(Serialize, Deserialize)]
 pub enum ErrorCode {
@@ -63,44 +64,42 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
         let user_session = get_user_session(&db_connection, &session, false).await;
 
         if user_session.is_ok() {
-            let (access_level, session_data) = user_session.ok().unwrap();
+            let session_data = user_session.ok().unwrap();
+            let upload_data = db_connection.get_upload_data(target_upload_id).await;
 
-            if access_level < User {
-                let backend_error = BackendError::new(Unauthorized, "Zugang nur mit Login gestattet");
-                let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+            if upload_data.is_ok() {
+                let upload_data = upload_data.ok().unwrap();
+                let response_txt = serde_json::to_string(&upload_data).unwrap_or("".to_owned());
 
-                return HttpResponse::Forbidden().body(response_body);
+                return HttpResponse::Ok().body(response_txt);
             }
             else {
-                let upload_data = db_connection.get_upload_data(target_upload_id).await;
+                let error = upload_data.err().unwrap();
 
-                if upload_data.is_ok() {
-                    let upload_data = upload_data.ok().unwrap();
-                    let response_txt = serde_json::to_string(&upload_data).unwrap_or("".to_owned());
+                if error.error_type == DbApiErrorType::NoResult {
+                    let backend_error = BackendError::new(NoResult, error.error_msg.as_str());
+                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
-                    return HttpResponse::Ok().body(response_txt);
+                    return HttpResponse::NotFound().body(response_body);
                 }
                 else {
-                    let error = upload_data.err().unwrap();
+                    let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
+                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
-                    if error.error_type == DbApiErrorType::NoResult {
-                        let backend_error = BackendError::new(NoResult, error.error_msg.as_str());
-                        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                        return HttpResponse::NotFound().body(response_body);
-                    }
-                    else {
-                        let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
-                        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                        return HttpResponse::InternalServerError().body(response_body);
-                    }
+                    return HttpResponse::InternalServerError().body(response_body);
                 }
             }
         }
         else {
             let error = user_session.err().unwrap();
-            let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
+            let error_code = if error.error_type == DbError {
+                DatabaseError
+            }
+            else {
+                Unauthorized
+            };
+
+            let backend_error = BackendError::new(error_code, error.error_msg.as_str());
             let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
             return HttpResponse::InternalServerError().body(response_body);
