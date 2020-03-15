@@ -24,6 +24,40 @@ use std::path::Path;
 use std::fs::File;
 use std::io::Read;
 
+macro_rules! read_toml_entry_connection_method {
+    ($self:ident, $toml_obj:ident, $main_entry:expr, $config_name:ident) => {
+        let config_value = $toml_obj[$main_entry][stringify!($config_name)].as_str();
+
+        if config_value.is_some() {
+            let connection_method_str = config_value.unwrap();
+            let connection_method_obj = ConnectionMethod::try_from(connection_method_str);
+            if connection_method_obj.is_ok() {
+                $self.$config_name.set_value(connection_method_obj.unwrap());
+            }
+        }
+    };
+}
+
+macro_rules! read_toml_entry_number {
+    ($self:ident, $toml_obj:ident, $main_entry:expr, $config_name:ident, $config_type:ty) => {
+        let config_value = $toml_obj[$main_entry][stringify!($config_name)].as_integer();
+
+        if config_value.is_some() {
+            $self.$config_name.set_value(config_value.unwrap() as $config_type);
+        }
+    };
+}
+
+macro_rules! read_toml_entry_string {
+    ($self:ident, $toml_obj:ident, $main_entry:expr, $config_name:ident) => {
+        let config_value = $toml_obj[$main_entry][stringify!($config_name)].as_str();
+
+        if config_value.is_some() {
+            $self.$config_name.set_value(config_value.unwrap().to_owned());
+        }
+    };
+}
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum ConnectionMethod {
     Tcp,
@@ -89,11 +123,7 @@ impl ApplicationConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let max_upload_size = toml_obj["application"]["max_upload_size"].as_integer();
-        
-        if max_upload_size.is_some() {
-            self.max_upload_size.set_value(max_upload_size.unwrap() as u16);
-        }
+        read_toml_entry_number!(self, toml_obj, "application", max_upload_size, u16);
     }
 }
 
@@ -115,26 +145,10 @@ impl FilesystemConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let ffprobe_path = toml_obj["filesystem"]["ffprobe_path"].as_str();
-        let default_userconfig_filepath = toml_obj["filesystem"]["default_userconfig_filepath"].as_str();
-        let static_webcontent_path = toml_obj["filesystem"]["static_webcontent_path"].as_str();
-        let uploads_path = toml_obj["filesystem"]["uploads_path"].as_str();
-
-        if ffprobe_path.is_some() {
-            self.ffprobe_path.set_value(ffprobe_path.unwrap().to_owned());
-        }
-
-        if default_userconfig_filepath.is_some() {
-            self.default_userconfig_filepath.set_value(default_userconfig_filepath.unwrap().to_owned());
-        }
-
-        if static_webcontent_path.is_some() {
-            self.static_webcontent_path.set_value(static_webcontent_path.unwrap().to_owned());
-        }
-
-        if uploads_path.is_some() {
-            self.uploads_path.set_value(uploads_path.unwrap().to_owned());
-        }
+        read_toml_entry_string!(self, toml_obj, "filesystem", ffprobe_path);
+        read_toml_entry_string!(self, toml_obj, "filesystem", default_userconfig_filepath);
+        read_toml_entry_string!(self, toml_obj, "filesystem", static_webcontent_path);
+        read_toml_entry_string!(self, toml_obj, "filesystem", uploads_path);
     }
 }
 
@@ -152,16 +166,8 @@ impl NetworkConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let ip_addr = toml_obj["network"]["ip_addr"].as_str();
-        let port = toml_obj["network"]["port"].as_integer();
-
-        if ip_addr.is_some() {
-            self.ip_addr.set_value(ip_addr.unwrap().to_owned());
-        }
-
-        if port.is_some() {
-            self.port.set_value(port.unwrap() as u16);
-        }
+        read_toml_entry_string!(self, toml_obj, "network", ip_addr);
+        read_toml_entry_number!(self, toml_obj, "network", port, u16);
     }
 }
 
@@ -191,50 +197,14 @@ impl PostgresConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let host = toml_obj["postgres"]["host"].as_str();
-        let port = toml_obj["postgres"]["port"].as_integer();
-        let unix_socket_dir = toml_obj["postgres"]["unix_socket_dir"].as_str();
-        let connection_method = toml_obj["postgres"]["connection_method"].as_str();
-        let user = toml_obj["postgres"]["user"].as_str();
-        let password = toml_obj["postgres"]["password"].as_str();
-        let db_name = toml_obj["postgres"]["db_name"].as_str();
-        let required_schema_version = toml_obj["postgres"]["required_schema_version"].as_integer();
-
-        if host.is_some() {
-            self.host.set_value(host.unwrap().to_owned());
-        }
-
-        if port.is_some() {
-            self.port.set_value(port.unwrap() as u16);
-        }
-
-        if unix_socket_dir.is_some() {
-            self.unix_socket_dir.set_value(unix_socket_dir.unwrap().to_owned());
-        }
-
-        if connection_method.is_some() {
-            let connection_method_str = connection_method.unwrap();
-            let connection_method_obj = ConnectionMethod::try_from(connection_method_str);
-            if connection_method_obj.is_ok() {
-                self.connection_method.set_value(connection_method_obj.unwrap());
-            }
-        }
-
-        if user.is_some() {
-            self.user.set_value(user.unwrap().to_owned());
-        }
-
-        if password.is_some() {
-            self.password.set_value(password.unwrap().to_owned());
-        }
-
-        if db_name.is_some() {
-            self.db_name.set_value(db_name.unwrap().to_owned());
-        }
-
-        if required_schema_version.is_some() {
-            self.required_schema_version.set_value(required_schema_version.unwrap() as u32);
-        }
+        read_toml_entry_string!(self, toml_obj, "postgres", host);
+        read_toml_entry_number!(self, toml_obj, "postgres", port, u16);
+        read_toml_entry_string!(self, toml_obj, "postgres", unix_socket_dir);
+        read_toml_entry_connection_method!(self, toml_obj, "postgres", connection_method);
+        read_toml_entry_string!(self, toml_obj, "postgres", user);
+        read_toml_entry_string!(self, toml_obj, "postgres", password);
+        read_toml_entry_string!(self, toml_obj, "postgres", db_name);
+        read_toml_entry_number!(self, toml_obj, "postgres", required_schema_version, u32);
     }
 }
 
@@ -256,30 +226,10 @@ impl RedisConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let host = toml_obj["redis"]["host"].as_str();
-        let port = toml_obj["redis"]["port"].as_integer();
-        let unix_socket_file = toml_obj["redis"]["unix_socket_file"].as_str();
-        let connection_method = toml_obj["redis"]["connection_method"].as_str();
-
-        if host.is_some() {
-            self.host.set_value(host.unwrap().to_owned());
-        }
-
-        if port.is_some() {
-            self.port.set_value(port.unwrap() as u16);
-        }
-
-        if unix_socket_file.is_some() {
-            self.unix_socket_file.set_value(unix_socket_file.unwrap().to_owned());
-        }
-
-        if connection_method.is_some() {
-            let connection_method_str = connection_method.unwrap();
-            let connection_method_obj = ConnectionMethod::try_from(connection_method_str);
-            if connection_method_obj.is_ok() {
-                self.connection_method.set_value(connection_method_obj.unwrap());
-            }
-        }
+        read_toml_entry_string!(self, toml_obj, "redis", host);
+        read_toml_entry_number!(self, toml_obj, "redis", port, u16);
+        read_toml_entry_string!(self, toml_obj, "redis", unix_socket_file);
+        read_toml_entry_connection_method!(self, toml_obj, "redis", connection_method);
     }
 }
 
@@ -297,16 +247,8 @@ impl SecurityConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
-        let password_hash_key = toml_obj["security"]["password_hash_key"].as_str();
-        let session_private_key = toml_obj["security"]["session_private_key"].as_str();
-
-        if password_hash_key.is_some() {
-            self.password_hash_key.set_value(password_hash_key.unwrap().to_owned());
-        }
-
-        if session_private_key.is_some() {
-            self.session_private_key.set_value(session_private_key.unwrap().to_owned());
-        }
+        read_toml_entry_string!(self, toml_obj, "security", password_hash_key);
+        read_toml_entry_string!(self, toml_obj, "security", session_private_key);
     }
 }
 
