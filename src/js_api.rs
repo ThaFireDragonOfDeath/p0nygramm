@@ -26,6 +26,69 @@ use crate::security::AccessLevel::User;
 use crate::db_api::result::DbApiErrorType;
 use crate::db_api::result::SessionErrorType::DbError;
 
+macro_rules! get_db_connection {
+    ($config:ident, $req_postgres:expr, $req_redis:expr) => {
+        {
+            let db_connection = DbConnection::new($config.as_ref(), $req_postgres, $req_redis).await;
+
+            if db_connection.is_err() {
+                handle_db_connection_error!(db_connection);
+            }
+
+            db_connection.ok().unwrap()
+        }
+    };
+}
+
+macro_rules! get_user_session_data {
+    ($db_connection:ident, $session:ident, $force_session_renew:expr) => {
+        {
+            let user_session = get_user_session(&$db_connection, &$session, $force_session_renew).await;
+
+            if user_session.is_err() {
+                handle_session_error!(user_session);
+            }
+
+            user_session.ok().unwrap()
+        }
+    };
+}
+
+macro_rules! handle_db_connection_error {
+    ($db_connection:ident) => {
+        let error = $db_connection.err().unwrap();
+        let error_txt = error.error_msg;
+        let backend_error = BackendError::new(DatabaseError, error_txt.as_str());
+        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+        return HttpResponse::InternalServerError().body(response_body);
+    };
+}
+
+macro_rules! handle_session_error {
+    ($user_session:ident) => {
+        let error = $user_session.err().unwrap();
+        let error_code = if error.error_type == DbError {
+            DatabaseError
+        }
+        else {
+            Unauthorized
+        };
+
+        let backend_error = BackendError::new(error_code, error.error_msg.as_str());
+        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+        if error_code == DatabaseError {
+            return HttpResponse::InternalServerError().body(response_body);
+        }
+        else {
+            return HttpResponse::Forbidden().body(response_body);
+        }
+    };
+}
+
+
+
 #[derive(Serialize, Deserialize, Eq, PartialEq, Copy, Clone)]
 pub enum ErrorCode {
     DatabaseError,
@@ -50,7 +113,6 @@ impl BackendError {
 }
 
 pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>) -> impl Responder {
-    let db_connection = DbConnection::new(config.as_ref(), true, true).await;
     let target_upload_id = url_data.into_inner();
 
     // Input checks
@@ -59,114 +121,46 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
         let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
     }
 
-    if db_connection.is_ok() {
-        let db_connection = db_connection.ok().unwrap();
-        let user_session = get_user_session(&db_connection, &session, false).await;
+    let db_connection = get_db_connection!(config, true, true);
+    let session_data = get_user_session_data!(db_connection, session, false);
+    let upload_data = db_connection.get_upload_data(target_upload_id).await;
 
-        if user_session.is_ok() {
-            let session_data = user_session.ok().unwrap();
-            let upload_data = db_connection.get_upload_data(target_upload_id).await;
+    if upload_data.is_ok() {
+        let upload_data = upload_data.ok().unwrap();
+        let response_txt = serde_json::to_string(&upload_data).unwrap_or("".to_owned());
 
-            if upload_data.is_ok() {
-                let upload_data = upload_data.ok().unwrap();
-                let response_txt = serde_json::to_string(&upload_data).unwrap_or("".to_owned());
-
-                return HttpResponse::Ok().body(response_txt);
-            }
-            else {
-                let error = upload_data.err().unwrap();
-
-                if error.error_type == DbApiErrorType::NoResult {
-                    let backend_error = BackendError::new(NoResult, error.error_msg.as_str());
-                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                    return HttpResponse::NotFound().body(response_body);
-                }
-                else {
-                    let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
-                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                    return HttpResponse::InternalServerError().body(response_body);
-                }
-            }
-        }
-        else {
-            let error = user_session.err().unwrap();
-            let error_code = if error.error_type == DbError {
-                DatabaseError
-            }
-            else {
-                Unauthorized
-            };
-
-            let backend_error = BackendError::new(error_code, error.error_msg.as_str());
-            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-            if error_code == DatabaseError {
-                return HttpResponse::InternalServerError().body(response_body);
-            }
-            else {
-                return HttpResponse::Forbidden().body(response_body);
-            }
-        }
+        return HttpResponse::Ok().body(response_txt);
     }
     else {
-        let error = db_connection.err().unwrap();
-        let error_txt = error.error_msg;
-        let backend_error = BackendError::new(DatabaseError, error_txt.as_str());
-        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+        let error = upload_data.err().unwrap();
 
-        return HttpResponse::InternalServerError().body(response_body);
+        if error.error_type == DbApiErrorType::NoResult {
+            let backend_error = BackendError::new(NoResult, error.error_msg.as_str());
+            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+            return HttpResponse::NotFound().body(response_body);
+        }
+        else {
+            let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
+            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+            return HttpResponse::InternalServerError().body(response_body);
+        }
     }
 }
 
 pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> impl Responder {
-    let db_connection = DbConnection::new(config.as_ref(), false, true).await;
+    let db_connection = get_db_connection!(config, false, true);
+    let session_data = get_user_session_data!(db_connection, session, false);
+    let session_id = session_data.session_id;
+    let logoff_result = db_connection.destroy_session(session_id.as_str()).await;
 
-    if db_connection.is_ok() {
-        let db_connection = db_connection.ok().unwrap();
-        let user_session = get_user_session(&db_connection, &session, false).await;
-
-        if user_session.is_ok() {
-            let session_data = user_session.ok().unwrap();
-            let session_id = session_data.session_id;
-            let logoff_result = db_connection.destroy_session(session_id.as_str()).await;
-
-            if logoff_result.is_ok() {
-                return HttpResponse::Ok().body("{ \"success:\" true }");
-            }
-            else {
-                let redis_error = logoff_result.err().unwrap();
-                let backend_error = BackendError::new(DatabaseError, redis_error.error_msg.as_str());
-                let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                return HttpResponse::InternalServerError().body(response_body);
-            }
-        }
-        else {
-            let error = user_session.err().unwrap();
-            let error_code = if error.error_type == DbError {
-                DatabaseError
-            }
-            else {
-                Unauthorized
-            };
-
-            let backend_error = BackendError::new(error_code, error.error_msg.as_str());
-            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-            if error_code == DatabaseError {
-                return HttpResponse::InternalServerError().body(response_body);
-            }
-            else {
-                return HttpResponse::Forbidden().body(response_body);
-            }
-        }
+    if logoff_result.is_ok() {
+        return HttpResponse::Ok().body("{ \"success:\" true }");
     }
     else {
-        let error = db_connection.err().unwrap();
-        let error_txt = error.error_msg;
-        let backend_error = BackendError::new(DatabaseError, error_txt.as_str());
+        let redis_error = logoff_result.err().unwrap();
+        let backend_error = BackendError::new(DatabaseError, redis_error.error_msg.as_str());
         let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
         return HttpResponse::InternalServerError().body(response_body);
