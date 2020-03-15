@@ -139,6 +139,26 @@ impl RedisConnection {
         return Err(SessionError::new(DbError, "Erstellen der Redis Einträge fehlgeschlagen"));
     }
 
+    pub async fn destroy_session(&self, session_id: &str) -> Result<(), SessionError> {
+        trace!("Enter RedisConnection::destroy_session");
+
+        let mut redis_connection = self.redis_connection.clone();
+        let redis_key_userid = format!("sessions.{}.user_id", session_id);
+        let redis_key_lts = format!("sessions.{}.lts", session_id); // Is long time session (aka keep logged in)
+
+        let query_result = redis::pipe().atomic()
+            .del(redis_key_userid)
+            .del(redis_key_lts)
+            .query_async::<MultiplexedConnection, (i32, i32)>(&mut redis_connection)
+            .await;
+
+        if query_result.is_ok() {
+            return Ok(());
+        }
+
+        return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
+    }
+
     pub async fn get_session_data(&self, session_id: &str) -> Result<SessionData, SessionError> {
         trace!("Enter RedisConnection::get_session_data");
 

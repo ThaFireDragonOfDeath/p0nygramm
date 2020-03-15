@@ -101,6 +101,16 @@ impl DbConnection {
         return self.postgres_connection.as_ref().unwrap().add_upload(upload_filename, upload_is_nsfw, uploader).await;
     }
 
+    pub async fn destroy_session(&self, session_id: &str) -> Result<(), SessionError> {
+        trace!("Enter DbConnection::destroy_session");
+
+        if !self.have_redis_connection() {
+            return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
+        }
+
+        return self.redis_connection.as_ref().unwrap().destroy_session(session_id).await;
+    }
+
     pub async fn get_session_data(&self, session_id: &str, force_session_renew: bool) -> Result<SessionData, SessionError> {
         trace!("Enter DbConnection::get_session_data");
 
