@@ -26,13 +26,30 @@ use std::io::Read;
 
 macro_rules! read_toml_entry_connection_method {
     ($self:ident, $toml_obj:ident, $main_entry:expr, $config_name:ident) => {
-        let config_value = $toml_obj[$main_entry][stringify!($config_name)].as_str();
+        let config_section_content = $toml_obj.as_table();
 
-        if config_value.is_some() {
-            let connection_method_str = config_value.unwrap();
-            let connection_method_obj = ConnectionMethod::try_from(connection_method_str);
-            if connection_method_obj.is_ok() {
-                $self.$config_name.set_value(connection_method_obj.unwrap());
+        if config_section_content.is_some() {
+            let config_section_content = config_section_content.unwrap().get($main_entry);
+
+            if config_section_content.is_some() {
+                let config_section_content = config_section_content.unwrap().as_table();
+
+                if config_section_content.is_some() {
+                    let config_value = config_section_content.unwrap().get(stringify!($config_name));
+
+                    if config_value.is_some() {
+                        let config_value = config_value.unwrap().as_str();
+
+                        if config_value.is_some() {
+                            let connection_method_str = config_value.unwrap();
+                            let connection_method_obj = ConnectionMethod::try_from(connection_method_str);
+
+                            if connection_method_obj.is_ok() {
+                                $self.$config_name.set_value(connection_method_obj.unwrap());
+                            }
+                        }
+                    }
+                }
             }
         }
     };
@@ -40,20 +57,52 @@ macro_rules! read_toml_entry_connection_method {
 
 macro_rules! read_toml_entry_number {
     ($self:ident, $toml_obj:ident, $main_entry:expr, $config_name:ident, $config_type:ty) => {
-        let config_value = $toml_obj[$main_entry][stringify!($config_name)].as_integer();
+        let config_section_content = $toml_obj.as_table();
 
-        if config_value.is_some() {
-            $self.$config_name.set_value(config_value.unwrap() as $config_type);
+        if config_section_content.is_some() {
+            let config_section_content = config_section_content.unwrap().get($main_entry);
+
+            if config_section_content.is_some() {
+                let config_section_content = config_section_content.unwrap().as_table();
+
+                if config_section_content.is_some() {
+                    let config_value = config_section_content.unwrap().get(stringify!($config_name));
+
+                    if config_value.is_some() {
+                        let config_value = config_value.unwrap().as_integer();
+
+                        if config_value.is_some() {
+                            $self.$config_name.set_value(config_value.unwrap() as $config_type);
+                        }
+                    }
+                }
+            }
         }
     };
 }
 
 macro_rules! read_toml_entry_string {
     ($self:ident, $toml_obj:ident, $main_entry:expr, $config_name:ident) => {
-        let config_value = $toml_obj[$main_entry][stringify!($config_name)].as_str();
+        let config_section_content = $toml_obj.as_table();
 
-        if config_value.is_some() {
-            $self.$config_name.set_value(config_value.unwrap().to_owned());
+        if config_section_content.is_some() {
+            let config_section_content = config_section_content.unwrap().get($main_entry);
+
+            if config_section_content.is_some() {
+                let config_section_content = config_section_content.unwrap().as_table();
+
+                if config_section_content.is_some() {
+                    let config_value = config_section_content.unwrap().get(stringify!($config_name));
+
+                    if config_value.is_some() {
+                        let config_value = config_value.unwrap().as_str();
+
+                        if config_value.is_some() {
+                            $self.$config_name.set_value(config_value.unwrap().to_owned());
+                        }
+                    }
+                }
+            }
         }
     };
 }
