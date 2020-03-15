@@ -26,7 +26,7 @@ use log::{trace, debug, info, warn, error};
 
 mod postgres;
 mod redis;
-mod result;
+pub mod result;
 
 pub struct DbConnection {
     postgres_connection: Option<PostgresConnection>,

@@ -11,20 +11,22 @@ lto = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+#actix-web-middleware-redirect-https = "1.0.0"
 actix-files = "0.2.1"
 actix-multipart = "0.2.0"
 actix-rt = "1.0.0"
 actix-session = "0.3.0"
 actix-web = "2.0.0"
 argonautica = { version = "0.2.0", features = ["simd"] }
-chrono = "0.4.10"
+chrono = { version = "0.4.11", features = ["serde"] }
 futures = "0.3.4"
 #handlebars = "3.0.1"
 log = "0.4.8"
 rand = "0.7.3"
 redis = { version = "0.15.1", features = ["tokio-rt-core"] }
-serde_json = "1.0.46"
+serde = "1.0.104"
+serde_json = "1.0.48"
 tokio = { version = "0.2.13", features = ["rt-core"] }
-tokio-postgres = { version = "0.5.2", features = ["with-chrono-0_4"] }
+tokio-postgres = { version = "0.5.3", features = ["with-chrono-0_4"] }
 toml = "0.5.6"
 v_htmlescape = "0.4.5"

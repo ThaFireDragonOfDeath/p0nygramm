@@ -17,8 +17,9 @@
 
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
 use chrono::{DateTime, Local};
+use serde::{Serialize, Deserialize};
 
-#[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct CommentData {
     comment_timestamp: DateTime<Local>,
     comment_text: String,
@@ -40,7 +41,7 @@ impl CommentData {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct CommentList {
     comment_list: Vec<CommentData>,
 }
@@ -57,7 +58,7 @@ impl CommentList {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DbApiErrorType {
     UnknownError,
     ConnectionError,
@@ -124,7 +125,7 @@ impl SessionError {
     }
 }
 
-#[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct TagData {
     pub tag_text: String,
     pub tag_upvotes: i32,
@@ -139,7 +140,7 @@ impl TagData {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct TagList {
     pub tag_list: Vec<TagData>,
 }
@@ -156,7 +157,7 @@ impl TagList {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct UploadData {
     pub upload_id: i32,
     pub upload_is_nsfw: bool,
@@ -200,7 +201,7 @@ impl UploadData {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct UploadPreview {
     pub upload_id: i32,
     pub upload_is_nsfw: bool,
@@ -219,7 +220,7 @@ impl UploadPreview {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct UploadPrvList {
     pub uploads: Vec<UploadPreview>,
 }

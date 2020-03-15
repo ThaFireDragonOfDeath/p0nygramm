@@ -19,6 +19,17 @@ extern crate v_htmlescape;
 use v_htmlescape::escape;
 use argonautica::{Hasher, Verifier};
 use argonautica::config::Variant;
+use crate::db_api::result::{SessionError, SessionData};
+use crate::db_api::DbConnection;
+use actix_session::Session;
+use crate::security::AccessLevel::User;
+
+#[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
+pub enum AccessLevel {
+    None = 0,
+    User = 1,
+    Mod = 2, // -> Is gay
+}
 
 pub fn check_and_escape_comment(comment: &str) -> Option<String> {
     let comment_length = comment.len();
@@ -113,6 +124,35 @@ pub fn check_username(username: &str) -> bool {
     }
     else {
         return false;
+    }
+}
+
+pub async fn get_user_session(db_connection: &DbConnection, session: &Session, force_session_renew: bool) -> Result<(AccessLevel, Option<SessionData>), SessionError> {
+    let session_id = session.get::<String>("SESSION_ID");
+
+    if session_id.is_ok() {
+        let session_id = session_id.unwrap().unwrap_or("".to_owned());
+
+        if session_id != "" {
+            let session_data = db_connection.get_session_data(session_id.as_str(), force_session_renew).await;
+
+            if session_data.is_ok() {
+                let access_level = AccessLevel::User;
+                let session_data = session_data.ok().unwrap();
+
+                return Ok( (access_level, Some(session_data)) );
+            }
+            else {
+                let session_error = session_data.err().unwrap();
+                return Err(session_error);
+            }
+        }
+        else {
+            return Ok( (AccessLevel::None, None) );
+        }
+    }
+    else {
+        return Ok( (AccessLevel::None, None) );
     }
 }
 

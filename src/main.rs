@@ -25,6 +25,9 @@ mod security;
 extern crate actix_web;
 
 #[macro_use]
+extern crate serde;
+
+#[macro_use]
 extern crate serde_json;
 
 extern crate argonautica;
@@ -36,16 +39,32 @@ extern crate tokio;
 use actix_web::web;
 use actix_web::{App, HttpResponse, HttpServer};
 use actix_files as fs;
+use crate::config::ProjectConfig;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new( || {
-        App::new()
-            .service(fs::Files::new("/", "./static/webcontent/").index_file("index.html"))
-            .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
-            .service(fs::Files::new("/prv", "./static/uploads-prv/").index_file("index.html"))
-    })
-    .bind("127.0.0.1:8080")?
-    .run()
-    .await
+    let prj_config = ProjectConfig::init();
+
+    if prj_config.is_some() {
+        let prj_config = prj_config.unwrap();
+        let prj_config_data = web::Data::new(prj_config);
+
+        HttpServer::new(move || {
+            App::new()
+                .service(fs::Files::new("/", "./static/webcontent/").index_file("index.html"))
+                .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
+                .service(fs::Files::new("/prv", "./static/uploads-prv/").index_file("index.html"))
+                .service(web::scope("/js-api")
+                    .app_data(prj_config_data.clone())
+                    .route("/get_upload_data/{upload_id}", web::get().to(js_api::get_upload_data))
+                )
+        })
+            .bind("127.0.0.1:8080")?
+            .run()
+            .await
+    }
+    else {
+        let error = std::io::Error::new(std::io::ErrorKind::Other, "Failed to read config");
+        return Err(error);
+    }
 }
