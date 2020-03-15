@@ -26,7 +26,7 @@ use crate::security::AccessLevel::User;
 use crate::db_api::result::DbApiErrorType;
 use crate::db_api::result::SessionErrorType::DbError;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Eq, PartialEq, Copy, Clone)]
 pub enum ErrorCode {
     DatabaseError,
     UserInputError,
@@ -102,7 +102,65 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
             let backend_error = BackendError::new(error_code, error.error_msg.as_str());
             let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
-            return HttpResponse::InternalServerError().body(response_body);
+            if error_code == DatabaseError {
+                return HttpResponse::InternalServerError().body(response_body);
+            }
+            else {
+                return HttpResponse::Forbidden().body(response_body);
+            }
+        }
+    }
+    else {
+        let error = db_connection.err().unwrap();
+        let error_txt = error.error_msg;
+        let backend_error = BackendError::new(DatabaseError, error_txt.as_str());
+        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+        return HttpResponse::InternalServerError().body(response_body);
+    }
+}
+
+pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> impl Responder {
+    let db_connection = DbConnection::new(config.as_ref(), false, true).await;
+
+    if db_connection.is_ok() {
+        let db_connection = db_connection.ok().unwrap();
+        let user_session = get_user_session(&db_connection, &session, false).await;
+
+        if user_session.is_ok() {
+            let session_data = user_session.ok().unwrap();
+            let session_id = session_data.session_id;
+            let logoff_result = db_connection.destroy_session(session_id.as_str()).await;
+
+            if logoff_result.is_ok() {
+                return HttpResponse::Ok().body("{ \"success:\" true }");
+            }
+            else {
+                let redis_error = logoff_result.err().unwrap();
+                let backend_error = BackendError::new(DatabaseError, redis_error.error_msg.as_str());
+                let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+                return HttpResponse::InternalServerError().body(response_body);
+            }
+        }
+        else {
+            let error = user_session.err().unwrap();
+            let error_code = if error.error_type == DbError {
+                DatabaseError
+            }
+            else {
+                Unauthorized
+            };
+
+            let backend_error = BackendError::new(error_code, error.error_msg.as_str());
+            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+            if error_code == DatabaseError {
+                return HttpResponse::InternalServerError().body(response_body);
+            }
+            else {
+                return HttpResponse::Forbidden().body(response_body);
+            }
         }
     }
     else {

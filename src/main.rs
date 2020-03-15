@@ -57,6 +57,7 @@ async fn main() -> std::io::Result<()> {
                 .service(web::scope("/js-api")
                     .app_data(prj_config_data.clone())
                     .route("/get_upload_data/{upload_id}", web::get().to(js_api::get_upload_data))
+                    .route("/logout", web::get().to(js_api::logout))
                 )
         })
             .bind("127.0.0.1:8080")?
