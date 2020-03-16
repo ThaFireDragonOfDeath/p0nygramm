@@ -32,6 +32,7 @@ extern crate serde_json;
 
 extern crate argonautica;
 extern crate chrono;
+extern crate fern;
 extern crate log;
 extern crate rand;
 extern crate tokio;
@@ -40,9 +41,31 @@ use actix_web::web;
 use actix_web::{App, HttpResponse, HttpServer};
 use actix_files as fs;
 use crate::config::ProjectConfig;
+use log::{trace, debug, info, warn, error};
+
+fn configure_debug_log() {
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Trace)
+        .chain(std::io::stdout())
+        .apply().unwrap();
+}
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
+    if cfg!(debug_assertions) {
+        configure_debug_log();
+        info!("Application is build in debug mode, all traces are activated");
+    }
+
     let prj_config = ProjectConfig::init();
 
     if prj_config.is_some() {
@@ -51,14 +74,14 @@ async fn main() -> std::io::Result<()> {
 
         HttpServer::new(move || {
             App::new()
-                .service(fs::Files::new("/", "./static/webcontent/").index_file("index.html"))
-                .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
-                .service(fs::Files::new("/prv", "./static/uploads-prv/").index_file("index.html"))
                 .service(web::scope("/js-api")
                     .app_data(prj_config_data.clone())
                     .route("/get_upload_data/{upload_id}", web::get().to(js_api::get_upload_data))
                     .route("/logout", web::get().to(js_api::logout))
                 )
+                .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
+                .service(fs::Files::new("/prv", "./static/uploads-prv/").index_file("index.html"))
+                .service(fs::Files::new("/", "./static/webcontent/").index_file("index.html"))
         })
             .bind("127.0.0.1:8080")?
             .run()
