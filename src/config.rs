@@ -23,6 +23,7 @@ use crate::config::ConnectionMethod::{Tcp, UnixSocket};
 use std::path::Path;
 use std::fs::File;
 use std::io::Read;
+use log::{trace, debug, info, warn, error};
 
 macro_rules! read_toml_entry_connection_method {
     ($self:ident, $toml_obj:ident, $main_entry:expr, $config_name:ident) => {
@@ -349,13 +350,17 @@ impl ProjectConfig {
                     }
                 }
             }
+            else {
+                error!("ProjectConfig::init: Userconf path is invalid");
+            }
 
             prj_config.parse_toml(&system_config_toml_obj.unwrap());
 
-            Some(prj_config)
+            return Some(prj_config);
         }
         else {
-            None
+            error!("ProjectConfig::init: Failed to read const and system config");
+            return None;
         }
     }
 

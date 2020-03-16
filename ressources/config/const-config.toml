@@ -1,7 +1,7 @@
 # File will be included in the binary and can't be edited from the outside
 
 [filesystem]
-default_userconfig_filepath = "%def_user_config_filepath%"
+default_userconfig_filepath = "/etc/p0nygramm/user-config.toml"
 
 [postgres]
 required_schema_version = "1"

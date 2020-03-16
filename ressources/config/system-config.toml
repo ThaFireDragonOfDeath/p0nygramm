@@ -8,8 +8,8 @@ max_upload_size = "20" # Maximum filesize of uploads in MB
 # Set the paths of the static webcontent, template and upload files
 [filesystem]
 ffprobe_path = "/usr/bin/ffprobe" # Path to ffprobe binary (part of ffmpeg)
-static_webcontent_path = "%static_webcontent_path%"
-uploads_path = "%uploads_path%"
+static_webcontent_path = "/srv/p0nygramm/static/webcontent"
+uploads_path = "/srv/p0nygramm/static/uploads"
 
 # Set on which ip and port %project_name% will listen
 [network]
@@ -24,7 +24,7 @@ unix_socket_dir = "/run/postgres" # The socket file is unix_socket_dir/db_name
 connection_method = "tcp" # Can be either 'tcp' or 'unix_socket'
 user = "postgres"
 password = ""
-db_name = "%project_name%"
+db_name = "p0nygramm"
 
 # Set the redis db connection parameters
 [redis]
