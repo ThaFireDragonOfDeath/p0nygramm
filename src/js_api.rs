@@ -160,7 +160,7 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
                     if session_data.is_ok() {
                         let session_data = session_data.ok().unwrap();
                         let session_id = session_data.session_id.clone();
-                        let session_set_result = session.set("SESSION_ID", session_id.as_str());
+                        let session_set_result = session.set("session_id", session_id.as_str());
 
                         if session_set_result.is_ok() {
                             let response_userdata = response_result::UserData::new(&user_data);
