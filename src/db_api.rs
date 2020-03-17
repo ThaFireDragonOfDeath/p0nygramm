@@ -122,7 +122,7 @@ impl DbConnection {
         return self.redis_connection.as_ref().unwrap().destroy_session(session_id).await;
     }
 
-    pub async fn get_session_data(&self, session_id: &str, force_session_renew: bool) -> Result<SessionData, SessionError> {
+    pub async fn get_session_data(&self, session: &Session, session_id: &str, force_session_renew: bool) -> Result<SessionData, SessionError> {
         trace!("Enter DbConnection::get_session_data");
 
         if !self.have_redis_connection() {
@@ -135,7 +135,7 @@ impl DbConnection {
         if session_data.is_ok() {
             let session_data = session_data.as_ref().ok().unwrap();
 
-            redis_connection.renew_session(session_data, force_session_renew).await;
+            redis_connection.renew_session(session, session_data, force_session_renew).await;
         }
 
         return session_data;

@@ -135,7 +135,7 @@ pub async fn get_user_session(db_connection: &DbConnection, session: &Session, f
         let session_id = session_id.unwrap().unwrap_or("".to_owned());
 
         if session_id != "" {
-            let session_data = db_connection.get_session_data(session_id.as_str(), force_session_renew).await;
+            let session_data = db_connection.get_session_data(session, session_id.as_str(), force_session_renew).await;
 
             if session_data.is_ok() {
                 let session_data = session_data.ok().unwrap();

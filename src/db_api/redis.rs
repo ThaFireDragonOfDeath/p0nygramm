@@ -256,7 +256,7 @@ impl RedisConnection {
         return None;
     }
 
-    pub async fn renew_session(&self, session_data: &SessionData, force_renew: bool) -> bool {
+    pub async fn renew_session(&self, session: &Session, session_data: &SessionData, force_session_renew: bool) -> bool {
         trace!("Enter RedisConnection::renew_session");
 
         let mut redis_connection = self.redis_connection.clone();
@@ -270,7 +270,7 @@ impl RedisConnection {
         let current_time = Local::now();
         let mut renew_session = false;
 
-        if force_renew {
+        if force_session_renew {
             renew_session = true;
         }
         else {
@@ -307,6 +307,8 @@ impl RedisConnection {
                 .await;
 
             if query_result.is_ok() {
+                session.renew();
+
                 return true;
             }
             else {
