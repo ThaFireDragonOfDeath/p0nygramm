@@ -19,14 +19,14 @@ use crate::db_api::postgres::PostgresConnection;
 use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
-use crate::db_api::result::{UploadPrvList, DbApiError, SessionData, SessionError, UploadData};
-use crate::db_api::result::DbApiErrorType::{UnknownError, ConnectionError, PartFail, QueryError};
-use crate::db_api::result::SessionErrorType::DbError;
+use crate::db_api::db_result::{UploadPrvList, DbApiError, SessionData, SessionError, UploadData, UserData};
+use crate::db_api::db_result::DbApiErrorType::{UnknownError, ConnectionError, PartFail, QueryError};
+use crate::db_api::db_result::SessionErrorType::DbError;
 use log::{trace, debug, info, warn, error};
 
 mod postgres;
 mod redis;
-pub mod result;
+pub mod db_result;
 
 pub struct DbConnection {
     postgres_connection: Option<PostgresConnection>,
@@ -148,6 +148,16 @@ impl DbConnection {
         }
 
         return self.postgres_connection.as_ref().unwrap().get_uploads(start_id, max_count, show_nsfw).await;
+    }
+
+    pub async fn get_userdata_by_username(&self, username: &str) -> Result<UserData, DbApiError> {
+        trace!("Enter DbConnection::get_userdata_by_username");
+
+        if !self.have_postgres_connection() {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
+        }
+
+        return self.postgres_connection.as_ref().unwrap().get_userdata_by_username(username).await;
     }
 
     pub fn have_postgres_connection(&self) -> bool {

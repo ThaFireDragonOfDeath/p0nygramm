@@ -15,16 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+mod request_data;
+mod response_result;
+
 use actix_web::{Responder, web, HttpResponse};
 use crate::config::ProjectConfig;
 use actix_session::Session;
 use crate::db_api::DbConnection;
 use serde::{Serialize, Deserialize};
-use crate::js_api::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult};
-use crate::security::get_user_session;
+use crate::security::{get_user_session, check_username, check_password, verify_password};
 use crate::security::AccessLevel::User;
-use crate::db_api::result::DbApiErrorType;
-use crate::db_api::result::SessionErrorType::DbError;
+use crate::db_api::db_result::DbApiErrorType;
+use crate::db_api::db_result::SessionErrorType::DbError;
+use crate::js_api::request_data::LoginInfo;
+use crate::js_api::response_result::BackendError;
+use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored};
+use std::borrow::Borrow;
 
 macro_rules! get_db_connection {
     ($config:ident, $req_postgres:expr, $req_redis:expr) => {
@@ -87,31 +93,6 @@ macro_rules! handle_session_error {
     };
 }
 
-
-
-#[derive(Serialize, Deserialize, Eq, PartialEq, Copy, Clone)]
-pub enum ErrorCode {
-    DatabaseError,
-    UserInputError,
-    NoResult,
-    Unauthorized,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct BackendError {
-    error_code: ErrorCode,
-    error_msg: String,
-}
-
-impl BackendError {
-    pub fn new(error_code: ErrorCode, error_msg: &str) -> BackendError {
-        BackendError {
-            error_code,
-            error_msg: error_msg.to_owned(),
-        }
-    }
-}
-
 pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>) -> impl Responder {
     let target_upload_id = url_data.into_inner();
 
@@ -147,6 +128,69 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
             return HttpResponse::InternalServerError().body(response_body);
         }
     }
+}
+
+pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_data: web::Form<LoginInfo>) -> impl Responder {
+    let db_connection = get_db_connection!(config, true, true);
+    let user_session = get_user_session(&db_connection, &session, false).await;
+
+    if user_session.is_err() {
+        let login_username = login_data.username.clone();
+        let login_password = login_data.password.clone();
+        let keep_logged_in = login_data.keep_logged_in;
+
+        let username_is_ok = check_username(login_username.as_str());
+        let password_is_ok = check_password(login_password.as_str());
+
+        if username_is_ok && password_is_ok {
+            let user_data = db_connection.get_userdata_by_username(login_username.as_str()).await;
+
+            if user_data.is_ok() {
+                let user_data = user_data.ok().unwrap();
+                let password_hash = user_data.password_hash.clone();
+                let secret_hash_key = config.security_config.password_hash_key.get_value();
+                let password_is_correct = verify_password(password_hash.as_str(), login_password.as_str(),
+                                                          secret_hash_key.as_str()).unwrap_or(false);
+
+                if password_is_correct {
+                    let response_userdata = response_result::UserData::new(&user_data);
+                    let response_body = serde_json::to_string(&response_userdata).unwrap_or("".to_owned());
+
+                    // TODO: Create session
+
+                    return HttpResponse::Ok().body(response_body);
+                }
+                else {
+                    let backend_error = BackendError::new(UserInputError, "Benutzername oder Passwort ist falsch");
+                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+                    return HttpResponse::Ok().body(response_body);
+                }
+            }
+            else {
+                // TODO: Check error code (it can be a NoResult error)
+                let error = user_data.err().unwrap();
+                let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
+                let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+                return HttpResponse::Ok().body(response_body);
+            }
+        }
+        else {
+            let backend_error = BackendError::new(UserInputError, "Ungültige Zeichen in Benutzername oder Passwort");
+            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+            return HttpResponse::Ok().body(response_body);
+        }
+    }
+    else {
+        let backend_error = BackendError::new(Ignored, "Es ist bereits ein Benutzer eingelogt");
+        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+        return HttpResponse::Ok().body(response_body);
+    }
+
+    return HttpResponse::InternalServerError().body("TODO");
 }
 
 pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> impl Responder {

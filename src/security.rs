@@ -19,11 +19,11 @@ extern crate v_htmlescape;
 use v_htmlescape::escape;
 use argonautica::{Hasher, Verifier};
 use argonautica::config::Variant;
-use crate::db_api::result::{SessionError, SessionData};
+use crate::db_api::db_result::{SessionError, SessionData};
 use crate::db_api::DbConnection;
 use actix_session::Session;
 use crate::security::AccessLevel::User;
-use crate::db_api::result::SessionErrorType::NoSession;
+use crate::db_api::db_result::SessionErrorType::NoSession;
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub enum AccessLevel {
@@ -179,12 +179,13 @@ pub fn hash_password(password: &str, secret_key: &str) -> Option<String> {
     }
 }
 
-pub fn verify_password(password: &str, secret_key: &str) -> Option<bool> {
+pub fn verify_password(password_hash: &str, password: &str, secret_key: &str) -> Option<bool> {
     let mut argon2_verifier = Verifier::default();
 
     // Don't block all CPU cores
     argon2_verifier.configure_threads(2);
 
+    argon2_verifier.with_hash(password_hash);
     argon2_verifier.with_password(password);
     argon2_verifier.with_secret_key(secret_key);
 

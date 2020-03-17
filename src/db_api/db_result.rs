@@ -225,3 +225,22 @@ impl UploadPreview {
 pub struct UploadPrvList {
     pub uploads: Vec<UploadPreview>,
 }
+
+#[derive(Clone)]
+pub struct UserData {
+    pub user_id: i32,
+    pub username: String,
+    pub password_hash: String,
+    pub user_is_mod: bool,
+}
+
+impl UserData {
+    pub fn new(user_id: i32, username: &str, password_hash: &str, user_is_mod: bool) -> UserData {
+        UserData {
+            user_id,
+            username: username.to_owned(),
+            password_hash: password_hash.to_owned(),
+            user_is_mod,
+        }
+    }
+}

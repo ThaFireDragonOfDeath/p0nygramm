@@ -20,12 +20,12 @@ use redis::aio::{Connection, MultiplexedConnection};
 use crate::config::ProjectConfig;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::PathBuf;
-use crate::db_api::result::{SessionData, DbApiError, SessionError, SessionErrorType};
-use crate::db_api::result::DbApiErrorType::{UnknownError, NoResult};
+use crate::db_api::db_result::{SessionData, DbApiError, SessionError, SessionErrorType};
+use crate::db_api::db_result::DbApiErrorType::{UnknownError, NoResult};
 use chrono::{ParseResult, DateTime, FixedOffset, Local, Duration};
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
-use crate::db_api::result::SessionErrorType::{DbError, SessionInvalid};
+use crate::db_api::db_result::SessionErrorType::{DbError, SessionInvalid};
 use log::{trace, debug, info, warn, error};
 
 const LTS_DURATION : u32 = 24 * 30; // Long time session are valid for 30 days without activity
