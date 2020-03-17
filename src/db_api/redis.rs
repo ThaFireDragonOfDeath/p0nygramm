@@ -27,6 +27,7 @@ use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
 use crate::db_api::db_result::SessionErrorType::{DbError, SessionInvalid};
 use log::{trace, debug, info, warn, error};
+use actix_session::Session;
 
 const LTS_DURATION : u32 = 24 * 30; // Long time session are valid for 30 days without activity
 const TTL_BUFFER: u8 = 30; // If the value ttl is smaller than this value, the session counts as expired

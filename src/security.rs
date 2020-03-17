@@ -129,7 +129,7 @@ pub fn check_username(username: &str) -> bool {
 }
 
 pub async fn get_user_session(db_connection: &DbConnection, session: &Session, force_session_renew: bool) -> Result<SessionData, SessionError> {
-    let session_id = session.get::<String>("SESSION_ID");
+    let session_id = session.get::<String>("session_id");
 
     if session_id.is_ok() {
         let session_id = session_id.unwrap().unwrap_or("".to_owned());
@@ -138,7 +138,6 @@ pub async fn get_user_session(db_connection: &DbConnection, session: &Session, f
             let session_data = db_connection.get_session_data(session_id.as_str(), force_session_renew).await;
 
             if session_data.is_ok() {
-                let access_level = AccessLevel::User;
                 let session_data = session_data.ok().unwrap();
 
                 return Ok(session_data);
@@ -150,11 +149,13 @@ pub async fn get_user_session(db_connection: &DbConnection, session: &Session, f
         }
         else {
             let session_error = SessionError::new(NoSession, "Keine Session ID gespeichert");
+
             return Err(session_error);
         }
     }
     else {
         let session_error = SessionError::new(NoSession, "Keine Session ID gespeichert");
+
         return Err(session_error);
     }
 }

@@ -23,6 +23,7 @@ use crate::db_api::db_result::{UploadPrvList, DbApiError, SessionData, SessionEr
 use crate::db_api::db_result::DbApiErrorType::{UnknownError, ConnectionError, PartFail, QueryError};
 use crate::db_api::db_result::SessionErrorType::DbError;
 use log::{trace, debug, info, warn, error};
+use actix_session::Session;
 
 mod postgres;
 mod redis;

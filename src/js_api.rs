@@ -229,6 +229,8 @@ pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> impl 
     let logoff_result = db_connection.destroy_session(session_id.as_str()).await;
 
     if logoff_result.is_ok() {
+        session.remove("session_id");
+
         return HttpResponse::Ok().body("{ \"success:\" true }");
     }
     else {
