@@ -286,6 +286,7 @@ impl RedisConfig {
 pub struct SecurityConfig {
     pub password_hash_key: ConfigField<String>,
     pub session_private_key: ConfigField<String>,
+    pub register_password: ConfigField<String>,
 }
 
 impl SecurityConfig {
@@ -293,12 +294,14 @@ impl SecurityConfig {
         SecurityConfig {
             password_hash_key: ConfigField::new_empty(String::new()),
             session_private_key: ConfigField::new_empty(String::new()),
+            register_password: ConfigField::new_empty(String::new()),
         }
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
         read_toml_entry_string!(self, toml_obj, "security", password_hash_key);
         read_toml_entry_string!(self, toml_obj, "security", session_private_key);
+        read_toml_entry_string!(self, toml_obj, "security", register_password);
     }
 }
 

@@ -37,3 +37,4 @@ connection_method = "tcp" # Can be either 'tcp' or 'unix_socket'
 [security]
 session_private_key = "" # Private key to secure cookie sessions (have to be a minimum length of 32 bytes)
 password_hash_key = "" # Private key to secure hash passwords (argon2 secret key feature) (minimal length: 8 bytes)
+register_password = "" # Password to make a new user account
