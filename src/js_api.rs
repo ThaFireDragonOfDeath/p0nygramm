@@ -29,7 +29,7 @@ use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
 use crate::js_api::request_data::LoginInfo;
 use crate::js_api::response_result::BackendError;
-use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored};
+use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError};
 use std::borrow::Borrow;
 
 macro_rules! get_db_connection {
@@ -149,22 +149,44 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
                 let user_data = user_data.ok().unwrap();
                 let password_hash = user_data.password_hash.clone();
                 let secret_hash_key = config.security_config.password_hash_key.get_value();
-                let password_is_correct = verify_password(password_hash.as_str(), login_password.as_str(),
+                let password_is_correct = verify_password(password_hash.as_str(),
+                                                          login_password.as_str(),
                                                           secret_hash_key.as_str()).unwrap_or(false);
 
                 if password_is_correct {
-                    let response_userdata = response_result::UserData::new(&user_data);
-                    let response_body = serde_json::to_string(&response_userdata).unwrap_or("".to_owned());
+                    let user_id = user_data.user_id;
+                    let session_data = db_connection.create_session(user_id, keep_logged_in).await;
 
-                    // TODO: Create session
+                    if session_data.is_ok() {
+                        let session_data = session_data.ok().unwrap();
+                        let session_id = session_data.session_id.clone();
+                        let session_set_result = session.set("SESSION_ID", session_id.as_str());
 
-                    return HttpResponse::Ok().body(response_body);
+                        if session_set_result.is_ok() {
+                            let response_userdata = response_result::UserData::new(&user_data);
+                            let response_body = serde_json::to_string(&response_userdata).unwrap_or("".to_owned());
+
+                            return HttpResponse::Ok().body(response_body);
+                        }
+                        else {
+                            let backend_error = BackendError::new(CookieError, "Fehler beim Setzen des Session Cookies");
+                            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+                            return HttpResponse::InternalServerError().body(response_body);
+                        }
+                    }
+                    else {
+                        let backend_error = BackendError::new(DatabaseError, "Fehler beim Anlegen der Session in der Redis Datenbank");
+                        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+                        return HttpResponse::InternalServerError().body(response_body);
+                    }
                 }
                 else {
                     let backend_error = BackendError::new(UserInputError, "Benutzername oder Passwort ist falsch");
                     let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
-                    return HttpResponse::Ok().body(response_body);
+                    return HttpResponse::Forbidden().body(response_body);
                 }
             }
             else {
@@ -173,7 +195,7 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
                 let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
                 let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
-                return HttpResponse::Ok().body(response_body);
+                return HttpResponse::InternalServerError().body(response_body);
             }
         }
         else {
@@ -189,8 +211,6 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
 
         return HttpResponse::Ok().body(response_body);
     }
-
-    return HttpResponse::InternalServerError().body("TODO");
 }
 
 pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> impl Responder {

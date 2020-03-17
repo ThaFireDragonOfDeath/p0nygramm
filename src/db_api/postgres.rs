@@ -253,7 +253,6 @@ impl PostgresConnection {
 
         if result_rows.is_ok() {
             let result_rows_vec = result_rows.unwrap();
-            let mut return_vec: Vec<UploadPreview> = Vec::new();
 
             if !result_rows_vec.is_empty() {
                 let row = result_rows_vec.get(0).unwrap();
