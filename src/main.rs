@@ -43,6 +43,7 @@ use actix_files as fs;
 use crate::config::ProjectConfig;
 use log::{trace, debug, info, warn, error};
 use actix_session::CookieSession;
+use std::borrow::Borrow;
 
 fn configure_debug_log() {
     fern::Dispatch::new()
@@ -72,20 +73,19 @@ async fn main() -> std::io::Result<()> {
 
     if prj_config.is_some() {
         let prj_config = prj_config.unwrap();
-        let prj_config_data = web::Data::new(prj_config);
         let session_private_key = prj_config.security_config.session_private_key.get_value();
-
-        let session_middleware = CookieSession::signed(session_private_key.as_bytes())
-            .http_only(true)
-            .max_age(2592000) // 30 days
-            .name("session_data")
-            .path("/")
-            .secure(true);
+        let prj_config_data = web::Data::new(prj_config);
 
         HttpServer::new(move || {
             App::new()
                 .service(web::scope("/js-api")
-                    .wrap(session_middleware)
+                    .wrap(CookieSession::signed(session_private_key.as_bytes())
+                        .http_only(true)
+                        .max_age(2592000) // 30 days
+                        .name("session_data")
+                        .path("/")
+                        .secure(true)
+                    )
                     .app_data(prj_config_data.clone())
                     .route("/get_upload_data/{upload_id}", web::get().to(js_api::get_upload_data))
                     .route("/login", web::post().to(js_api::login))

@@ -190,12 +190,21 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
                 }
             }
             else {
-                // TODO: Check error code (it can be a NoResult error)
                 let error = user_data.err().unwrap();
-                let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
-                let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+                let error_type = error.error_type;
 
-                return HttpResponse::InternalServerError().body(response_body);
+                if error_type == DbApiErrorType::NoResult {
+                    let backend_error = BackendError::new(UserInputError, "Benutzername oder Passwort ist falsch");
+                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+                    return HttpResponse::Forbidden().body(response_body);
+                }
+                else {
+                    let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
+                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+                    return HttpResponse::InternalServerError().body(response_body);
+                }
             }
         }
         else {
