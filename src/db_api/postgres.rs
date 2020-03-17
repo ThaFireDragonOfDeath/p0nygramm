@@ -138,6 +138,29 @@ impl PostgresConnection {
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
+    pub async fn add_user(&self, username: &str, pw_hash: &str, user_is_mod: bool) -> Result<i32, DbApiError> {
+        trace!("Enter PostgresConnection::add_user");
+
+        let sql_cmd = include_str!(get_filepath!("add_user.sql"));
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&username, &pw_hash, &user_is_mod];
+        let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            let result_rows = result_rows.unwrap();
+            let first_row = result_rows.get(0);
+
+            if first_row.is_some() {
+                let first_row = first_row.unwrap();
+                let user_id = first_row.get(0);
+
+                return Ok(user_id);
+            }
+        }
+
+        error!("PostgresConnection::add_user: Failed to execute sql statement");
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
     pub async fn get_upload_data(&self, upload_id: i32) -> Result<UploadData, DbApiError> {
         trace!("Enter PostgresConnection::get_upload_data");
 

@@ -102,6 +102,17 @@ impl DbConnection {
         return self.postgres_connection.as_ref().unwrap().add_upload(upload_filename, upload_is_nsfw, uploader).await;
     }
 
+    // Returns the id of the new created user
+    pub async fn add_user(&self, username: &str, pw_hash: &str, user_is_mod: bool) -> Result<i32, DbApiError> {
+        trace!("Enter PostgresConnection::add_user");
+
+        if !self.have_postgres_connection() {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
+        }
+
+        return self.postgres_connection.as_ref().unwrap().add_user(username, pw_hash, user_is_mod).await;
+    }
+
     pub async fn create_session(&self, user_id: i32, is_lts: bool) -> Result<SessionData, SessionError> {
         trace!("Enter DbConnection::create_session");
 
