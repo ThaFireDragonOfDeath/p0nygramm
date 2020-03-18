@@ -64,16 +64,24 @@ macro_rules! handle_db_connection_error {
     ($db_connection:ident) => {
         let error = $db_connection.err().unwrap();
         let error_txt = error.error_msg;
-        let backend_error = BackendError::new(DatabaseError, error_txt.as_str());
+
+        handle_error_str!(DatabaseError, error_txt.as_str(), InternalServerError);
+    };
+}
+
+macro_rules! handle_error_str {
+    ($error_code:expr, $error_str:expr, $http_code:ident) => {
+        let backend_error = BackendError::new($error_code, $error_str);
         let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
-        return HttpResponse::InternalServerError().body(response_body);
+        return HttpResponse::$http_code().body(response_body);
     };
 }
 
 macro_rules! handle_session_error {
     ($user_session:ident) => {
         let error = $user_session.err().unwrap();
+        let error_txt = error.error_msg;
         let error_code = if error.error_type == DbError {
             DatabaseError
         }
@@ -81,14 +89,11 @@ macro_rules! handle_session_error {
             Unauthorized
         };
 
-        let backend_error = BackendError::new(error_code, error.error_msg.as_str());
-        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
         if error_code == DatabaseError {
-            return HttpResponse::InternalServerError().body(response_body);
+            handle_error_str!(error_code, error_txt.as_str(), InternalServerError);
         }
         else {
-            return HttpResponse::Forbidden().body(response_body);
+            handle_error_str!(error_code, error_txt.as_str(), Forbidden);
         }
     };
 }
@@ -116,16 +121,10 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
         let error = upload_data.err().unwrap();
 
         if error.error_type == DbApiErrorType::NoResult {
-            let backend_error = BackendError::new(NoResult, error.error_msg.as_str());
-            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-            return HttpResponse::NotFound().body(response_body);
+            handle_error_str!(NoResult, error.error_msg.as_str(), NotFound);
         }
         else {
-            let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
-            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-            return HttpResponse::InternalServerError().body(response_body);
+            handle_error_str!(DatabaseError, error.error_msg.as_str(), InternalServerError);
         }
     }
 }
@@ -169,24 +168,15 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
                             return HttpResponse::Ok().body(response_body);
                         }
                         else {
-                            let backend_error = BackendError::new(CookieError, "Fehler beim Setzen des Session Cookies");
-                            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                            return HttpResponse::InternalServerError().body(response_body);
+                            handle_error_str!(CookieError, "Fehler beim Setzen des Session Cookies", InternalServerError);
                         }
                     }
                     else {
-                        let backend_error = BackendError::new(DatabaseError, "Fehler beim Anlegen der Session in der Redis Datenbank");
-                        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                        return HttpResponse::InternalServerError().body(response_body);
+                        handle_error_str!(DatabaseError, "Fehler beim Anlegen der Session in der Redis Datenbank", InternalServerError);
                     }
                 }
                 else {
-                    let backend_error = BackendError::new(UserInputError, "Benutzername oder Passwort ist falsch");
-                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                    return HttpResponse::Forbidden().body(response_body);
+                    handle_error_str!(UserInputError, "Benutzername oder Passwort ist falsch", Forbidden);
                 }
             }
             else {
@@ -194,31 +184,19 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
                 let error_type = error.error_type;
 
                 if error_type == DbApiErrorType::NoResult {
-                    let backend_error = BackendError::new(UserInputError, "Benutzername oder Passwort ist falsch");
-                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                    return HttpResponse::Forbidden().body(response_body);
+                    handle_error_str!(UserInputError, "Benutzername oder Passwort ist falsch", Forbidden);
                 }
                 else {
-                    let backend_error = BackendError::new(DatabaseError, error.error_msg.as_str());
-                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                    return HttpResponse::InternalServerError().body(response_body);
+                    handle_error_str!(DatabaseError, error.error_msg.as_str(), InternalServerError);
                 }
             }
         }
         else {
-            let backend_error = BackendError::new(UserInputError, "Ungültige Zeichen in Benutzername oder Passwort");
-            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-            return HttpResponse::BadRequest().body(response_body);
+            handle_error_str!(UserInputError, "Ungültige Zeichen in Benutzername oder Passwort", BadRequest);
         }
     }
     else {
-        let backend_error = BackendError::new(Ignored, "Es ist bereits ein Benutzer eingelogt");
-        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-        return HttpResponse::Ok().body(response_body);
+        handle_error_str!(Ignored, "Es ist bereits ein Benutzer eingelogt", BadRequest);
     }
 }
 
@@ -235,10 +213,8 @@ pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> impl 
     }
     else {
         let redis_error = logoff_result.err().unwrap();
-        let backend_error = BackendError::new(DatabaseError, redis_error.error_msg.as_str());
-        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
-        return HttpResponse::InternalServerError().body(response_body);
+        handle_error_str!(DatabaseError, redis_error.error_msg.as_str(), InternalServerError);
     }
 }
 
@@ -267,30 +243,18 @@ pub async fn register(config: web::Data<ProjectConfig>, register_data: web::Form
                     return HttpResponse::Ok().body("{ \"success:\" true }");
                 }
                 else {
-                    let backend_error = BackendError::new(DatabaseError, "Fehler beim Hashen des Passwortes");
-                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                    return HttpResponse::InternalServerError().body(response_body);
+                    handle_error_str!(DatabaseError, "Fehler beim Anlegen des Benutzers in der Datenbank", InternalServerError);
                 }
             }
             else {
-                let backend_error = BackendError::new(InternalError, "Fehler beim Hashen des Passwortes");
-                let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-                return HttpResponse::InternalServerError().body(response_body);
+                handle_error_str!(DatabaseError, "Fehler beim Hashen des Passwortes", InternalServerError);
             }
         }
         else {
-            let backend_error = BackendError::new(UserInputError, "Der eingegebene Invitecode ist ungültig");
-            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-            return HttpResponse::Forbidden().body(response_body);
+            handle_error_str!(UserInputError, "Der eingegebene Invitecode ist ungültig", Forbidden);
         }
     }
     else {
-        let backend_error = BackendError::new(UserInputError, "Die eingegebenen Daten entsprechen nicht den Richtlinien");
-        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
-
-        return HttpResponse::BadRequest().body(response_body);
+        handle_error_str!(UserInputError, "Die eingegebenen Daten entsprechen nicht den Richtlinien", BadRequest);
     }
 }
