@@ -16,7 +16,7 @@
  */
 
 #[derive(Deserialize)]
-pub struct LoginInfo {
+pub struct LoginData {
     pub username: String,
     pub password: String,
     pub keep_logged_in: bool,

@@ -27,7 +27,7 @@ use crate::security::{get_user_session, check_username, check_password, verify_p
 use crate::security::AccessLevel::User;
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
-use crate::js_api::request_data::LoginInfo;
+use crate::js_api::request_data::LoginData;
 use crate::js_api::response_result::BackendError;
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError};
 use std::borrow::Borrow;
@@ -130,7 +130,7 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
     }
 }
 
-pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_data: web::Form<LoginInfo>) -> impl Responder {
+pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_data: web::Form<LoginData>) -> impl Responder {
     let db_connection = get_db_connection!(config, true, true);
     let user_session = get_user_session(&db_connection, &session, false).await;
 
