@@ -26,6 +26,7 @@ pub enum ErrorCode {
     Ignored,
     UnknownError,
     CookieError,
+    InternalError,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -57,6 +57,27 @@ pub fn check_and_escape_comment(comment: &str) -> Option<String> {
     }
 }
 
+pub fn check_invite_key(invite_key: &str) -> bool {
+    let key_length = invite_key.len();
+
+    // An invite key have to be 32 characters long
+    if key_length == 32 {
+        let key_chars = invite_key.chars();
+
+        // A tag can only have ascii alphanumeric characters and simple whitespaces
+        for char in key_chars {
+            let char_is_ascii_alphanumeric = char.is_ascii_alphanumeric();
+
+            return char_is_ascii_alphanumeric;
+        }
+
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 pub fn check_password(password: &str) -> bool {
     let password_length = password.len();
 

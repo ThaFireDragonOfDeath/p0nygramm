@@ -90,6 +90,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/get_upload_data/{upload_id}", web::get().to(js_api::get_upload_data))
                     .route("/login", web::post().to(js_api::login))
                     .route("/logout", web::get().to(js_api::logout))
+                    .route("/register", web::post().to(js_api::register))
                 )
                 .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
                 .service(fs::Files::new("/prv", "./static/uploads-prv/").index_file("index.html"))

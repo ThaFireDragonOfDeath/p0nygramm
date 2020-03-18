@@ -21,3 +21,10 @@ pub struct LoginData {
     pub password: String,
     pub keep_logged_in: bool,
 }
+
+#[derive(Deserialize)]
+pub struct RegisterData {
+    pub username: String,
+    pub password: String,
+    pub invite_key: String,
+}

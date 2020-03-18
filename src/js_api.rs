@@ -23,13 +23,13 @@ use crate::config::ProjectConfig;
 use actix_session::Session;
 use crate::db_api::DbConnection;
 use serde::{Serialize, Deserialize};
-use crate::security::{get_user_session, check_username, check_password, verify_password};
+use crate::security::{get_user_session, check_username, check_password, verify_password, check_invite_key, hash_password};
 use crate::security::AccessLevel::User;
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
-use crate::js_api::request_data::LoginData;
+use crate::js_api::request_data::{LoginData, RegisterData};
 use crate::js_api::response_result::BackendError;
-use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError};
+use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use std::borrow::Borrow;
 
 macro_rules! get_db_connection {
@@ -211,7 +211,7 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
             let backend_error = BackendError::new(UserInputError, "Ungültige Zeichen in Benutzername oder Passwort");
             let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
-            return HttpResponse::Ok().body(response_body);
+            return HttpResponse::BadRequest().body(response_body);
         }
     }
     else {
@@ -239,5 +239,58 @@ pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> impl 
         let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
 
         return HttpResponse::InternalServerError().body(response_body);
+    }
+}
+
+pub async fn register(config: web::Data<ProjectConfig>, register_data: web::Form<RegisterData>) -> impl Responder {
+    let db_connection = get_db_connection!(config, true, false);
+
+    let username = register_data.username.clone();
+    let password = register_data.password.clone();
+    let invite_key = register_data.invite_key.clone();
+
+    let username_is_ok = check_username(username.as_str());
+    let password_is_ok = check_password(password.as_str());
+    let invite_key_is_ok = check_invite_key(invite_key.as_str());
+
+    if username_is_ok && password_is_ok && invite_key_is_ok {
+        let master_invite_key = config.security_config.master_invite_key.get_value();
+
+        if invite_key == master_invite_key {
+            let password_hash_key = config.security_config.password_hash_key.get_value();
+            let password_hash = hash_password(password.as_str(), password_hash_key.as_str()).unwrap_or(String::new());
+
+            if password_hash != "" {
+                let create_result = db_connection.add_user(username.as_str(),password_hash.as_str(), false).await;
+
+                if create_result.is_ok() {
+                    return HttpResponse::Ok().body("{ \"success:\" true }");
+                }
+                else {
+                    let backend_error = BackendError::new(DatabaseError, "Fehler beim Hashen des Passwortes");
+                    let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+                    return HttpResponse::InternalServerError().body(response_body);
+                }
+            }
+            else {
+                let backend_error = BackendError::new(InternalError, "Fehler beim Hashen des Passwortes");
+                let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+                return HttpResponse::InternalServerError().body(response_body);
+            }
+        }
+        else {
+            let backend_error = BackendError::new(UserInputError, "Der eingegebene Invitecode ist ungültig");
+            let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+            return HttpResponse::Forbidden().body(response_body);
+        }
+    }
+    else {
+        let backend_error = BackendError::new(UserInputError, "Die eingegebenen Daten entsprechen nicht den Richtlinien");
+        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+
+        return HttpResponse::BadRequest().body(response_body);
     }
 }
