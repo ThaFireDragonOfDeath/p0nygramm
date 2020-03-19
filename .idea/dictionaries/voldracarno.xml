@@ -2,6 +2,7 @@
   <dictionary name="voldracarno">
     <words>
       <w>addr</w>
+      <w>ffmpeg</w>
       <w>ffprobe</w>
       <w>filepath</w>
       <w>htmlescape</w>

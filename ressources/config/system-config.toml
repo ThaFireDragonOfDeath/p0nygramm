@@ -7,6 +7,7 @@ max_upload_size = "20" # Maximum filesize of uploads in MB
 
 # Set the paths of the static webcontent, template and upload files
 [filesystem]
+ffmpeg_path = "/usr/bin/ffmpeg" # Path to ffmpeg binary
 ffprobe_path = "/usr/bin/ffprobe" # Path to ffprobe binary (part of ffmpeg)
 static_webcontent_path = "/srv/p0nygramm/static/webcontent"
 uploads_path = "/srv/p0nygramm/static/uploads"

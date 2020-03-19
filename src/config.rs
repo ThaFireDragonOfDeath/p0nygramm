@@ -178,6 +178,7 @@ impl ApplicationConfig {
 }
 
 pub struct FilesystemConfig {
+    pub ffmpeg_path: ConfigField<String>,
     pub ffprobe_path: ConfigField<String>,
     pub default_userconfig_filepath: ConfigField<String>,
     pub static_webcontent_path: ConfigField<String>,
@@ -187,6 +188,7 @@ pub struct FilesystemConfig {
 impl FilesystemConfig {
     pub fn new() -> FilesystemConfig {
         FilesystemConfig {
+            ffmpeg_path: ConfigField::new_empty(String::new()),
             ffprobe_path: ConfigField::new_empty(String::new()),
             default_userconfig_filepath: ConfigField::new_empty(String::new()),
             static_webcontent_path: ConfigField::new_empty(String::new()),
@@ -195,6 +197,7 @@ impl FilesystemConfig {
     }
 
     pub fn parse_toml(&mut self, toml_obj: &Value) {
+        read_toml_entry_string!(self, toml_obj, "filesystem", ffmpeg_path);
         read_toml_entry_string!(self, toml_obj, "filesystem", ffprobe_path);
         read_toml_entry_string!(self, toml_obj, "filesystem", default_userconfig_filepath);
         read_toml_entry_string!(self, toml_obj, "filesystem", static_webcontent_path);
