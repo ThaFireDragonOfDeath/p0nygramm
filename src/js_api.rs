@@ -103,7 +103,15 @@ macro_rules! handle_session_error {
 
 // TODO: Finish implementation
 pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut payload: Multipart) -> HttpResponse {
+    let db_connection = get_db_connection!(config, true, true);
+    let session_data = get_user_session_data!(db_connection, session, false);
+
+    let mut upload_file_name = String::new();
+    let mut upload_write_success = true;
+    let mut upload_tags_string = String::new();
+
     while let Some(item) = payload.next().await {
+        // Only proceed if the item is ok and there isn't already a file uploaded
         if item.is_ok() {
             let mut field = item.unwrap();
             let content_disposition = field.content_disposition();
@@ -112,16 +120,29 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
                 let content_disposition = content_disposition.unwrap();
 
                 if content_disposition.is_form_data() {
+                    let name = content_disposition.get_name();
                     let filename = content_disposition.get_filename();
 
-                    if filename.is_some() {
+                    // Read initial tags from multipart stream
+                    if name.is_some() && upload_tags_string == "" {
+                        while let Some(chunk) = field.next().await {
+                            let data = chunk.unwrap();
+                            let parse_result = String::from_utf8(data.to_vec());
+
+                            if parse_result.is_ok() {
+                                upload_tags_string = parse_result.unwrap();
+                            }
+                        }
+                    }
+
+                    // Read and write uploaded file from the multipart stream
+                    if filename.is_some() && upload_file_name == "" {
                         let filename = filename.unwrap();
                         let filepath = format!("./tmp/p0nygramm/upload_heap/{}", filename);
                         let filepath_clone = filepath.clone();
 
                         // Create file (using actix threadpool)
-                        let file = web::block(move || std::fs::File::create(filepath_clone.as_str()))
-                            .await;
+                        let file = web::block(move || std::fs::File::create(filepath_clone.as_str())).await;
 
                         if file.is_ok() {
                             let mut file = file.unwrap();
@@ -130,19 +151,21 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
                             while let Some(chunk) = field.next().await {
                                 let data = chunk.unwrap();
 
+                                // Set outer filename to prevent processing of other entries of the multipart stream
+                                upload_file_name = filename.to_owned();
+
                                 // Write data to tmp (using actix threadpool) and return the ownership over the file object
                                 let write_result = web::block(move || file.write_all(&data).map(|_| file)).await;
 
                                 if write_result.is_ok() {
                                     // Return the ownership of the file object to the file variable
                                     file = write_result.unwrap();
-
-                                    return HttpResponse::Ok().body("{ \"success:\" true }");
                                 }
                                 else {
                                     let remove_success = std::fs::remove_file(filepath.as_str());
+                                    upload_write_success = false;
 
-                                    return HttpResponse::Ok().body("{ \"success:\" false }");
+                                    break;
                                 }
                             }
                         }
@@ -150,6 +173,13 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
                 }
             }
         }
+    }
+
+    if upload_write_success {
+        // TODO: Process file
+    }
+    else {
+        handle_error_str!(UnknownError, "Es ist ein Fehler beim Speichern des Uploades aufgetreten", InternalServerError);
     }
 
     return HttpResponse::Ok().body("{ \"success:\" false }");
