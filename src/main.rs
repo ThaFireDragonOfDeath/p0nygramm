@@ -15,10 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#[macro_use]
+mod js_api;
+
 mod config;
 mod db_api;
 mod file_api;
-mod js_api;
+mod frontend;
 mod security;
 
 #[macro_use]
@@ -33,6 +36,7 @@ extern crate serde_json;
 extern crate argonautica;
 extern crate chrono;
 extern crate fern;
+extern crate handlebars;
 extern crate log;
 extern crate rand;
 extern crate tokio;
@@ -44,6 +48,7 @@ use crate::config::ProjectConfig;
 use log::{trace, debug, info, warn, error};
 use actix_session::CookieSession;
 use std::borrow::Borrow;
+use handlebars::Handlebars;
 
 fn configure_debug_log() {
     fern::Dispatch::new()
@@ -74,11 +79,33 @@ async fn main() -> std::io::Result<()> {
     if prj_config.is_some() {
         let prj_config = prj_config.unwrap();
         let session_private_key = prj_config.security_config.session_private_key.get_value();
+        let template_path = prj_config.filesystem_config.template_path.get_value();
         let prj_config_data = web::Data::new(prj_config);
+
+        let mut handlebars = Handlebars::new();
+
+        handlebars
+            .register_templates_directory(".html", template_path.as_str())
+            .unwrap();
+        let handlebars_data = web::Data::new(handlebars);
 
         HttpServer::new(move || {
             App::new()
-                .service(web::scope("/js-api")
+                .service(
+                    web::scope("/")
+                    .wrap(CookieSession::signed(session_private_key.as_bytes())
+                        .http_only(true)
+                        .max_age(2592000) // 30 days
+                        .name("session_data")
+                        .path("/")
+                        .secure(true)
+                    )
+                    .app_data(prj_config_data.clone())
+                    .app_data(handlebars_data.clone())
+                    .route("/", web::post().to(frontend::index))
+                )
+                .service(
+                    web::scope("/js-api")
                     .wrap(CookieSession::signed(session_private_key.as_bytes())
                         .http_only(true)
                         .max_age(2592000) // 30 days

@@ -182,7 +182,9 @@ pub struct FilesystemConfig {
     pub ffprobe_path: ConfigField<String>,
     pub default_userconfig_filepath: ConfigField<String>,
     pub static_webcontent_path: ConfigField<String>,
+    pub template_path: ConfigField<String>,
     pub uploads_path: ConfigField<String>,
+    pub uploads_prv_path: ConfigField<String>,
 }
 
 impl FilesystemConfig {
@@ -192,7 +194,9 @@ impl FilesystemConfig {
             ffprobe_path: ConfigField::new_empty(String::new()),
             default_userconfig_filepath: ConfigField::new_empty(String::new()),
             static_webcontent_path: ConfigField::new_empty(String::new()),
+            template_path: ConfigField::new_empty(String::new()),
             uploads_path: ConfigField::new_empty(String::new()),
+            uploads_prv_path: ConfigField::new_empty(String::new()),
         }
     }
 
@@ -201,7 +205,9 @@ impl FilesystemConfig {
         read_toml_entry_string!(self, toml_obj, "filesystem", ffprobe_path);
         read_toml_entry_string!(self, toml_obj, "filesystem", default_userconfig_filepath);
         read_toml_entry_string!(self, toml_obj, "filesystem", static_webcontent_path);
+        read_toml_entry_string!(self, toml_obj, "filesystem", template_path);
         read_toml_entry_string!(self, toml_obj, "filesystem", uploads_path);
+        read_toml_entry_string!(self, toml_obj, "filesystem", uploads_prv_path);
     }
 }
 

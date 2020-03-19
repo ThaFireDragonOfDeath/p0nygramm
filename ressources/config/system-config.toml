@@ -10,7 +10,9 @@ max_upload_size = "20" # Maximum filesize of uploads in MB
 ffmpeg_path = "/usr/bin/ffmpeg" # Path to ffmpeg binary
 ffprobe_path = "/usr/bin/ffprobe" # Path to ffprobe binary (part of ffmpeg)
 static_webcontent_path = "/srv/p0nygramm/static/webcontent"
+template_path = "/srv/p0nygramm/static/templates"
 uploads_path = "/srv/p0nygramm/static/uploads"
+uploads_prv_path = "/srv/p0nygramm/static/uploads-prv"
 
 # Set on which ip and port %project_name% will listen
 [network]

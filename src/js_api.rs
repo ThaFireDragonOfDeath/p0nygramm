@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-mod request_data;
-mod response_result;
+pub mod request_data;
+pub mod response_result;
 
 use actix_web::{Responder, web, HttpResponse};
 use crate::config::ProjectConfig;
