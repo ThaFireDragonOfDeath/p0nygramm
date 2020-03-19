@@ -31,6 +31,9 @@ use crate::js_api::request_data::{LoginData, RegisterData};
 use crate::js_api::response_result::BackendError;
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use std::borrow::Borrow;
+use actix_multipart::Multipart;
+use futures::StreamExt;
+use std::io::Write;
 
 macro_rules! get_db_connection {
     ($config:ident, $req_postgres:expr, $req_redis:expr) => {
@@ -96,6 +99,60 @@ macro_rules! handle_session_error {
             handle_error_str!(error_code, error_txt.as_str(), Forbidden);
         }
     };
+}
+
+// TODO: Finish implementation
+pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut payload: Multipart) -> HttpResponse {
+    while let Some(item) = payload.next().await {
+        if item.is_ok() {
+            let mut field = item.unwrap();
+            let content_disposition = field.content_disposition();
+
+            if content_disposition.is_some() {
+                let content_disposition = content_disposition.unwrap();
+
+                if content_disposition.is_form_data() {
+                    let filename = content_disposition.get_filename();
+
+                    if filename.is_some() {
+                        let filename = filename.unwrap();
+                        let filepath = format!("./tmp/p0nygramm/upload_heap/{}", filename);
+                        let filepath_clone = filepath.clone();
+
+                        // Create file (using actix threadpool)
+                        let file = web::block(move || std::fs::File::create(filepath_clone.as_str()))
+                            .await;
+
+                        if file.is_ok() {
+                            let mut file = file.unwrap();
+
+                            // Field in turn is stream of bytes
+                            while let Some(chunk) = field.next().await {
+                                let data = chunk.unwrap();
+
+                                // Write data to tmp (using actix threadpool) and return the ownership over the file object
+                                let write_result = web::block(move || file.write_all(&data).map(|_| file)).await;
+
+                                if write_result.is_ok() {
+                                    // Return the ownership of the file object to the file variable
+                                    file = write_result.unwrap();
+
+                                    return HttpResponse::Ok().body("{ \"success:\" true }");
+                                }
+                                else {
+                                    let remove_success = std::fs::remove_file(filepath.as_str());
+
+                                    return HttpResponse::Ok().body("{ \"success:\" false }");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return HttpResponse::Ok().body("{ \"success:\" false }");
 }
 
 pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>) -> HttpResponse {

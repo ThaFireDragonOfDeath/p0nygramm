@@ -1,6 +1,7 @@
 <component name="ProjectDictionaryState">
   <dictionary name="voldracarno">
     <words>
+      <w>actix</w>
       <w>addr</w>
       <w>ffmpeg</w>
       <w>ffprobe</w>
@@ -8,6 +9,7 @@
       <w>htmlescape</w>
       <w>iter</w>
       <w>nsfw</w>
+      <w>threadpool</w>
       <w>toml</w>
       <w>unixsocket</w>
       <w>upvotes</w>
