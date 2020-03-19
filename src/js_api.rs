@@ -98,7 +98,7 @@ macro_rules! handle_session_error {
     };
 }
 
-pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>) -> impl Responder {
+pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>) -> HttpResponse {
     let target_upload_id = url_data.into_inner();
 
     // Input checks
@@ -129,7 +129,7 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
     }
 }
 
-pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_data: web::Form<LoginData>) -> impl Responder {
+pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_data: web::Form<LoginData>) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, true);
     let user_session = get_user_session(&db_connection, &session, false).await;
 
@@ -200,7 +200,7 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
     }
 }
 
-pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> impl Responder {
+pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> HttpResponse {
     let db_connection = get_db_connection!(config, false, true);
     let session_data = get_user_session_data!(db_connection, session, false);
     let session_id = session_data.session_id;
@@ -218,7 +218,7 @@ pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> impl 
     }
 }
 
-pub async fn register(config: web::Data<ProjectConfig>, register_data: web::Form<RegisterData>) -> impl Responder {
+pub async fn register(config: web::Data<ProjectConfig>, register_data: web::Form<RegisterData>) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, false);
 
     let username = register_data.username.clone();
