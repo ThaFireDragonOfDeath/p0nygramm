@@ -15,13 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+use crate::config::ProjectConfig;
+
+pub struct FileProcessError {
+    error_type: FileProcessErrorType,
+    error_msg: String,
+}
+
+pub enum FileProcessErrorType {
+    FormatError,
+}
+
 pub fn get_url_from_filename(filename: &str) -> String {
-    format!("./uploads/{}", filename)
+    format!("/uploads/{}", filename)
 }
 
 pub fn get_preview_url_from_filename(filename: &str) -> String {
     let filename_point_pos = filename.rfind('.').unwrap();
     let (file_name, _file_ext) = filename.split_at(filename_point_pos);
 
-    format!("./prv/{}.{}", file_name, ".jpg")
+    format!("/prv/{}.{}", file_name, ".jpg")
+}
+
+pub fn process_file(config: ProjectConfig, filename: &str) -> Result<(), FileProcessError> {
+    // TODO: Implement
+
+    return Ok(());
 }
