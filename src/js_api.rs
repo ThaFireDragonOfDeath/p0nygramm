@@ -34,6 +34,7 @@ use std::borrow::Borrow;
 use actix_multipart::Multipart;
 use futures::StreamExt;
 use std::io::Write;
+use actix_web::http::header::ContentDisposition;
 
 macro_rules! get_db_connection {
     ($config:ident, $req_postgres:expr, $req_redis:expr) => {
@@ -122,6 +123,7 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
                 if content_disposition.is_form_data() {
                     let name = content_disposition.get_name();
                     let filename = content_disposition.get_filename();
+                    let mime_type = field.content_type();
 
                     // Read initial tags from multipart stream
                     if name.is_some() && upload_tags_string == "" {
@@ -303,6 +305,40 @@ pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> HttpR
 
         handle_error_str!(DatabaseError, redis_error.error_msg.as_str(), InternalServerError);
     }
+}
+
+// Returns (name, data) (as String) or None
+async fn parse_multipart_form_data(content_disposition: ContentDisposition) -> Option<(String, String)> {
+    if content_disposition.is_form_data() {
+        let name = content_disposition.get_name();
+        let mime_type = field.content_type();
+        let mut parse_full_success = true;
+        let mut data_content = String::new();
+
+        if name.is_some() && upload_tags_string == "" {
+            while let Some(chunk) = field.next().await {
+                let data = chunk.unwrap();
+                let parse_result = String::from_utf8(data.to_vec());
+
+                if parse_result.is_ok() {
+                    let read_data = parse_result.unwrap();
+                    data_content.push_str(read_data.as_str());
+                }
+                else {
+                    parse_full_success = false;
+                    break;
+                }
+            }
+
+            if parse_full_success {
+                let return_value : (String, String) = (name.unwrap().to_owned(), data_content);
+
+                return Some(return_value);
+            }
+        }
+    }
+
+    return None;
 }
 
 pub async fn register(config: web::Data<ProjectConfig>, register_data: web::Form<RegisterData>) -> HttpResponse {
