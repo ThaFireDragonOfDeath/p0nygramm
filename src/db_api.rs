@@ -29,6 +29,22 @@ mod postgres;
 mod redis;
 pub mod db_result;
 
+macro_rules! check_postgres_connection {
+    ($self:ident) => {
+        if !$self.have_postgres_connection() {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
+        }
+    };
+}
+
+macro_rules! check_redis_connection {
+    ($self:ident) => {
+        if !$self.have_postgres_connection() {
+            return Err(SessionError::new(DbError, "Keine Verbindung zum Redis Server vorhanden!"));
+        }
+    };
+}
+
 pub struct DbConnection {
     postgres_connection: Option<PostgresConnection>,
     redis_connection: Option<RedisConnection>,
@@ -38,15 +54,15 @@ impl DbConnection {
     pub async fn add_comment(&self, comment_poster: i32, comment_upload: i32, comment_text: &str) -> Result<(), DbApiError> {
         trace!("Enter DbConnection::add_comment");
 
-        if !self.have_postgres_connection() {
-            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
-        }
+        check_postgres_connection!(self);
 
         return self.postgres_connection.as_ref().unwrap().add_comment(comment_poster, comment_upload, comment_text).await;
     }
 
     pub async fn add_tags(&self, tags: Vec<&str>, tag_poster: i32, upload_id: i32) -> Result<(), DbApiError> {
         trace!("Enter DbConnection::add_tags");
+
+        check_postgres_connection!(self);
 
         let mut part_fail = false;
         let mut full_fail = true;
@@ -78,9 +94,7 @@ impl DbConnection {
     pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
         trace!("Enter DbConnection::add_upload");
 
-        if !self.have_postgres_connection() {
-            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
-        }
+        check_postgres_connection!(self);
 
         return self.postgres_connection.as_ref().unwrap().add_upload(upload_filename, upload_is_nsfw, uploader).await;
     }
@@ -89,9 +103,7 @@ impl DbConnection {
     pub async fn add_user(&self, username: &str, pw_hash: &str, user_is_mod: bool) -> Result<i32, DbApiError> {
         trace!("Enter PostgresConnection::add_user");
 
-        if !self.have_postgres_connection() {
-            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
-        }
+        check_postgres_connection!(self);
 
         return self.postgres_connection.as_ref().unwrap().add_user(username, pw_hash, user_is_mod).await;
     }
@@ -99,9 +111,7 @@ impl DbConnection {
     pub async fn create_session(&self, user_id: i32, is_lts: bool) -> Result<SessionData, SessionError> {
         trace!("Enter DbConnection::create_session");
 
-        if !self.have_redis_connection() {
-            return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
-        }
+        check_redis_connection!(self);
 
         return self.redis_connection.as_ref().unwrap().create_session(user_id, is_lts).await;
     }
@@ -109,9 +119,7 @@ impl DbConnection {
     pub async fn destroy_session(&self, session_id: &str) -> Result<(), SessionError> {
         trace!("Enter DbConnection::destroy_session");
 
-        if !self.have_redis_connection() {
-            return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
-        }
+        check_redis_connection!(self);
 
         return self.redis_connection.as_ref().unwrap().destroy_session(session_id).await;
     }
@@ -119,9 +127,7 @@ impl DbConnection {
     pub async fn get_session_data(&self, session: &Session, session_id: &str, force_session_renew: bool) -> Result<SessionData, SessionError> {
         trace!("Enter DbConnection::get_session_data");
 
-        if !self.have_redis_connection() {
-            return Err(SessionError::new(DbError, "Fehler beim Zugriff auf die Redis Datenbank"));
-        }
+        check_redis_connection!(self);
 
         let redis_connection = self.redis_connection.as_ref().unwrap();
         let session_data = redis_connection.get_session_data(session_id).await;
@@ -138,9 +144,7 @@ impl DbConnection {
     pub async fn get_upload_data(&self, upload_id: i32) -> Result<UploadData, DbApiError> {
         trace!("Enter DbConnection::get_upload_data");
 
-        if !self.have_postgres_connection() {
-            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
-        }
+        check_postgres_connection!(self);
 
         return self.postgres_connection.as_ref().unwrap().get_upload_data(upload_id).await;
     }
@@ -148,9 +152,7 @@ impl DbConnection {
     pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
         trace!("Enter DbConnection::get_uploads");
 
-        if !self.have_postgres_connection() {
-            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
-        }
+        check_postgres_connection!(self);
 
         return self.postgres_connection.as_ref().unwrap().get_uploads(start_id, max_count, show_nsfw).await;
     }
@@ -158,9 +160,7 @@ impl DbConnection {
     pub async fn get_userdata_by_username(&self, username: &str) -> Result<UserData, DbApiError> {
         trace!("Enter DbConnection::get_userdata_by_username");
 
-        if !self.have_postgres_connection() {
-            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
-        }
+        check_postgres_connection!(self);
 
         return self.postgres_connection.as_ref().unwrap().get_userdata_by_username(username).await;
     }
