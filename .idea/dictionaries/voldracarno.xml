@@ -9,6 +9,7 @@
       <w>htmlescape</w>
       <w>iter</w>
       <w>nsfw</w>
+      <w>taglist</w>
       <w>threadpool</w>
       <w>toml</w>
       <w>unixsocket</w>

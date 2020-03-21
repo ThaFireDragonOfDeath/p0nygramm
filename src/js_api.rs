@@ -18,23 +18,21 @@
 pub mod request_data;
 pub mod response_result;
 
-use actix_web::{Responder, web, HttpResponse};
+use actix_web::{web, HttpResponse, HttpMessage};
 use crate::config::ProjectConfig;
 use actix_session::Session;
 use crate::db_api::DbConnection;
-use serde::{Serialize, Deserialize};
 use crate::security::{get_user_session, check_username, check_password, verify_password, check_invite_key, hash_password};
-use crate::security::AccessLevel::User;
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
 use crate::js_api::request_data::{LoginData, RegisterData};
 use crate::js_api::response_result::BackendError;
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
-use std::borrow::Borrow;
-use actix_multipart::Multipart;
-use futures::StreamExt;
-use std::io::Write;
-use actix_web::http::header::ContentDisposition;
+use actix_multipart::{Multipart, Field};
+use futures::{StreamExt, TryStreamExt};
+use std::collections::HashMap;
+use log::{trace, debug, info, warn, error};
+use crate::tokio::io::AsyncWriteExt;
 
 macro_rules! get_db_connection {
     ($config:ident, $req_postgres:expr, $req_redis:expr) => {
@@ -107,81 +105,16 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
     let db_connection = get_db_connection!(config, true, true);
     let session_data = get_user_session_data!(db_connection, session, false);
 
-    let mut upload_file_name = String::new();
-    let mut upload_write_success = true;
-    let mut upload_tags_string = String::new();
+    let multipart_data = parse_multipart_form_data(&mut payload).await;
 
-    while let Some(item) = payload.next().await {
-        // Only proceed if the item is ok and there isn't already a file uploaded
-        if item.is_ok() {
-            let mut field = item.unwrap();
-            let content_disposition = field.content_disposition();
+    let taglist_str = multipart_data.get("taglist");
+    let filepath = multipart_data.get("file");
 
-            if content_disposition.is_some() {
-                let content_disposition = content_disposition.unwrap();
-
-                if content_disposition.is_form_data() {
-                    let name = content_disposition.get_name();
-                    let filename = content_disposition.get_filename();
-                    let mime_type = field.content_type();
-
-                    // Read initial tags from multipart stream
-                    if name.is_some() && upload_tags_string == "" {
-                        while let Some(chunk) = field.next().await {
-                            let data = chunk.unwrap();
-                            let parse_result = String::from_utf8(data.to_vec());
-
-                            if parse_result.is_ok() {
-                                upload_tags_string = parse_result.unwrap();
-                            }
-                        }
-                    }
-
-                    // Read and write uploaded file from the multipart stream
-                    if filename.is_some() && upload_file_name == "" {
-                        let filename = filename.unwrap();
-                        let filepath = format!("./tmp/p0nygramm/upload_heap/{}", filename);
-                        let filepath_clone = filepath.clone();
-
-                        // Create file (using actix threadpool)
-                        let file = web::block(move || std::fs::File::create(filepath_clone.as_str())).await;
-
-                        if file.is_ok() {
-                            let mut file = file.unwrap();
-
-                            // Field in turn is stream of bytes
-                            while let Some(chunk) = field.next().await {
-                                let data = chunk.unwrap();
-
-                                // Set outer filename to prevent processing of other entries of the multipart stream
-                                upload_file_name = filename.to_owned();
-
-                                // Write data to tmp (using actix threadpool) and return the ownership over the file object
-                                let write_result = web::block(move || file.write_all(&data).map(|_| file)).await;
-
-                                if write_result.is_ok() {
-                                    // Return the ownership of the file object to the file variable
-                                    file = write_result.unwrap();
-                                }
-                                else {
-                                    let remove_success = std::fs::remove_file(filepath.as_str());
-                                    upload_write_success = false;
-
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if upload_write_success {
+    if filepath.is_some() {
         // TODO: Process file
     }
     else {
-        handle_error_str!(UnknownError, "Es ist ein Fehler beim Speichern des Uploades aufgetreten", InternalServerError);
+        handle_error_str!(UnknownError, "Es ist ein Fehler beim Speichern der Datei auf dem Server aufgetreten", InternalServerError);
     }
 
     return HttpResponse::Ok().body("{ \"success:\" false }");
@@ -307,38 +240,83 @@ pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> HttpR
     }
 }
 
-// Returns (name, data) (as String) or None
-async fn parse_multipart_form_data(content_disposition: ContentDisposition) -> Option<(String, String)> {
-    if content_disposition.is_form_data() {
-        let name = content_disposition.get_name();
-        let mime_type = field.content_type();
-        let mut parse_full_success = true;
-        let mut data_content = String::new();
+//noinspection ALL
+// Returns a map of name and content (in case of file: content = filename)
+async fn parse_multipart_form_data(payload: &mut Multipart) -> HashMap<String, String> {
+    let mut result_map : HashMap<String, String> = HashMap::new();
 
-        if name.is_some() && upload_tags_string == "" {
-            while let Some(chunk) = field.next().await {
-                let data = chunk.unwrap();
-                let parse_result = String::from_utf8(data.to_vec());
+    while let Ok(Some(field)) = payload.try_next().await {
+        let mut field : Field = field; // Hack to show types in IDEA IDE
+        let content_disposition = field.content_disposition();
 
-                if parse_result.is_ok() {
-                    let read_data = parse_result.unwrap();
-                    data_content.push_str(read_data.as_str());
+        if content_disposition.is_some() {
+            let content_disposition = content_disposition.unwrap();
+
+            if content_disposition.is_form_data() {
+                let name = content_disposition.get_name();
+                let filename = content_disposition.get_filename();
+                let mime_type = field.content_type();
+                let mut parse_full_success = true;
+                let mut data_content = String::new();
+
+                if name.is_some() {
+                    if filename.is_some() {
+                        // Warning: IntelliJ cant show types or perform code completion on async fs stuff,
+                        // because tokio uses cfg attributes which the IDE can't parse (yet)
+
+                        let filename = filename.unwrap().to_owned();
+                        let filepath = format!("./tmp/p0nygramm/upload_heap/{}", filename.as_str());
+                        let file = tokio::fs::File::create(filepath.as_str()).await;
+
+                        if file.is_ok() {
+                            let mut file : tokio::fs::File = file.unwrap();
+
+                            // Field in turn is stream of bytes
+                            while let Some(chunk) = field.next().await {
+                                let data = chunk.unwrap();
+                                let write_result = file.write_all(&data).await;
+
+                                if write_result.is_err() {
+                                    parse_full_success = false;
+                                    let remove_result : Result<_, _> = tokio::fs::remove_file(filepath.as_str()).await;
+
+                                    if remove_result.is_err() {
+                                        error!("Can't delete file: {}", filepath.as_str());
+                                    }
+
+                                    break;
+                                }
+                            }
+
+                            if parse_full_success {
+                                result_map.insert(name.unwrap().to_owned(), filename.clone());
+                            }
+                        }
+                    }
+                    else {
+                        while let Some(chunk) = field.next().await {
+                            let data = chunk.unwrap();
+                            let parse_result = String::from_utf8(data.to_vec());
+
+                            if parse_result.is_ok() {
+                                let read_data = parse_result.unwrap();
+                                data_content.push_str(read_data.as_str());
+                            } else {
+                                parse_full_success = false;
+                                break;
+                            }
+                        }
+
+                        if parse_full_success {
+                            result_map.insert(name.unwrap().to_owned(), data_content);
+                        }
+                    }
                 }
-                else {
-                    parse_full_success = false;
-                    break;
-                }
-            }
-
-            if parse_full_success {
-                let return_value : (String, String) = (name.unwrap().to_owned(), data_content);
-
-                return Some(return_value);
             }
         }
     }
 
-    return None;
+    return result_map;
 }
 
 pub async fn register(config: web::Data<ProjectConfig>, register_data: web::Form<RegisterData>) -> HttpResponse {
