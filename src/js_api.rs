@@ -25,7 +25,7 @@ use crate::db_api::DbConnection;
 use crate::security::{get_user_session, check_username, check_password, verify_password, check_invite_key, hash_password};
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
-use crate::js_api::request_data::{LoginData, RegisterData};
+use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime};
 use crate::js_api::response_result::BackendError;
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use actix_multipart::{Multipart, Field};
@@ -260,54 +260,62 @@ async fn parse_multipart_form_data(payload: &mut Multipart) -> HashMap<String, S
 
                 if name.is_some() {
                     if filename.is_some() {
-                        // Warning: IntelliJ cant show types or perform code completion on async fs stuff,
-                        // because tokio uses cfg attributes which the IDE can't parse (yet)
+                        let mime_type_is_ok = check_file_mime(mime_type);
 
-                        let filename = filename.unwrap().to_owned();
-                        let filepath = format!("./tmp/p0nygramm/upload_heap/{}", filename.as_str());
-                        let file = tokio::fs::File::create(filepath.as_str()).await;
+                        if mime_type_is_ok {
+                            // Warning: IntelliJ cant show types or perform code completion on async fs stuff,
+                            // because tokio uses cfg attributes which the IDE can't parse (yet)
 
-                        if file.is_ok() {
-                            let mut file : tokio::fs::File = file.unwrap();
+                            let filename = filename.unwrap().to_owned();
+                            let filepath = format!("./tmp/p0nygramm/upload_heap/{}", filename.as_str());
+                            let file = tokio::fs::File::create(filepath.as_str()).await;
 
-                            // Field in turn is stream of bytes
+                            if file.is_ok() {
+                                let mut file : tokio::fs::File = file.unwrap();
+
+                                // Field in turn is stream of bytes
+                                while let Some(chunk) = field.next().await {
+                                    let data = chunk.unwrap();
+                                    let write_result = file.write_all(&data).await;
+
+                                    if write_result.is_err() {
+                                        parse_full_success = false;
+                                        let remove_result : Result<_, _> = tokio::fs::remove_file(filepath.as_str()).await;
+
+                                        if remove_result.is_err() {
+                                            error!("Can't delete file: {}", filepath.as_str());
+                                        }
+
+                                        break;
+                                    }
+                                }
+
+                                if parse_full_success {
+                                    result_map.insert(name.unwrap().to_owned(), filename.clone());
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        let mime_type_is_ok = check_form_content_mime(mime_type);
+
+                        if mime_type_is_ok {
                             while let Some(chunk) = field.next().await {
                                 let data = chunk.unwrap();
-                                let write_result = file.write_all(&data).await;
+                                let parse_result = String::from_utf8(data.to_vec());
 
-                                if write_result.is_err() {
+                                if parse_result.is_ok() {
+                                    let read_data = parse_result.unwrap();
+                                    data_content.push_str(read_data.as_str());
+                                } else {
                                     parse_full_success = false;
-                                    let remove_result : Result<_, _> = tokio::fs::remove_file(filepath.as_str()).await;
-
-                                    if remove_result.is_err() {
-                                        error!("Can't delete file: {}", filepath.as_str());
-                                    }
-
                                     break;
                                 }
                             }
 
                             if parse_full_success {
-                                result_map.insert(name.unwrap().to_owned(), filename.clone());
+                                result_map.insert(name.unwrap().to_owned(), data_content);
                             }
-                        }
-                    }
-                    else {
-                        while let Some(chunk) = field.next().await {
-                            let data = chunk.unwrap();
-                            let parse_result = String::from_utf8(data.to_vec());
-
-                            if parse_result.is_ok() {
-                                let read_data = parse_result.unwrap();
-                                data_content.push_str(read_data.as_str());
-                            } else {
-                                parse_full_success = false;
-                                break;
-                            }
-                        }
-
-                        if parse_full_success {
-                            result_map.insert(name.unwrap().to_owned(), data_content);
                         }
                     }
                 }

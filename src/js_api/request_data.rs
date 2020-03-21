@@ -17,6 +17,7 @@
 
 use crate::security::check_tag;
 use log::{trace, debug, info, warn, error};
+use mime::Mime;
 
 #[derive(Deserialize)]
 pub struct LoginData {
@@ -67,5 +68,28 @@ impl TagData {
         TagData {
             taglist: result_vec,
         }
+    }
+}
+
+pub fn check_file_mime(mime_type: &Mime) -> bool {
+    let type_name = mime_type.type_();
+    let subtype_name = mime_type.subtype();
+
+    match (type_name, subtype_name) {
+        (mime::IMAGE, mime::PNG) => true,
+        (mime::IMAGE, mime::JPEG) => true,
+        (mime::IMAGE, mime::GIF) => true,
+        (mime::VIDEO, mime::MP4) => true,
+        _ => false,
+    }
+}
+
+pub fn check_form_content_mime(mime_type: &Mime) -> bool {
+    let type_name = mime_type.type_();
+    let subtype_name = mime_type.subtype();
+
+    match (type_name, subtype_name) {
+        (mime::APPLICATION, mime::OCTET_STREAM) => true,
+        _ => false,
     }
 }

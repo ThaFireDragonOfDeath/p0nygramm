@@ -38,6 +38,7 @@ extern crate chrono;
 extern crate fern;
 extern crate handlebars;
 extern crate log;
+extern crate mime;
 extern crate rand;
 extern crate tokio;
 
