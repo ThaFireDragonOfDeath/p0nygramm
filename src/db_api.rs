@@ -48,23 +48,6 @@ impl DbConnection {
     pub async fn add_tags(&self, tags: Vec<&str>, tag_poster: i32, upload_id: i32) -> Result<(), DbApiError> {
         trace!("Enter DbConnection::add_tags");
 
-        /*
-        let tags_iter: dyn Iterator<&str> = tags.split(",");
-        for tag in tags_iter {
-            let mut current_tag: String = tag.to_owned();
-
-            // Remove all whitespaces from left
-            while current_tag[0..1].as_ref() = " " {
-                current_tag.remove(0);
-            }
-
-            // Remove all whitespaces from right
-            while current_tag[current_tag.len() - 2..current_tag.len() - 1].as_ref() = " " {
-                current_tag.remove(current_tag.len() - 1);
-            }
-        }
-        */
-
         let mut part_fail = false;
         let mut full_fail = true;
 

@@ -15,6 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+use crate::security::check_tag;
+use log::{trace, debug, info, warn, error};
+
 #[derive(Deserialize)]
 pub struct LoginData {
     pub username: String,
@@ -27,4 +30,42 @@ pub struct RegisterData {
     pub username: String,
     pub password: String,
     pub invite_key: String,
+}
+
+pub struct TagData {
+    pub taglist: Vec<String>,
+}
+
+impl TagData {
+    pub fn from_str(taglist_str: &str) -> TagData {
+        let mut result_vec : Vec<String> = Vec::new();
+        let tags_iter : Vec<&str> = taglist_str.split(",").collect();
+
+        for tag in tags_iter {
+            let mut current_tag = tag.to_owned();
+
+            // Remove all whitespaces from left
+            while current_tag.starts_with(" ") {
+                current_tag.remove(0);
+            }
+
+            // Remove all whitespaces from right
+            while current_tag.ends_with(" ") {
+                current_tag.remove(current_tag.len() - 1);
+            }
+
+            let tag_is_ok = check_tag(current_tag.as_str());
+
+            if tag_is_ok {
+                result_vec.push(current_tag);
+            }
+            else {
+                warn!("from_str: Got invalid tag: {}", current_tag);
+            }
+        }
+
+        TagData {
+            taglist: result_vec,
+        }
+    }
 }

@@ -124,9 +124,8 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
     let target_upload_id = url_data.into_inner();
 
     // Input checks
-    if target_upload_id < 0 {
-        let backend_error = BackendError::new(UserInputError, "Die Upload-ID muss 0 oder größer sein");
-        let response_body = serde_json::to_string(&backend_error).unwrap_or("".to_owned());
+    if target_upload_id < 1 {
+        handle_error_str!(UserInputError, "Die Upload-ID muss 1 oder größer sein", BadRequest);
     }
 
     let db_connection = get_db_connection!(config, true, true);
