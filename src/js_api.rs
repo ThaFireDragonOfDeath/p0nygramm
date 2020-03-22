@@ -33,6 +33,7 @@ use futures::{StreamExt, TryStreamExt};
 use std::collections::HashMap;
 use log::{trace, debug, info, warn, error};
 use crate::tokio::io::AsyncWriteExt;
+use crate::file_api::get_upload_filedrop_path;
 
 macro_rules! get_db_connection {
     ($config:ident, $req_postgres:expr, $req_redis:expr) => {
@@ -267,7 +268,7 @@ async fn parse_multipart_form_data(payload: &mut Multipart) -> HashMap<String, S
                             // because tokio uses cfg attributes which the IDE can't parse (yet)
 
                             let filename = filename.unwrap().to_owned();
-                            let filepath = format!("./tmp/p0nygramm/upload_heap/{}", filename.as_str());
+                            let filepath = get_upload_filedrop_path(filename.as_str());
                             let file = tokio::fs::File::create(filepath.as_str()).await;
 
                             if file.is_ok() {

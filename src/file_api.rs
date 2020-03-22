@@ -20,11 +20,12 @@ use tokio::process::Command;
 use std::path::Path;
 use std::process::Output;
 use serde_json::Value;
-use crate::file_api::FileProcessErrorType::FormatError;
+use crate::file_api::FileProcessErrorType::{FormatError, UnknownError, PrvGenError};
 
 #[derive(Serialize, Deserialize)]
 struct FFprobeFormat {
     format_name: String,
+    duration: Option<f32>,
     size: u32,
 }
 
@@ -56,7 +57,57 @@ impl FileProcessError {
 }
 
 pub enum FileProcessErrorType {
+    UnknownError,
     FormatError,
+    PrvGenError,
+}
+
+async fn generate_preview(ffmpeg_filepath: &str, ffprobe_data: &FFprobeOutput, filename: &str) -> bool {
+    let is_image_file = is_image_file(filename);
+    let is_video_file = is_video_file(filename);
+
+    if is_image_file || is_video_file {
+        let upload_filepath = get_upload_filedrop_path(filename);
+        let output_filepath = get_tmp_prv_files_path(filename);
+        let width = ffprobe_data.streams.get(0).unwrap().width;
+        let height = ffprobe_data.streams.get(0).unwrap().height;
+        let crop_resolution = width.min(height);
+        let ffmpeg_filter = format!("crop={}:{},scale=150:150", crop_resolution, crop_resolution);
+        let video_duration = ffprobe_data.format.duration.unwrap_or(0.0);
+
+        let mut ffmpeg_args : Vec<&str> = Vec::new();
+        ffmpeg_args.push("-loglevel");
+        ffmpeg_args.push("quiet");
+
+
+        // If the file is a video and it is long enough, crate the thumbnail from the frame after the first second
+        // Else: The thumbnail will be created from the first frame
+        if video_duration > 1.1 {
+            ffmpeg_args.push("-ss");
+            ffmpeg_args.push("1");
+        }
+
+        ffmpeg_args.push("-i");
+        ffmpeg_args.push(upload_filepath.as_str());
+        ffmpeg_args.push("-frames:v");
+        ffmpeg_args.push("1");
+        ffmpeg_args.push("-filter:v");
+        ffmpeg_args.push(ffmpeg_filter.as_str());
+        ffmpeg_args.push("-qscale:v");
+        ffmpeg_args.push("5");
+        ffmpeg_args.push(output_filepath.as_str());
+
+        let ffmpeg_result : std::io::Result<Output> = Command::new(ffmpeg_filepath)
+            .args(ffmpeg_args)
+            .output()
+            .await;
+
+        if ffmpeg_result.is_ok() && ffmpeg_result.unwrap().status.success() {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 pub fn get_url_from_filename(filename: &str) -> String {
@@ -70,8 +121,12 @@ pub fn get_preview_url_from_filename(filename: &str) -> String {
     format!("/prv/{}.{}", file_name, ".jpg")
 }
 
-pub fn get_tmp_file_path(filename: &str) -> String {
-    format!("./tmp/p0nygramm/upload_heap/{}", filename)
+pub fn get_tmp_prv_files_path(filename: &str) -> String {
+    format!("./tmp/p0nygramm/preview_files/{}", filename)
+}
+
+pub fn get_upload_filedrop_path(filename: &str) -> String {
+    format!("./tmp/p0nygramm/upload_files/{}", filename)
 }
 
 pub fn is_image_file(filename: &str) -> bool {
@@ -106,7 +161,7 @@ pub fn is_video_file(filename: &str) -> bool {
 
 // Returns Some(FFprobeOutput) if the file format and codex is valid (if not -> None)
 pub async fn probe_file(ffprobe_filepath: &str, upload_filename: &str) -> Option<FFprobeOutput> {
-    let upload_filepath = get_tmp_file_path(upload_filename);
+    let upload_filepath = get_upload_filedrop_path(upload_filename);
 
     let is_image_file = is_image_file(upload_filename);
     let is_video_file = is_video_file(upload_filename);
@@ -204,17 +259,30 @@ fn probe_video_file(ffprobe_stdout_json: &FFprobeOutput) -> bool {
 }
 
 pub async fn process_file(config: ProjectConfig, filename: &str) -> Result<(), FileProcessError> {
+    let ffmpeg_filepath = config.filesystem_config.ffmpeg_path.get_value();
     let ffprobe_path = config.filesystem_config.ffprobe_path.get_value();
     let format_data = probe_file(ffprobe_path.as_str(), filename).await;
 
-    if format_data.is_some() {
+    let mut return_val : Result<(), FileProcessError> = Err(FileProcessError::new(UnknownError, "Unbekannter Fehler"));
 
+    if format_data.is_some() {
+        let format_data = format_data.unwrap();
+        let generate_preview_success = generate_preview(ffmpeg_filepath.as_str(), &format_data, filename).await;
+
+        if generate_preview_success {
+            // TODO: Move files to server directory
+
+            return_val = Ok(());
+        }
+        else {
+            return_val = Err(FileProcessError::new(PrvGenError, "Fehler beim Erzeugen der Vorschaubilder"));
+        }
     }
     else {
-        return Err(FileProcessError::new(FormatError, "Format der Datei wird nicht akzepziert"));
+        return_val = Err(FileProcessError::new(FormatError, "Format der Datei wird nicht akzepziert"));
     }
 
-    // TODO: Implement
+    // TODO: Remove tmp files on error
 
-    return Ok(());
+    return return_val;
 }
