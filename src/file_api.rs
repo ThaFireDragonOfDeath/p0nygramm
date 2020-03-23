@@ -97,7 +97,15 @@ async fn generate_preview(ffmpeg_filepath: &str, ffprobe_data: &FFprobeOutput, f
         ffmpeg_args.push("5");
         ffmpeg_args.push(output_filepath.as_str());
 
-        let ffmpeg_result : std::io::Result<Output> = Command::new(ffmpeg_filepath)
+        // Let the OS take care of finding the ffmpeg binary if there is no path provided
+        let command = if !ffmpeg_filepath.is_empty() {
+            ffmpeg_filepath
+        }
+        else {
+            "ffmpeg"
+        };
+
+        let ffmpeg_result : std::io::Result<Output> = Command::new(command)
             .args(ffmpeg_args)
             .output()
             .await;
@@ -166,8 +174,16 @@ pub async fn probe_file(ffprobe_filepath: &str, upload_filename: &str) -> Option
     let is_image_file = is_image_file(upload_filename);
     let is_video_file = is_video_file(upload_filename);
 
+    // Let the OS take care of finding the ffprobe binary if there is no path provided
+    let command = if !ffprobe_filepath.is_empty() {
+        ffprobe_filepath
+    }
+    else {
+        "ffprobe"
+    };
+
     if is_image_file || is_video_file {
-        let ffprobe_result : tokio::io::Result<Output> = Command::new(ffprobe_filepath)
+        let ffprobe_result : tokio::io::Result<Output> = Command::new(command)
             .arg("-loglevel")
             .arg("quiet")
             .arg("-hide_banner")
