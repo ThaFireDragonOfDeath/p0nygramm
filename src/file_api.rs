@@ -20,7 +20,8 @@ use tokio::process::Command;
 use std::path::Path;
 use std::process::Output;
 use serde_json::Value;
-use crate::file_api::FileProcessErrorType::{FormatError, UnknownError, PrvGenError};
+use crate::file_api::FileProcessErrorType::{FormatError, UnknownError, PrvGenError, CopyError};
+use log::{trace, debug, info, warn, error};
 
 #[derive(Serialize, Deserialize)]
 struct FFprobeFormat {
@@ -60,6 +61,7 @@ pub enum FileProcessErrorType {
     UnknownError,
     FormatError,
     PrvGenError,
+    CopyError,
 }
 
 async fn generate_preview(ffmpeg_filepath: &str, ffprobe_data: &FFprobeOutput, filename: &str) -> bool {
@@ -278,6 +280,8 @@ pub async fn process_file(config: ProjectConfig, filename: &str) -> Result<(), F
     let ffmpeg_filepath = config.filesystem_config.ffmpeg_path.get_value();
     let ffprobe_path = config.filesystem_config.ffprobe_path.get_value();
     let format_data = probe_file(ffprobe_path.as_str(), filename).await;
+    let tmp_upload_filepath = get_upload_filedrop_path(filename);
+    let tmp_upload_prv_filepath = get_tmp_prv_files_path(filename);
 
     let mut return_val : Result<(), FileProcessError> = Err(FileProcessError::new(UnknownError, "Unbekannter Fehler"));
 
@@ -286,9 +290,20 @@ pub async fn process_file(config: ProjectConfig, filename: &str) -> Result<(), F
         let generate_preview_success = generate_preview(ffmpeg_filepath.as_str(), &format_data, filename).await;
 
         if generate_preview_success {
-            // TODO: Move files to server directory
+            let srv_upload_directory = config.filesystem_config.uploads_path.get_value();
+            let srv_upload_prv_directory = config.filesystem_config.uploads_prv_path.get_value();
+            let srv_upload_filepath = format!("{}/{}", srv_upload_directory, filename);
+            let srv_upload_prv_filepath = format!("{}/{}", srv_upload_prv_directory, filename);
 
-            return_val = Ok(());
+            let cpy_upload_success : core::result::Result<u64, _> = tokio::fs::copy(tmp_upload_filepath.as_str(), srv_upload_filepath.as_str()).await;
+            let cpy_upload_prv_success : core::result::Result<u64, _> = tokio::fs::copy(tmp_upload_prv_filepath.as_str(), srv_upload_prv_filepath.as_str()).await;
+
+            if cpy_upload_success.is_ok() && cpy_upload_prv_success.is_ok() {
+                return_val = Ok(());
+            }
+            else {
+                return_val = Err(FileProcessError::new(CopyError, "Fehler beim Kopieren der Dateien ins Serververzeichnis"));
+            }
         }
         else {
             return_val = Err(FileProcessError::new(PrvGenError, "Fehler beim Erzeugen der Vorschaubilder"));
@@ -298,7 +313,16 @@ pub async fn process_file(config: ProjectConfig, filename: &str) -> Result<(), F
         return_val = Err(FileProcessError::new(FormatError, "Format der Datei wird nicht akzepziert"));
     }
 
-    // TODO: Remove tmp files on error
+    let rm_tmp_upload_success : tokio::io::Result<()> = tokio::fs::remove_file(tmp_upload_filepath.as_str()).await;
+    let rm_tmp_upload_prv_success : tokio::io::Result<()> = tokio::fs::remove_file(tmp_upload_prv_filepath.as_str()).await;
+
+    if rm_tmp_upload_success.is_err() {
+        warn!("Temoräre Datei konnte nicht gelöscht werden: {}", tmp_upload_filepath.as_str());
+    }
+
+    if !rm_tmp_upload_prv_success.is_err() {
+        warn!("Temoräre Datei konnte nicht gelöscht werden: {}", tmp_upload_prv_filepath.as_str());
+    }
 
     return return_val;
 }
