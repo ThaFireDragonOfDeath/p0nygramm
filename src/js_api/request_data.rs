@@ -35,11 +35,13 @@ pub struct RegisterData {
 
 pub struct TagData {
     pub taglist: Vec<String>,
+    pub full_success: bool,
 }
 
 impl TagData {
     pub fn from_str(taglist_str: &str) -> TagData {
         let mut result_vec : Vec<String> = Vec::new();
+        let mut full_success = true;
         let tags_iter : Vec<&str> = taglist_str.split(",").collect();
 
         for tag in tags_iter {
@@ -61,13 +63,21 @@ impl TagData {
                 result_vec.push(current_tag);
             }
             else {
+                full_success = false;
                 warn!("from_str: Got invalid tag: {}", current_tag);
             }
         }
 
         TagData {
             taglist: result_vec,
+            full_success
         }
+    }
+
+    pub fn as_str_ref_vec(&self) -> Vec<&str> {
+        let taglist_str_vec = self.taglist.iter().map(|tag| tag.as_str()).collect();
+
+        return taglist_str_vec;
     }
 }
 

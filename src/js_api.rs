@@ -25,8 +25,8 @@ use crate::db_api::DbConnection;
 use crate::security::{get_user_session, check_username, check_password, verify_password, check_invite_key, hash_password};
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
-use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime};
-use crate::js_api::response_result::BackendError;
+use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime, TagData};
+use crate::js_api::response_result::{BackendError, AddUploadSuccess};
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use actix_multipart::{Multipart, Field};
 use futures::{StreamExt, TryStreamExt};
@@ -35,6 +35,7 @@ use log::{trace, debug, info, warn, error};
 use crate::tokio::io::AsyncWriteExt;
 use crate::file_api::{get_upload_filedrop_path, process_file};
 use crate::file_api::FileProcessErrorType::FormatError;
+use crate::db_api::db_result::DbApiErrorType::PartFail;
 
 macro_rules! get_db_connection {
     ($config:ident, $req_postgres:expr, $req_redis:expr) => {
@@ -111,13 +112,70 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
 
     let taglist_str = multipart_data.get("taglist");
     let filename = multipart_data.get("file");
+    let upload_classification = multipart_data.get("classification");
+    let mut upload_is_nsfw = false;
+
+    if upload_classification.is_some() {
+        let upload_classification = upload_classification.unwrap();
+
+        if upload_classification == "nsfw" {
+            upload_is_nsfw = true;
+        }
+        else if  upload_classification != "sfw" {
+            handle_error_str!(UserInputError, "Upload muss entweder als SFW oder als NSFW gekennzeichnet sein", BadRequest);
+        }
+    }
 
     if filename.is_some() {
         let filename = filename.unwrap();
         let file_process_success = process_file(&config, filename).await;
 
         if file_process_success.is_ok() {
-            // TODO: Write upload to database
+            let uploader_id = session_data.user_id;
+            let db_success = db_connection.add_upload(filename, upload_is_nsfw, uploader_id).await;
+
+            if db_success.is_ok() {
+                let upload_id = db_success.ok().unwrap();
+
+                if taglist_str.is_some() {
+                    let taglist_str = taglist_str.unwrap();
+                    let taglist_data = TagData::from_str(taglist_str);
+                    let taglist_full_success = taglist_data.full_success;
+                    let taglist_vec = taglist_data.as_str_ref_vec();
+
+                    let db_success = db_connection.add_tags(taglist_vec, uploader_id, upload_id).await;
+
+                    if db_success.is_ok() {
+                        let ret_val = AddUploadSuccess::new(true, true, taglist_full_success);
+                        let response_txt = serde_json::to_string(&ret_val).unwrap_or("".to_owned());
+
+                        return HttpResponse::Ok().body(response_txt);
+                    }
+                    else {
+                        let error = db_success.err().unwrap();
+                        let error_type = error.error_type;
+
+                        if error_type == PartFail {
+                            let ret_val = AddUploadSuccess::new(true, true, false);
+                            let response_txt = serde_json::to_string(&ret_val).unwrap_or("".to_owned());
+
+                            return HttpResponse::Ok().body(response_txt);
+                        }
+                    }
+                }
+
+                let ret_val = AddUploadSuccess::new(true, false, false);
+                let response_txt = serde_json::to_string(&ret_val).unwrap_or("".to_owned());
+
+                return HttpResponse::Ok().body(response_txt);
+            }
+            else {
+                // TODO: Delete image files on server
+
+                let error = db_success.err().unwrap();
+                let error_msg = error.error_msg;
+                handle_error_str!(InternalError, error_msg.as_str(), InternalServerError);
+            }
         }
         else {
             let error = file_process_success.unwrap_err();
@@ -135,8 +193,6 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
     else {
         handle_error_str!(UnknownError, "Es ist ein Fehler beim Speichern der Datei auf dem Server aufgetreten", InternalServerError);
     }
-
-    return HttpResponse::Ok().body("{ \"success:\" false }");
 }
 
 pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>) -> HttpResponse {

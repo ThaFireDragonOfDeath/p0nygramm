@@ -45,6 +45,23 @@ impl BackendError {
 }
 
 #[derive(Clone, Serialize)]
+pub struct AddUploadSuccess {
+    upload_success: bool,
+    tags_part_success: bool,
+    tags_full_success: bool,
+}
+
+impl AddUploadSuccess {
+    pub fn new(upload_success: bool, tags_part_success: bool, tags_full_success: bool) -> AddUploadSuccess {
+        AddUploadSuccess {
+            upload_success,
+            tags_part_success,
+            tags_full_success,
+        }
+    }
+}
+
+#[derive(Clone, Serialize)]
 pub struct UserData {
     pub user_id: i32,
     pub username: String,
