@@ -44,8 +44,8 @@ struct FFprobeStream {
 }
 
 pub struct FileProcessError {
-    error_code: FileProcessErrorType,
-    error_msg: String,
+    pub error_code: FileProcessErrorType,
+    pub error_msg: String,
 }
 
 impl FileProcessError {
@@ -57,6 +57,7 @@ impl FileProcessError {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum FileProcessErrorType {
     UnknownError,
     FormatError,
@@ -276,7 +277,7 @@ fn probe_video_file(ffprobe_stdout_json: &FFprobeOutput) -> bool {
     return false;
 }
 
-pub async fn process_file(config: ProjectConfig, filename: &str) -> Result<(), FileProcessError> {
+pub async fn process_file(config: &ProjectConfig, filename: &str) -> Result<(), FileProcessError> {
     let ffmpeg_filepath = config.filesystem_config.ffmpeg_path.get_value();
     let ffprobe_path = config.filesystem_config.ffprobe_path.get_value();
     let format_data = probe_file(ffprobe_path.as_str(), filename).await;

@@ -33,7 +33,8 @@ use futures::{StreamExt, TryStreamExt};
 use std::collections::HashMap;
 use log::{trace, debug, info, warn, error};
 use crate::tokio::io::AsyncWriteExt;
-use crate::file_api::get_upload_filedrop_path;
+use crate::file_api::{get_upload_filedrop_path, process_file};
+use crate::file_api::FileProcessErrorType::FormatError;
 
 macro_rules! get_db_connection {
     ($config:ident, $req_postgres:expr, $req_redis:expr) => {
@@ -109,10 +110,27 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
     let multipart_data = parse_multipart_form_data(&mut payload).await;
 
     let taglist_str = multipart_data.get("taglist");
-    let filepath = multipart_data.get("file");
+    let filename = multipart_data.get("file");
 
-    if filepath.is_some() {
-        // TODO: Process file
+    if filename.is_some() {
+        let filename = filename.unwrap();
+        let file_process_success = process_file(&config, filename).await;
+
+        if file_process_success.is_ok() {
+            // TODO: Write upload to database
+        }
+        else {
+            let error = file_process_success.unwrap_err();
+            let error_type = error.error_code;
+            let error_msg = error.error_msg;
+
+            if error_type == FormatError {
+                handle_error_str!(UserInputError, error_msg.as_str(), BadRequest);
+            }
+            else {
+                handle_error_str!(InternalError, error_msg.as_str(), InternalServerError);
+            }
+        }
     }
     else {
         handle_error_str!(UnknownError, "Es ist ein Fehler beim Speichern der Datei auf dem Server aufgetreten", InternalServerError);
