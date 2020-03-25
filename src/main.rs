@@ -117,6 +117,7 @@ async fn main() -> std::io::Result<()> {
                     .app_data(prj_config_data.clone())
                     .route("/add_upload", web::post().to(js_api::add_upload))
                     .route("/get_upload_data/{upload_id}", web::get().to(js_api::get_upload_data))
+                    .route("/get_userdata_by_username/{username}", web::get().to(js_api::get_userdata_by_username))
                     .route("/login", web::post().to(js_api::login))
                     .route("/logout", web::get().to(js_api::logout))
                     .route("/register", web::post().to(js_api::register))

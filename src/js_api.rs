@@ -26,7 +26,7 @@ use crate::security::{get_user_session, check_username, check_password, verify_p
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
 use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime, TagData};
-use crate::js_api::response_result::{BackendError, AddUploadSuccess};
+use crate::js_api::response_result::{BackendError, AddUploadSuccess, UserData};
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use actix_multipart::{Multipart, Field};
 use futures::{StreamExt, TryStreamExt};
@@ -229,6 +229,39 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
         else {
             handle_error_str!(DatabaseError, error.error_msg.as_str(), InternalServerError);
         }
+    }
+}
+
+pub async fn get_userdata_by_username(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<String>) -> HttpResponse {
+    let target_username = url_data.into_inner();
+    let username_is_ok = check_username(target_username.as_str());
+
+    if username_is_ok {
+        let db_connection = get_db_connection!(config, true, true);
+        let session_data = get_user_session_data!(db_connection, session, false);
+        let user_data = db_connection.get_userdata_by_username(target_username.as_str()).await;
+
+        if user_data.is_ok() {
+            let user_data = UserData::new(&user_data.ok().unwrap());
+            let response_txt = serde_json::to_string(&user_data).unwrap_or("".to_owned());
+
+            return HttpResponse::Ok().body(response_txt);
+        }
+        else {
+            let error = user_data.err().unwrap();
+            let error_type = error.error_type;
+            let error_msg = error.error_msg;
+
+            if error_type == DbApiErrorType::NoResult {
+                handle_error_str!(NoResult, error_msg.as_str(), NotFound);
+            }
+            else {
+                handle_error_str!(DatabaseError, error_msg.as_str(), InternalServerError);
+            }
+        }
+    }
+    else {
+        handle_error_str!(UserInputError, "Benutzername ist ungültig", BadRequest);
     }
 }
 
