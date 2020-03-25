@@ -65,13 +65,45 @@ pub enum FileProcessErrorType {
     CopyError,
 }
 
+pub async fn delete_upload_srv(config: &ProjectConfig, filename: &str) {
+    let srv_upload_filepath = get_upload_path_srv(config, filename);
+    let srv_upload_prv_filepath = get_upload_prv_path_srv(config, filename);
+
+    let rm_upload_success: tokio::io::Result<()> = tokio::fs::remove_file(srv_upload_filepath.as_str()).await;
+    let rm_upload_prv_success: tokio::io::Result<()> = tokio::fs::remove_file(srv_upload_prv_filepath.as_str()).await;
+
+    if rm_upload_success.is_err() {
+        error!("Upload Datei konnte nicht gelöscht werden: {}", srv_upload_filepath.as_str());
+    }
+
+    if !rm_upload_prv_success.is_err() {
+        error!("Upload Datei konnte nicht gelöscht werden: {}", srv_upload_prv_filepath.as_str());
+    }
+}
+
+pub async fn delete_upload_tmp(filename: &str) {
+    let tmp_upload_filepath = get_upload_path_tmp(filename);
+    let tmp_upload_prv_filepath = get_upload_prv_path_tmp(filename);
+
+    let rm_tmp_upload_success : tokio::io::Result<()> = tokio::fs::remove_file(tmp_upload_filepath.as_str()).await;
+    let rm_tmp_upload_prv_success : tokio::io::Result<()> = tokio::fs::remove_file(tmp_upload_prv_filepath.as_str()).await;
+
+    if rm_tmp_upload_success.is_err() {
+        warn!("Temoräre Datei konnte nicht gelöscht werden: {}", tmp_upload_filepath.as_str());
+    }
+
+    if !rm_tmp_upload_prv_success.is_err() {
+        warn!("Temoräre Datei konnte nicht gelöscht werden: {}", tmp_upload_prv_filepath.as_str());
+    }
+}
+
 async fn generate_preview(ffmpeg_filepath: &str, ffprobe_data: &FFprobeOutput, filename: &str) -> bool {
     let is_image_file = is_image_file(filename);
     let is_video_file = is_video_file(filename);
 
     if is_image_file || is_video_file {
-        let upload_filepath = get_upload_filedrop_path(filename);
-        let output_filepath = get_tmp_prv_files_path(filename);
+        let upload_filepath = get_upload_path_tmp(filename);
+        let output_filepath = get_upload_prv_path_tmp(filename);
         let width = ffprobe_data.streams.get(0).unwrap().width;
         let height = ffprobe_data.streams.get(0).unwrap().height;
         let crop_resolution = width.min(height);
@@ -132,12 +164,20 @@ pub fn get_preview_url_from_filename(filename: &str) -> String {
     format!("/prv/{}.{}", file_name, ".jpg")
 }
 
-pub fn get_tmp_prv_files_path(filename: &str) -> String {
-    format!("./tmp/p0nygramm/preview_files/{}", filename)
+pub fn get_upload_path_srv(config: &ProjectConfig, filename: &str) -> String {
+    format!("{}/{}", config.filesystem_config.uploads_path.get_value(), filename)
 }
 
-pub fn get_upload_filedrop_path(filename: &str) -> String {
+pub fn get_upload_prv_path_srv(config: &ProjectConfig, filename: &str) -> String {
+    format!("{}/{}", config.filesystem_config.uploads_prv_path.get_value(), filename)
+}
+
+pub fn get_upload_path_tmp(filename: &str) -> String {
     format!("./tmp/p0nygramm/upload_files/{}", filename)
+}
+
+pub fn get_upload_prv_path_tmp(filename: &str) -> String {
+    format!("./tmp/p0nygramm/preview_files/{}", filename)
 }
 
 pub fn is_image_file(filename: &str) -> bool {
@@ -172,7 +212,7 @@ pub fn is_video_file(filename: &str) -> bool {
 
 // Returns Some(FFprobeOutput) if the file format and codex is valid (if not -> None)
 pub async fn probe_file(ffprobe_filepath: &str, upload_filename: &str) -> Option<FFprobeOutput> {
-    let upload_filepath = get_upload_filedrop_path(upload_filename);
+    let upload_filepath = get_upload_path_tmp(upload_filename);
 
     let is_image_file = is_image_file(upload_filename);
     let is_video_file = is_video_file(upload_filename);
@@ -281,8 +321,8 @@ pub async fn process_file(config: &ProjectConfig, filename: &str) -> Result<(), 
     let ffmpeg_filepath = config.filesystem_config.ffmpeg_path.get_value();
     let ffprobe_path = config.filesystem_config.ffprobe_path.get_value();
     let format_data = probe_file(ffprobe_path.as_str(), filename).await;
-    let tmp_upload_filepath = get_upload_filedrop_path(filename);
-    let tmp_upload_prv_filepath = get_tmp_prv_files_path(filename);
+    let tmp_upload_filepath = get_upload_path_tmp(filename);
+    let tmp_upload_prv_filepath = get_upload_prv_path_tmp(filename);
 
     let mut return_val : Result<(), FileProcessError> = Err(FileProcessError::new(UnknownError, "Unbekannter Fehler"));
 
@@ -314,16 +354,7 @@ pub async fn process_file(config: &ProjectConfig, filename: &str) -> Result<(), 
         return_val = Err(FileProcessError::new(FormatError, "Format der Datei wird nicht akzepziert"));
     }
 
-    let rm_tmp_upload_success : tokio::io::Result<()> = tokio::fs::remove_file(tmp_upload_filepath.as_str()).await;
-    let rm_tmp_upload_prv_success : tokio::io::Result<()> = tokio::fs::remove_file(tmp_upload_prv_filepath.as_str()).await;
-
-    if rm_tmp_upload_success.is_err() {
-        warn!("Temoräre Datei konnte nicht gelöscht werden: {}", tmp_upload_filepath.as_str());
-    }
-
-    if !rm_tmp_upload_prv_success.is_err() {
-        warn!("Temoräre Datei konnte nicht gelöscht werden: {}", tmp_upload_prv_filepath.as_str());
-    }
+    delete_upload_tmp(filename).await;
 
     return return_val;
 }

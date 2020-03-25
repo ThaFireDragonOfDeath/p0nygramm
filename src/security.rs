@@ -57,6 +57,30 @@ pub fn check_and_escape_comment(comment: &str) -> Option<String> {
     }
 }
 
+pub fn check_filename(filename: &str) -> bool {
+    let filename_length = filename.len();
+
+    // A filename can be up to 32 characters long (including file extension) and have to contain exactly one point (for file extension)
+    if filename_length <= 32 {
+        let filename_chars = filename.chars();
+
+        // A tag can only have ascii alphanumeric characters and simple whitespaces
+        for char in filename_chars {
+            let char_is_ascii_alphanumeric = char.is_ascii_alphanumeric();
+            let char_is_allowed_special_character = char == '-' || char == '_' || char == '.';
+
+            if !char_is_ascii_alphanumeric && !char_is_allowed_special_character {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 pub fn check_invite_key(invite_key: &str) -> bool {
     let key_length = invite_key.len();
 
@@ -64,11 +88,13 @@ pub fn check_invite_key(invite_key: &str) -> bool {
     if key_length == 32 {
         let key_chars = invite_key.chars();
 
-        // A tag can only have ascii alphanumeric characters and simple whitespaces
+        // A invite key can only have ascii alphanumeric characters
         for char in key_chars {
             let char_is_ascii_alphanumeric = char.is_ascii_alphanumeric();
 
-            return char_is_ascii_alphanumeric;
+            if !char_is_ascii_alphanumeric {
+                return false;
+            }
         }
 
         return true;

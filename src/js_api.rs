@@ -22,7 +22,7 @@ use actix_web::{web, HttpResponse, HttpMessage};
 use crate::config::ProjectConfig;
 use actix_session::Session;
 use crate::db_api::DbConnection;
-use crate::security::{get_user_session, check_username, check_password, verify_password, check_invite_key, hash_password};
+use crate::security::{get_user_session, check_username, check_password, verify_password, check_invite_key, hash_password, check_filename};
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
 use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime, TagData};
@@ -33,7 +33,7 @@ use futures::{StreamExt, TryStreamExt};
 use std::collections::HashMap;
 use log::{trace, debug, info, warn, error};
 use crate::tokio::io::AsyncWriteExt;
-use crate::file_api::{get_upload_filedrop_path, process_file};
+use crate::file_api::{get_upload_path_tmp, process_file, delete_upload_srv};
 use crate::file_api::FileProcessErrorType::FormatError;
 use crate::db_api::db_result::DbApiErrorType::PartFail;
 
@@ -103,13 +103,10 @@ macro_rules! handle_session_error {
     };
 }
 
-// TODO: Finish implementation
 pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut payload: Multipart) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, true);
     let session_data = get_user_session_data!(db_connection, session, false);
-
     let multipart_data = parse_multipart_form_data(&mut payload).await;
-
     let taglist_str = multipart_data.get("taglist");
     let filename = multipart_data.get("file");
     let upload_classification = multipart_data.get("classification");
@@ -125,69 +122,79 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
             handle_error_str!(UserInputError, "Upload muss entweder als SFW oder als NSFW gekennzeichnet sein", BadRequest);
         }
     }
+    else {
+        handle_error_str!(UserInputError, "Upload muss entweder als SFW oder als NSFW gekennzeichnet sein", BadRequest);
+    }
 
     if filename.is_some() {
         let filename = filename.unwrap();
-        let file_process_success = process_file(&config, filename).await;
+        let filename_is_ok = check_filename(filename.as_str());
 
-        if file_process_success.is_ok() {
-            let uploader_id = session_data.user_id;
-            let db_success = db_connection.add_upload(filename, upload_is_nsfw, uploader_id).await;
+        if filename_is_ok {
+            let file_process_success = process_file(&config, filename).await;
 
-            if db_success.is_ok() {
-                let upload_id = db_success.ok().unwrap();
+            if file_process_success.is_ok() {
+                let uploader_id = session_data.user_id;
+                let db_success = db_connection.add_upload(filename, upload_is_nsfw, uploader_id).await;
 
-                if taglist_str.is_some() {
-                    let taglist_str = taglist_str.unwrap();
-                    let taglist_data = TagData::from_str(taglist_str);
-                    let taglist_full_success = taglist_data.full_success;
-                    let taglist_vec = taglist_data.as_str_ref_vec();
+                if db_success.is_ok() {
+                    let upload_id = db_success.ok().unwrap();
 
-                    let db_success = db_connection.add_tags(taglist_vec, uploader_id, upload_id).await;
+                    if taglist_str.is_some() {
+                        let taglist_str = taglist_str.unwrap();
+                        let taglist_data = TagData::from_str(taglist_str);
+                        let taglist_full_success = taglist_data.full_success;
+                        let taglist_vec = taglist_data.as_str_ref_vec();
 
-                    if db_success.is_ok() {
-                        let ret_val = AddUploadSuccess::new(true, true, taglist_full_success);
-                        let response_txt = serde_json::to_string(&ret_val).unwrap_or("".to_owned());
+                        let db_success = db_connection.add_tags(taglist_vec, uploader_id, upload_id).await;
 
-                        return HttpResponse::Ok().body(response_txt);
-                    }
-                    else {
-                        let error = db_success.err().unwrap();
-                        let error_type = error.error_type;
-
-                        if error_type == PartFail {
-                            let ret_val = AddUploadSuccess::new(true, true, false);
+                        if db_success.is_ok() {
+                            let ret_val = AddUploadSuccess::new(true, true, taglist_full_success);
                             let response_txt = serde_json::to_string(&ret_val).unwrap_or("".to_owned());
 
                             return HttpResponse::Ok().body(response_txt);
                         }
+                        else {
+                            let error = db_success.err().unwrap();
+                            let error_type = error.error_type;
+
+                            if error_type == PartFail {
+                                let ret_val = AddUploadSuccess::new(true, true, false);
+                                let response_txt = serde_json::to_string(&ret_val).unwrap_or("".to_owned());
+
+                                return HttpResponse::Ok().body(response_txt);
+                            }
+                        }
                     }
+
+                    let ret_val = AddUploadSuccess::new(true, false, false);
+                    let response_txt = serde_json::to_string(&ret_val).unwrap_or("".to_owned());
+
+                    return HttpResponse::Ok().body(response_txt);
                 }
+                else {
+                    delete_upload_srv(&config, filename).await;
 
-                let ret_val = AddUploadSuccess::new(true, false, false);
-                let response_txt = serde_json::to_string(&ret_val).unwrap_or("".to_owned());
-
-                return HttpResponse::Ok().body(response_txt);
+                    let error = db_success.err().unwrap();
+                    let error_msg = error.error_msg;
+                    handle_error_str!(InternalError, error_msg.as_str(), InternalServerError);
+                }
             }
             else {
-                // TODO: Delete image files on server
-
-                let error = db_success.err().unwrap();
+                let error = file_process_success.unwrap_err();
+                let error_type = error.error_code;
                 let error_msg = error.error_msg;
-                handle_error_str!(InternalError, error_msg.as_str(), InternalServerError);
+
+                if error_type == FormatError {
+                    handle_error_str!(UserInputError, error_msg.as_str(), BadRequest);
+                }
+                else {
+                    handle_error_str!(InternalError, error_msg.as_str(), InternalServerError);
+                }
             }
         }
         else {
-            let error = file_process_success.unwrap_err();
-            let error_type = error.error_code;
-            let error_msg = error.error_msg;
-
-            if error_type == FormatError {
-                handle_error_str!(UserInputError, error_msg.as_str(), BadRequest);
-            }
-            else {
-                handle_error_str!(InternalError, error_msg.as_str(), InternalServerError);
-            }
+            handle_error_str!(UserInputError, "Dateiname enthält ungültige Zeichen", BadRequest);
         }
     }
     else {
@@ -342,7 +349,7 @@ async fn parse_multipart_form_data(payload: &mut Multipart) -> HashMap<String, S
                             // because tokio uses cfg attributes which the IDE can't parse (yet)
 
                             let filename = filename.unwrap().to_owned();
-                            let filepath = get_upload_filedrop_path(filename.as_str());
+                            let filepath = get_upload_path_tmp(filename.as_str());
                             let file = tokio::fs::File::create(filepath.as_str()).await;
 
                             if file.is_ok() {
