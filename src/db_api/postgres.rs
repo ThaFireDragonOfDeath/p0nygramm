@@ -267,6 +267,39 @@ impl PostgresConnection {
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
+    pub async fn get_uploads_range(&self, start_id: i32, end_id: i32, show_sfw: bool, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+        trace!("Enter PostgresConnection::get_uploads_range");
+
+        let sql_cmd = include_str!(get_filepath!("get_uploads_range.sql"));
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&start_id, &end_id, &show_sfw, &show_nsfw];
+        let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            let result_rows_vec = result_rows.unwrap();
+            let mut return_vec: Vec<UploadPreview> = Vec::new();
+
+            if !result_rows_vec.is_empty() {
+                for row in result_rows_vec {
+                    let upload_id = row.get(0);
+                    let upload_filename = row.get(1);
+                    let upload_is_nsfw = row.get(2);
+                    let upload_preview = UploadPreview::new(upload_id, upload_is_nsfw, upload_filename);
+                    return_vec.push(upload_preview);
+                }
+            }
+            else {
+                warn!("PostgresConnection::get_uploads: No uploads found"); // Usually this should only happen if there is nothing uploaded yet
+            }
+
+            return Ok(UploadPrvList{ uploads: return_vec });
+        }
+        else {
+            error!("PostgresConnection::get_uploads: Failed to execute sql statement");
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
     pub async fn get_userdata_by_username(&self, username: &str) -> Result<UserData, DbApiError> {
         trace!("Enter PostgresConnection::get_userdata_by_username");
 
