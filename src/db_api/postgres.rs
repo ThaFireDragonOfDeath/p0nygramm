@@ -234,11 +234,11 @@ impl PostgresConnection {
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
-    pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+    pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_sfw: bool, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
         trace!("Enter PostgresConnection::get_uploads");
 
         let sql_cmd = include_str!(get_filepath!("get_uploads.sql"));
-        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&start_id, &max_count, &show_nsfw];
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&start_id, &max_count, &show_sfw, &show_nsfw];
         let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
 
         if result_rows.is_ok() {

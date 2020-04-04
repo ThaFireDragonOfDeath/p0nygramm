@@ -149,12 +149,12 @@ impl DbConnection {
         return self.postgres_connection.as_ref().unwrap().get_upload_data(upload_id).await;
     }
 
-    pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+    pub async fn get_uploads(&self, start_id: i32, max_count: i16, show_sfw: bool, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
         trace!("Enter DbConnection::get_uploads");
 
         check_postgres_connection!(self);
 
-        return self.postgres_connection.as_ref().unwrap().get_uploads(start_id, max_count, show_nsfw).await;
+        return self.postgres_connection.as_ref().unwrap().get_uploads(start_id, max_count, show_sfw, show_nsfw).await;
     }
 
     pub async fn get_uploads_range(&self, start_id: i32, end_id: i32, show_sfw: bool, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {

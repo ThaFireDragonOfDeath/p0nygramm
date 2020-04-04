@@ -202,11 +202,11 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
     }
 }
 
-pub async fn get_uploads(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i16, bool)>) -> HttpResponse {
+pub async fn get_uploads(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i16, bool, bool)>) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, true);
     let session_data = get_user_session_data!(db_connection, session, false);
 
-    let (start_id, amount, show_nsfw) = url_data.into_inner();
+    let (start_id, amount, show_sfw, show_nsfw) = url_data.into_inner();
 
     if start_id < 1 {
         handle_error_str!(UserInputError, "Die Start ID kann nicht kleiner als 1 sein", BadRequest);
@@ -216,7 +216,7 @@ pub async fn get_uploads(config: web::Data<ProjectConfig>, session: Session, url
         handle_error_str!(UserInputError, "Die Anzahl der auszugebenden Uploads muss im Bereich von 1 bis 500 liegen", BadRequest);
     }
 
-    let uploads = db_connection.get_uploads(start_id, amount, show_nsfw).await;
+    let uploads = db_connection.get_uploads(start_id, amount, show_sfw, show_nsfw).await;
 
     if uploads.is_ok() {
         let uploads = uploads.ok().unwrap();
