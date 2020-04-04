@@ -1,6 +1,34 @@
-use crate::security::check_tag;
+use crate::security::{check_tag, check_and_escape_comment};
 use log::{trace, debug, info, warn, error};
 use mime::Mime;
+use crate::db_api::DbConnection;
+
+#[derive(Deserialize)]
+pub struct CommentData {
+    pub upload_id: i32,
+    pub comment_text: String,
+}
+
+impl CommentData {
+    pub async fn validate_data(&self, db_connection: &DbConnection) -> Option<CommentData> {
+        let escaped_comment_txt = check_and_escape_comment(self.comment_text.as_str());
+
+        if escaped_comment_txt.is_some() {
+            let upload_data = db_connection.get_upload_data(self.upload_id).await;
+
+            if upload_data.is_ok() {
+                let comment_data = CommentData {
+                    upload_id: self.upload_id,
+                    comment_text: escaped_comment_txt.unwrap()
+                };
+
+                return Some(comment_data);
+            }
+        }
+
+        return None;
+    }
+}
 
 #[derive(Deserialize)]
 pub struct LoginData {

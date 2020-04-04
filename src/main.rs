@@ -98,6 +98,7 @@ async fn main() -> std::io::Result<()> {
                         .secure(true)
                     )
                     .app_data(prj_config_data.clone())
+                    .route("/add_comment", web::post().to(js_api::add_comment))
                     .route("/add_upload", web::post().to(js_api::add_upload))
                     .route("/get_uploads/{start_id}/{amount}/{show_sfw}/{show_nsfw}", web::get().to(js_api::get_uploads))
                     .route("/get_uploads_range/{start_id}/{amount}/{show_sfw}/{show_nsfw}", web::get().to(js_api::get_uploads_range))

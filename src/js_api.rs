@@ -8,7 +8,7 @@ use crate::db_api::DbConnection;
 use crate::security::{get_user_session, check_username, check_password, verify_password, check_invite_key, hash_password, check_filename};
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
-use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime, TagData};
+use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime, TagData, CommentData};
 use crate::js_api::response_result::{BackendError, AddUploadSuccess, UserData};
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use actix_multipart::{Multipart, Field};
@@ -84,6 +84,35 @@ macro_rules! handle_session_error {
             handle_error_str!(error_code, error_txt.as_str(), Forbidden);
         }
     };
+}
+
+pub async fn add_comment(config: web::Data<ProjectConfig>, session: Session, comment_data: web::Form<CommentData>) -> HttpResponse {
+    let db_connection = get_db_connection!(config, true, true);
+    let session_data = get_user_session_data!(db_connection, session, false);
+
+    let validated_comment_data = comment_data.validate_data(&db_connection).await;
+
+    if validated_comment_data.is_some() {
+        let validated_comment_data = validated_comment_data.unwrap();
+        let comment_upload = validated_comment_data.upload_id;
+        let comment_text = validated_comment_data.comment_text;
+        let comment_poster = session_data.user_id;
+
+        let post_result = db_connection.add_comment(comment_poster, comment_upload, comment_text.as_str()).await;
+
+        if post_result.is_ok() {
+            return HttpResponse::Ok().body("{ \"success:\" true }");
+        }
+        else {
+            let error = post_result.err().unwrap();
+            let error_msg = error.error_msg;
+
+            handle_error_str!(InternalError, error_msg.as_str(), InternalServerError);
+        }
+    }
+    else {
+        handle_error_str!(UserInputError, "Übergebene Daten konnten nicht validiert werden", BadRequest);
+    }
 }
 
 pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut payload: Multipart) -> HttpResponse {
