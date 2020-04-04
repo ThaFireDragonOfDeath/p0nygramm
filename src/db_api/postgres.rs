@@ -256,6 +256,8 @@ impl PostgresConnection {
             }
             else {
                 warn!("PostgresConnection::get_uploads: No uploads found"); // Usually this should only happen if there is nothing uploaded yet
+
+                return Err(DbApiError::new(NoResult, "Keine Uploads vorhanden"));
             }
 
             return Ok(UploadPrvList{ uploads: return_vec });
@@ -289,6 +291,8 @@ impl PostgresConnection {
             }
             else {
                 warn!("PostgresConnection::get_uploads: No uploads found"); // Usually this should only happen if there is nothing uploaded yet
+
+                return Err(DbApiError::new(NoResult, "Keine Uploads vorhanden"));
             }
 
             return Ok(UploadPrvList{ uploads: return_vec });
