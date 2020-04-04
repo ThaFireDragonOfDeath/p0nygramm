@@ -118,7 +118,7 @@ pub async fn add_comment(config: web::Data<ProjectConfig>, session: Session, com
 pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut payload: Multipart) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, true);
     let session_data = get_user_session_data!(db_connection, session, false);
-    let multipart_data = parse_multipart_form_data(&mut payload).await;
+    let multipart_data = parse_multipart_form_data(&mut payload, false).await;
     let taglist_str = multipart_data.get("taglist");
     let filename = multipart_data.get("file");
     let upload_classification = multipart_data.get("classification");
@@ -436,8 +436,9 @@ pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> HttpR
 
 //noinspection ALL
 // Returns a map of name and content (in case of file: content = filename)
-async fn parse_multipart_form_data(payload: &mut Multipart) -> HashMap<String, String> {
+async fn parse_multipart_form_data(payload: &mut Multipart, allow_multiple_file_uploads: bool) -> HashMap<String, String> {
     let mut result_map : HashMap<String, String> = HashMap::new();
+    let mut file_saved = false;
 
     while let Ok(Some(field)) = payload.try_next().await {
         let mut field : Field = field; // Hack to show types in IDEA IDE
@@ -454,7 +455,7 @@ async fn parse_multipart_form_data(payload: &mut Multipart) -> HashMap<String, S
                 let mut data_content = String::new();
 
                 if name.is_some() {
-                    if filename.is_some() {
+                    if filename.is_some() && (!file_saved || allow_multiple_file_uploads) {
                         let mime_type_is_ok = check_file_mime(mime_type);
 
                         if mime_type_is_ok {
@@ -486,6 +487,7 @@ async fn parse_multipart_form_data(payload: &mut Multipart) -> HashMap<String, S
                                 }
 
                                 if parse_full_success {
+                                    file_saved = true;
                                     result_map.insert(name.unwrap().to_owned(), filename.clone());
                                 }
                             }
