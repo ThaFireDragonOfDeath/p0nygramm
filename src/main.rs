@@ -123,6 +123,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/login", web::post().to(js_api::login))
                     .route("/logout", web::get().to(js_api::logout))
                     .route("/register", web::post().to(js_api::register))
+                    .route("/vote_upload/{upload_id}/{vote_value}", web::get().to(js_api::vote_upload))
                 )
                 .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
                 .service(fs::Files::new("/prv", "./static/uploads-prv/").index_file("index.html"))

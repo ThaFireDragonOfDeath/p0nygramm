@@ -549,3 +549,27 @@ pub async fn register(config: web::Data<ProjectConfig>, register_data: web::Form
         handle_error_str!(UserInputError, "Die eingegebenen Daten entsprechen nicht den Richtlinien", BadRequest);
     }
 }
+
+pub async fn vote_upload(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i32)>) -> HttpResponse {
+    let db_connection = get_db_connection!(config, true, true);
+    let session_data = get_user_session_data!(db_connection, session, false);
+    let (upload_id, vote_value) = url_data.into_inner();
+    let user_id = session_data.user_id;
+
+    if upload_id < 1 {
+        handle_error_str!(UserInputError, "Die Upload ID kann nicht kleiner als 1 sein", BadRequest);
+    }
+
+    if vote_value < 1 || vote_value > 1 {
+        handle_error_str!(UserInputError, "Die Vote Nummer muss im Bereich von -1 und +1 liegen", BadRequest);
+    }
+
+    let db_result = db_connection.vote_upload(upload_id, user_id, vote_value).await;
+
+    if db_result.is_ok() {
+        return HttpResponse::Ok().body("{ \"success:\" true }");
+    }
+    else {
+        handle_error_str!(DatabaseError, "Fehler beim Speichern der Bewertung", InternalServerError);
+    }
+}

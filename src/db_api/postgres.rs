@@ -387,4 +387,19 @@ impl PostgresConnection {
 
         return None;
     }
+
+    pub async fn vote_upload(&self, upload_id: i32, user_id: i32, vote_value: i32) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::vote_upload");
+
+        let sql_cmd = include_str!(get_filepath!("vote_upload.sql"));
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&upload_id, &user_id, &vote_value];
+        let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+        else {
+            return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+        }
+    }
 }

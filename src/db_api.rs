@@ -209,4 +209,12 @@ impl DbConnection {
 
         Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
     }
+
+    pub async fn vote_upload(&self, upload_id: i32, user_id: i32, vote_value: i32) -> Result<(), DbApiError> {
+        trace!("Enter DbConnection::vote_upload");
+
+        check_postgres_connection!(self);
+
+        return self.postgres_connection.as_ref().unwrap().vote_upload(upload_id, user_id, vote_value).await;
+    }
 }
