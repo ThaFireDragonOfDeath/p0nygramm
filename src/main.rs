@@ -115,7 +115,7 @@ async fn main() -> std::io::Result<()> {
                 )
                 .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
                 .service(fs::Files::new("/prv", "./static/uploads-prv/").index_file("index.html"))
-                .service(fs::Files::new("/", "./static/webcontent/").index_file("index.html"))
+                .service(fs::Files::new("/static", "./static/webcontent/").index_file("index.html"))
         })
             .bind("127.0.0.1:8080")?
             .run()
