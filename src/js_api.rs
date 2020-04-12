@@ -564,6 +564,30 @@ pub async fn register(config: web::Data<ProjectConfig>, register_data: web::Form
     }
 }
 
+pub async fn vote_comment(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i32)>) -> HttpResponse {
+    let db_connection = get_db_connection!(config, true, true);
+    let session_data = get_user_session_data!(db_connection, session, false);
+    let (comment_id, vote_value) = url_data.into_inner();
+    let user_id = session_data.user_id;
+
+    if comment_id < 1 {
+        handle_error_str!(UserInputError, "Die Comment ID kann nicht kleiner als 1 sein", BadRequest);
+    }
+
+    if vote_value < 1 || vote_value > 1 {
+        handle_error_str!(UserInputError, "Die Vote Nummer muss im Bereich von -1 und +1 liegen", BadRequest);
+    }
+
+    let db_result = db_connection.vote_comment(comment_id, user_id, vote_value).await;
+
+    if db_result.is_ok() {
+        return HttpResponse::Ok().body("{ \"success:\" true }");
+    }
+    else {
+        handle_error_str!(DatabaseError, "Fehler beim Speichern der Bewertung", InternalServerError);
+    }
+}
+
 pub async fn vote_upload(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i32)>) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, true);
     let session_data = get_user_session_data!(db_connection, session, false);
