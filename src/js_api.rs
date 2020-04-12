@@ -564,6 +564,26 @@ pub async fn register(config: web::Data<ProjectConfig>, register_data: web::Form
     }
 }
 
+pub async fn set_filter(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(bool, bool)>) -> HttpResponse {
+    let (show_sfw, show_nsfw) = url_data.into_inner();
+
+    if show_sfw && show_nsfw {
+        handle_error_str!(UserInputError, "Es muss mindestens ein Filter aktiviert sein", BadRequest);
+    }
+
+    let db_connection = get_db_connection!(config, true, true);
+    let session_data = get_user_session_data!(db_connection, session, false);
+
+    let set_result_1 = session.set("show_sfw", show_sfw);
+    let set_result_2 = session.set("show_nsfw", show_nsfw);
+
+    if set_result_1.is_err() || set_result_2.is_err() {
+        handle_error_str!(CookieError, "Fehler beim Speichern der Einstellung", InternalServerError);
+    }
+
+    return HttpResponse::Ok().body("{ \"success:\" true }");
+}
+
 pub async fn vote_comment(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i32)>) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, true);
     let session_data = get_user_session_data!(db_connection, session, false);
