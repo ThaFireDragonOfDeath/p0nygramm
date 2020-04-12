@@ -9,7 +9,7 @@ use crate::security::{get_user_session, check_username, check_password, verify_p
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
 use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime, TagData, CommentData};
-use crate::js_api::response_result::{BackendError, AddUploadSuccess, UserData};
+use crate::js_api::response_result::{BackendError, AddUploadSuccess, UserData, Filter};
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use actix_multipart::{Multipart, Field};
 use futures::{StreamExt, TryStreamExt};
@@ -211,6 +211,43 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
     }
     else {
         handle_error_str!(UnknownError, "Es ist ein Fehler beim Speichern der Datei auf dem Server aufgetreten", InternalServerError);
+    }
+}
+
+pub async fn get_filter(config: web::Data<ProjectConfig>, session: Session) -> HttpResponse {
+    let db_connection = get_db_connection!(config, true, true);
+    let session_data = get_user_session_data!(db_connection, session, false);
+
+    let show_sfw = session.get::<bool>("show_sfw");
+    let show_nsfw = session.get::<bool>("show_nsfw");
+
+    if show_sfw.is_ok() && show_nsfw.is_ok() {
+        let show_sfw = show_sfw.unwrap();
+        let show_nsfw = show_nsfw.unwrap();
+
+        if show_sfw.is_some() && show_nsfw.is_some() {
+            let show_sfw = show_sfw.unwrap();
+            let show_nsfw = show_nsfw.unwrap();
+
+            let filter_obj = Filter::new(show_sfw, show_nsfw);
+            let response_txt = serde_json::to_string(&filter_obj).unwrap_or("".to_owned());
+
+            return HttpResponse::Ok().body(response_txt);
+        }
+    }
+
+    // If filter is not set: Set show_sfw = true and show_nsfw to false
+    let set_result_1 = session.set("show_sfw", true);
+    let set_result_2 = session.set("show_nsfw", false);
+
+    if set_result_1.is_err() || set_result_2.is_err() {
+        handle_error_str!(CookieError, "Fehler beim Speichern der Default Einstellung", InternalServerError);
+    }
+    else {
+        let filter_obj = Filter::new(true, false);
+        let response_txt = serde_json::to_string(&filter_obj).unwrap_or("".to_owned());
+
+        return HttpResponse::Ok().body(response_txt);
     }
 }
 

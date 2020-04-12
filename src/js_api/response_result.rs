@@ -45,6 +45,21 @@ impl AddUploadSuccess {
 }
 
 #[derive(Clone, Serialize)]
+pub struct Filter {
+    pub show_sfw: bool,
+    pub show_nsfw: bool,
+}
+
+impl Filter {
+    pub fn new(show_sfw: bool, show_nsfw: bool) -> Filter {
+        Filter {
+            show_sfw,
+            show_nsfw,
+        }
+    }
+}
+
+#[derive(Clone, Serialize)]
 pub struct UserData {
     pub user_id: i32,
     pub username: String,
