@@ -194,11 +194,19 @@ impl DbConnection {
     }
 
     pub async fn vote_comment(&self, comment_id: i32, user_id: i32, vote_value: i32) -> Result<(), DbApiError> {
-        trace!("Enter DbConnection::vote_upload");
+        trace!("Enter DbConnection::vote_comment");
 
         check_postgres_connection!(self);
 
         return self.postgres_connection.as_ref().unwrap().vote_comment(comment_id, user_id, vote_value).await;
+    }
+
+    pub async fn vote_tag(&self, tum_id: i32, user_id: i32, vote_value: i32) -> Result<(), DbApiError> {
+        trace!("Enter DbConnection::vote_tag");
+
+        check_postgres_connection!(self);
+
+        return self.postgres_connection.as_ref().unwrap().vote_tag(tum_id, user_id, vote_value).await;
     }
 
     pub async fn vote_upload(&self, upload_id: i32, user_id: i32, vote_value: i32) -> Result<(), DbApiError> {

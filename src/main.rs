@@ -108,6 +108,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/logout", web::get().to(js_api::logout))
                     .route("/register", web::post().to(js_api::register))
                     .route("/vote_comment/{comment_id}/{vote_value}", web::get().to(js_api::vote_comment))
+                    .route("/vote_tag/{tum_id}/{vote_value}", web::get().to(js_api::vote_tag))
                     .route("/vote_upload/{upload_id}/{vote_value}", web::get().to(js_api::vote_upload))
                 )
                 .service(fs::Files::new("/uploads", "./static/uploads/").index_file("index.html"))
