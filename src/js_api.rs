@@ -412,15 +412,19 @@ pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_dat
                     if session_data.is_ok() {
                         let session_data = session_data.ok().unwrap();
                         let session_id = session_data.session_id.clone();
-                        let session_set_result = session.set("session_id", session_id.as_str());
+                        let session_set_result_1 = session.set("session_id", session_id.as_str());
+                        let session_set_result_2 = session.set("show_sfw", true);
+                        let session_set_result_3 = session.set("show_nsfw", false);
 
-                        if session_set_result.is_ok() {
+                        if session_set_result_1.is_ok() && session_set_result_2.is_ok() && session_set_result_3.is_ok() {
                             let response_userdata = response_result::UserData::new(&user_data);
                             let response_body = serde_json::to_string(&response_userdata).unwrap_or("".to_owned());
 
                             return HttpResponse::Ok().body(response_body);
                         }
                         else {
+                            session.purge();
+
                             handle_error_str!(CookieError, "Fehler beim Setzen des Session Cookies", InternalServerError);
                         }
                     }
@@ -460,7 +464,7 @@ pub async fn logout(config: web::Data<ProjectConfig>, session: Session) -> HttpR
     let logoff_result = db_connection.destroy_session(session_id.as_str()).await;
 
     if logoff_result.is_ok() {
-        session.remove("session_id");
+        session.purge();
 
         return HttpResponse::Ok().body("{ \"success:\" true }");
     }
