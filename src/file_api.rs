@@ -90,7 +90,7 @@ async fn generate_preview(ffmpeg_filepath: &str, ffprobe_data: &FFprobeOutput, f
         let width = ffprobe_data.streams.get(0).unwrap().width;
         let height = ffprobe_data.streams.get(0).unwrap().height;
         let crop_resolution = width.min(height);
-        let ffmpeg_filter = format!("crop={}:{},scale=150:150", crop_resolution, crop_resolution);
+        let ffmpeg_filter = format!("crop={}:{},scale=100:100", crop_resolution, crop_resolution);
         let video_duration = ffprobe_data.format.duration.unwrap_or(0.0);
 
         let mut ffmpeg_args : Vec<&str> = Vec::new();
