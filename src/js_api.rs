@@ -218,6 +218,12 @@ pub async fn check_username_exists(config: web::Data<ProjectConfig>, url_data: w
     let db_connection = get_db_connection!(config, true, false);
 
     let username = url_data.into_inner();
+    let username_is_ok = check_username(username.as_str());
+
+    if !username_is_ok {
+        handle_error_str!(UserInputError, "Benutzername entspricht nicht den Richtlinien", BadRequest);
+    }
+
     let user_exists = db_connection.check_user_exists(username.as_str()).await;
 
     if user_exists.is_ok() {
