@@ -45,6 +45,19 @@ impl AddUploadSuccess {
 }
 
 #[derive(Clone, Serialize)]
+pub struct UserExists {
+    user_exists: bool,
+}
+
+impl UserExists {
+    pub fn new(user_exists: bool) -> UserExists {
+        UserExists {
+            user_exists,
+        }
+    }
+}
+
+#[derive(Clone, Serialize)]
 pub struct Filter {
     pub show_sfw: bool,
     pub show_nsfw: bool,

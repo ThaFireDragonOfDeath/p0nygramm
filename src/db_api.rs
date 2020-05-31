@@ -3,7 +3,7 @@ use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
 use crate::db_api::db_result::{UploadPrvList, DbApiError, SessionData, SessionError, UploadData, UserData};
-use crate::db_api::db_result::DbApiErrorType::{UnknownError, ConnectionError, PartFail, QueryError};
+use crate::db_api::db_result::DbApiErrorType::{UnknownError, ConnectionError, PartFail, QueryError, NoResult};
 use crate::db_api::db_result::SessionErrorType::DbError;
 use log::{trace, debug, info, warn, error};
 use actix_session::Session;
@@ -89,6 +89,28 @@ impl DbConnection {
         check_postgres_connection!(self);
 
         return self.postgres_connection.as_ref().unwrap().add_user(username, pw_hash, user_is_mod).await;
+    }
+
+    pub async fn check_user_exists(&self, username: &str) -> Result<bool, DbApiError> {
+        trace!("Enter DbConnection::check_user_exists");
+
+        check_postgres_connection!(self);
+
+        let user_data = self.postgres_connection.as_ref().unwrap().get_userdata_by_username(username).await;
+
+        if user_data.is_ok() {
+            return Ok(true);
+        }
+        else {
+            let user_data_error = user_data.err().unwrap();
+
+            if user_data_error.error_type == NoResult {
+                return Ok(false);
+            }
+            else {
+                return Err(user_data_error);
+            }
+        }
     }
 
     pub async fn create_session(&self, user_id: i32, is_lts: bool) -> Result<SessionData, SessionError> {

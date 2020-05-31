@@ -9,7 +9,7 @@ use crate::security::{get_user_session, check_username, check_password, verify_p
 use crate::db_api::db_result::DbApiErrorType;
 use crate::db_api::db_result::SessionErrorType::DbError;
 use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime, TagData, CommentData};
-use crate::js_api::response_result::{BackendError, AddUploadSuccess, UserData, Filter};
+use crate::js_api::response_result::{BackendError, AddUploadSuccess, UserData, Filter, UserExists};
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use actix_multipart::{Multipart, Field};
 use futures::{StreamExt, TryStreamExt};
@@ -211,6 +211,26 @@ pub async fn add_upload(config: web::Data<ProjectConfig>, session: Session, mut 
     }
     else {
         handle_error_str!(UnknownError, "Es ist ein Fehler beim Speichern der Datei auf dem Server aufgetreten", InternalServerError);
+    }
+}
+
+pub async fn check_username_exists(config: web::Data<ProjectConfig>, url_data: web::Path<String>) -> HttpResponse {
+    let db_connection = get_db_connection!(config, true, false);
+
+    let username = url_data.into_inner();
+    let user_exists = db_connection.check_user_exists(username.as_str()).await;
+
+    if user_exists.is_ok() {
+        let user_exists = user_exists.ok().unwrap();
+        let user_exists_obj = UserExists::new(user_exists);
+        let response_txt = serde_json::to_string(&user_exists_obj).unwrap_or("".to_owned());
+
+        return HttpResponse::Ok().body(response_txt);
+    }
+    else {
+        let error = user_exists.err().unwrap();
+        let error_msg = error.error_msg;
+        handle_error_str!(InternalError, error_msg.as_str(), InternalServerError);
     }
 }
 
