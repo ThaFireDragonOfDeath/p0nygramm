@@ -39,6 +39,7 @@ CREATE TABLE public.uploads (
 	upload_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
 	upload_is_sfw bool NOT NULL DEFAULT true,
 	upload_is_nsfw bool NOT NULL DEFAULT false,
+	upload_upvotes integer NOT NULL DEFAULT 0,
 	uploader integer NOT NULL,
 	CONSTRAINT uploads_pk PRIMARY KEY (upload_id),
 	CONSTRAINT upload_filename_unique UNIQUE (upload_filename)
@@ -55,6 +56,7 @@ CREATE TABLE public.comments (
 	comment_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
 	comment_text text NOT NULL,
 	comment_poster integer NOT NULL,
+	comment_upvotes integer NOT NULL DEFAULT 0,
 	comment_upload integer NOT NULL,
 	CONSTRAINT comments_pk PRIMARY KEY (comment_id)
 
@@ -80,6 +82,7 @@ CREATE TABLE public.tags (
 -- DROP TABLE IF EXISTS public.tag_upload_map CASCADE;
 CREATE TABLE public.tag_upload_map (
 	tum_id serial NOT NULL,
+	tag_upvotes integer NOT NULL DEFAULT 0,
 	tag_poster integer NOT NULL,
 	tag_id integer NOT NULL,
 	upload_id integer NOT NULL,

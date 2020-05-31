@@ -37,10 +37,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="uploads" layer="0" collapse-mode="2" max-obj-count="7">
+<table name="uploads" layer="0" collapse-mode="2" max-obj-count="8">
 	<schema name="public"/>
 	<role name="postgres"/>
-	<position x="920" y="800"/>
+	<position x="880" y="880"/>
 	<column name="upload_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -56,6 +56,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="upload_is_nsfw" not-null="true" default-value="false">
 		<type name="bool" length="0"/>
 	</column>
+	<column name="upload_upvotes" not-null="true" default-value="0">
+		<type name="integer" length="0"/>
+	</column>
 	<column name="uploader" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
@@ -67,7 +70,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="comments" layer="0" collapse-mode="2" max-obj-count="6">
+<table name="comments" layer="0" collapse-mode="2" max-obj-count="7">
 	<schema name="public"/>
 	<role name="postgres"/>
 	<position x="140" y="260"/>
@@ -81,6 +84,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="text" length="0"/>
 	</column>
 	<column name="comment_poster" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="comment_upvotes" not-null="true" default-value="0">
 		<type name="integer" length="0"/>
 	</column>
 	<column name="comment_upload" not-null="true">
@@ -109,12 +115,15 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="tag_upload_map" layer="0" collapse-mode="2" max-obj-count="4">
+<table name="tag_upload_map" layer="0" collapse-mode="2" max-obj-count="6">
 	<schema name="public"/>
 	<role name="postgres"/>
 	<position x="140" y="520"/>
 	<column name="tum_id" not-null="true">
 		<type name="serial" length="0"/>
+	</column>
+	<column name="tag_upvotes" not-null="true" default-value="0">
+		<type name="integer" length="0"/>
 	</column>
 	<column name="tag_poster" not-null="true">
 		<type name="integer" length="0"/>

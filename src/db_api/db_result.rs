@@ -111,13 +111,15 @@ impl SessionError {
 
 #[derive(Clone, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct TagData {
+    pub tag_id: i32,
     pub tag_text: String,
     pub tag_upvotes: i32,
 }
 
 impl TagData {
-    pub fn new(tag_text: &str, tag_upvotes: i32) -> TagData {
+    pub fn new(tag_id: i32, tag_text: &str, tag_upvotes: i32) -> TagData {
         TagData {
+            tag_id,
             tag_text: tag_text.to_owned(),
             tag_upvotes,
         }
@@ -178,8 +180,8 @@ impl UploadData {
         self.comment_list.add_comment(comment_data);
     }
 
-    pub fn add_tag(&mut self, tag_text: &str, tag_upvotes: i32) {
-        let tag_data = TagData::new(tag_text, tag_upvotes);
+    pub fn add_tag(&mut self, tag_id: i32, tag_text: &str, tag_upvotes: i32) {
+        let tag_data = TagData::new(tag_id, tag_text, tag_upvotes);
 
         self.tag_list.add_tag(tag_data);
     }

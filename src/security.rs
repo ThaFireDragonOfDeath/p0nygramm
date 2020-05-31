@@ -91,7 +91,7 @@ pub fn check_password(password: &str) -> bool {
     let password_length = password.len();
 
     // A password can be 64 characters long
-    if password_length <= 64 {
+    if password_length >= 8 && password_length <= 64 {
         let password_chars = password.chars();
 
         // A password can only have alphanumeric characters and ascii punctuations (like !;:% etc.)

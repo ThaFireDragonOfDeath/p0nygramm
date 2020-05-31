@@ -147,9 +147,9 @@ impl PostgresConnection {
     pub async fn get_upload_data(&self, upload_id: i32) -> Result<UploadData, DbApiError> {
         trace!("Enter PostgresConnection::get_upload_data");
 
-        let sql_cmd_upload_data = include_str!(get_filepath!("get_uploads.sql"));
+        let sql_cmd_upload_data = include_str!(get_filepath!("get_upload_data.sql"));
         let sql_cmd_comment_data = include_str!(get_filepath!("get_comments_for_upload.sql"));
-        let sql_cmd_tag_data = include_str!(get_filepath!("get_uploads.sql"));
+        let sql_cmd_tag_data = include_str!(get_filepath!("get_tags_for_upload.sql"));
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[&upload_id];
 
         let prepared_statement : Result<(Statement, Statement, Statement), Error> = future::try_join3(
@@ -196,10 +196,11 @@ impl PostgresConnection {
 
                     // Process tags
                     for row in result_rows_ta {
-                        let tag_text : String = row.get(0);
-                        let tag_upvotes : i32 = row.get(1);
+                        let tag_id : i32 = row.get(0);
+                        let tag_text : String = row.get(1);
+                        let tag_upvotes : i32 = row.get(2);
 
-                        upload_data.add_tag(tag_text.as_str(), tag_upvotes);
+                        upload_data.add_tag(tag_id, tag_text.as_str(), tag_upvotes);
                     }
                 }
                 else {
