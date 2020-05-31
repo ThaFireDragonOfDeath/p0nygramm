@@ -61,7 +61,13 @@ function send_http_request(method, post_data_format, path, content, callback, pr
             xhttp_ref = null; // After the request is send it can't be canceled from the API
         }
         if (this.readyState == 4) {
-            callback(this.status, this.response);
+            if (this.response == "") {
+                var default_error =  { "error_code":"InternalError", "error_msg":"Interner Fehler beim Erzeugen des JSON Objektes" };
+                callback(500, default_error);
+            }
+            else {
+                callback(this.status, this.response);
+            }
         }
     };
 
