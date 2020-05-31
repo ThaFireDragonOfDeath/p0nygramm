@@ -27,13 +27,19 @@ function logout(callback) {
     send_http_request("GET", null, "js-api/logout", null, callback, null);
 }
 
-function register(username, password, invite_key) {
+function register(username, password, invite_key, callback) {
     var url_encoded_form_data = "";
     url_encoded_form_data.concat("username=", username, "&");
     url_encoded_form_data.concat("password=", password, "&");
     url_encoded_form_data.concat("invite_key=", invite_key);
 
     send_http_request("POST", post_urlencoded, "js-api/register", url_encoded_form_data, callback, null);
+}
+
+function set_filter(show_sfw, show_nsfw, callback) {
+    var url_path = "js-api/set_filter/" + show_sfw + "/" + show_nsfw;
+
+    send_http_request("GET", null, url_path, null, callback, null);
 }
 
 // Helper functions
