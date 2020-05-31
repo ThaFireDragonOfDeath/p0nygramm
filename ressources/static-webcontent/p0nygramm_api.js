@@ -11,7 +11,7 @@ const post_multipart_fd = 2; // content must be a FormData object (used for file
 
 // Global variables
 var last_send_progress = -1;
-var xhttp_ref = null;
+var xhttp_ref = null; // Reference to the current request (used to cancel uploads)
 
 // API functions
 function login(username, password, keep_logged_in, callback) {
@@ -31,29 +31,27 @@ function logout(callback) {
 function send_http_request(method, post_data_format, path, content, callback, progress_callback) {
     var xhttp = new XMLHttpRequest();
     xhttp.timeout = httpTimeout;
+    xhttp_ref = xhttp;
 
     // Set options for post content type
+    // In case of multipart form data we don't set that field here (the FormData object sets that)
     if (post_data_format == post_urlencoded) {
         xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    }
-    else if (post_data_format == post_multipart_fd) {
-        xhttp_ref = xhttp;
     }
 
     // Request finished handler
     xhttp.onreadystatechange = function() {
+        if (this.readyState == 3) {
+            xhttp_ref = null; // After the request is send it can't be canceled from the API
+        }
         if (this.readyState == 4) {
-            if (xhttp_ref != null) {
-                xhttp_ref = null;
-            }
-
-            callback(this.status, this.response)
+            callback(this.status, this.response);
         }
     };
 
     // Timeout handler
     xhttp.ontimeout = function() {
-        callback(503, null)
+        callback(503, null);
     };
 
     // Progress report
