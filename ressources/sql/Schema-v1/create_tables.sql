@@ -167,6 +167,15 @@ CREATE TABLE public.votes_comments (
 -- ALTER TABLE public.votes_comments OWNER TO postgres;
 -- ddl-end --
 
+-- object: username_uq | type: INDEX --
+-- DROP INDEX IF EXISTS public.username_uq CASCADE;
+CREATE UNIQUE INDEX username_uq ON public.users
+	USING btree
+	(
+	  (LOWER(user_name))
+	);
+-- ddl-end --
+
 -- object: uploader_fk | type: CONSTRAINT --
 -- ALTER TABLE public.uploads DROP CONSTRAINT IF EXISTS uploader_fk CASCADE;
 ALTER TABLE public.uploads ADD CONSTRAINT uploader_fk FOREIGN KEY (uploader)

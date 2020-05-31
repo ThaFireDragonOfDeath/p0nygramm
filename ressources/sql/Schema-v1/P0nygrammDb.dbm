@@ -246,6 +246,14 @@ schema_version•1]]>
 	</constraint>
 </table>
 
+<index name="username_uq" table="public.users"
+	 concurrent="false" unique="true" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<expression><![CDATA[LOWER(user_name)]]></expression>
+		</idxelement>
+</index>
+
 <constraint name="uploader_fk" type="fk-constr" comparison-type="MATCH FULL"
 	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.uploads">
 	<columns names="uploader" ref-type="src-columns"/>
