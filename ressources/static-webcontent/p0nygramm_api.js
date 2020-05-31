@@ -27,6 +27,15 @@ function logout(callback) {
     send_http_request("GET", null, "js-api/logout", null, callback, null);
 }
 
+function register(username, password, invite_key) {
+    var url_encoded_form_data = "";
+    url_encoded_form_data.concat("username=", username, "&");
+    url_encoded_form_data.concat("password=", password, "&");
+    url_encoded_form_data.concat("invite_key=", invite_key);
+
+    send_http_request("POST", post_urlencoded, "js-api/register", url_encoded_form_data, callback, null);
+}
+
 // Helper functions
 function send_http_request(method, post_data_format, path, content, callback, progress_callback) {
     var xhttp = new XMLHttpRequest();
@@ -42,6 +51,7 @@ function send_http_request(method, post_data_format, path, content, callback, pr
     // Request finished handler
     xhttp.onreadystatechange = function() {
         if (this.readyState == 3) {
+            last_send_progress = -1;
             xhttp_ref = null; // After the request is send it can't be canceled from the API
         }
         if (this.readyState == 4) {
