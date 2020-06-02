@@ -1,0 +1,8 @@
+body {
+    background-color: #161618;
+}
+
+#div_register_error {
+    color: red;
+    display: none;
+}

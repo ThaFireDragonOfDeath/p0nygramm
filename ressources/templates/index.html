@@ -1,13 +1,36 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="utf-8">
         <title>P0nygramm - Die Datingplattform für Kellerponys</title>
+        <link rel="stylesheet" href="p0nygramm.css">
+        <script src="p0nygramm_api.js"></script>
+        <script src="p0nygramm.js"></script>
     </head>
     <body>
-        {{#if have_read_access}}
-            <!-- Content, if user is logged in !-->
+        {{#if is_logged_in}}
+        <!-- Content, if user is logged in !-->
         {{else}}
-            <p>Diese Plattform ist nur für registrierte Mitglieder zugänglich</p>
+        <!-- Content, if user is not logged in !-->
+        <p>
+            Dies ist eine rein private Webseite, daher ist der Zugang nur für registrierte Personen zugänglich.<br>
+            Bitte anmelden oder registrieren!
+        </p>
+        <div id="div_register">
+            Registrieren:
+            <form onsubmit="js_register()">
+                <label for="reg_username">Benutzername:</label><br>
+                <input type="text" id="reg_username" name="username"><br><br>
+                <label for="reg_password">Passwort:</label><br>
+                <input type="password" id="reg_password" name="password"><br><br>
+                <label for="reg_rpassword">Passwort wiederholen:</label><br>
+                <input type="password" id="reg_rpassword" name="rpassword"><br><br>
+                <label for="reg_invite_key">Invite Schlüssel:</label><br>
+                <input type="text" id="reg_invite_key" name="invite_key"><br><br>
+                <input type="submit" id="reg_submit" value="Registrieren">
+            </form>
+            <div id="div_register_error">Platz für Fehlermeldungen</div>
+        </div>
         {{/if}}
     </body>
 </html>

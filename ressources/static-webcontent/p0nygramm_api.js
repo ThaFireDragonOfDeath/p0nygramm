@@ -1,3 +1,5 @@
+// Backend API
+
 // The callback function get two parameters:
 // Parameter 1: Response code (on timeout: 503)
 // Parameter 2: Response JSON object (on timeout: null)
@@ -14,36 +16,36 @@ var last_send_progress = -1;
 var xhttp_ref = null; // Reference to the current request (used to cancel uploads)
 
 // API functions
-function login(username, password, keep_logged_in, callback) {
+function api_login(username, password, keep_logged_in, callback) {
     var url_encoded_form_data = "";
     url_encoded_form_data.concat("username=", username, "&");
     url_encoded_form_data.concat("password=", password, "&");
     url_encoded_form_data.concat("keep_logged_in=", keep_logged_in);
 
-    send_http_request("POST", post_urlencoded, "js-api/login", url_encoded_form_data, callback, null);
+    api_send_http_request("POST", post_urlencoded, "js-api/login", url_encoded_form_data, callback, null);
 }
 
-function logout(callback) {
-    send_http_request("GET", null, "js-api/logout", null, callback, null);
+function api_logout(callback) {
+    api_send_http_request("GET", null, "js-api/logout", null, callback, null);
 }
 
-function register(username, password, invite_key, callback) {
+function api_register(username, password, invite_key, callback) {
     var url_encoded_form_data = "";
     url_encoded_form_data.concat("username=", username, "&");
     url_encoded_form_data.concat("password=", password, "&");
     url_encoded_form_data.concat("invite_key=", invite_key);
 
-    send_http_request("POST", post_urlencoded, "js-api/register", url_encoded_form_data, callback, null);
+    api_send_http_request("POST", post_urlencoded, "js-api/register", url_encoded_form_data, callback, null);
 }
 
-function set_filter(show_sfw, show_nsfw, callback) {
+function api_set_filter(show_sfw, show_nsfw, callback) {
     var url_path = "js-api/set_filter/" + show_sfw + "/" + show_nsfw;
 
-    send_http_request("GET", null, url_path, null, callback, null);
+    api_send_http_request("GET", null, url_path, null, callback, null);
 }
 
 // Helper functions
-function send_http_request(method, post_data_format, path, content, callback, progress_callback) {
+function api_send_http_request(method, post_data_format, path, content, callback, progress_callback) {
     var xhttp = new XMLHttpRequest();
     xhttp.timeout = httpTimeout;
     xhttp_ref = xhttp;
@@ -82,7 +84,7 @@ function send_http_request(method, post_data_format, path, content, callback, pr
             var progress = Math.round(100 / event.total * event.loaded);
 
             // Prevent multiple callbacks for the same progress number
-            if (progress != last_send_progress) {
+            if (progress > last_send_progress) {
                 last_send_progress = progress;
                 progress_callback(progress);
             }
