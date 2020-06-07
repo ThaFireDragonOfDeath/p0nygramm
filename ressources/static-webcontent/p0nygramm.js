@@ -1,54 +1,97 @@
 // Common functions called from HTML
 
 // API functions
+function js_login() {
+    // Read input data
+    var login_data = ui_get_login_data();
+
+    // Disable login and register button
+    ui_set_auth_state(ui_btn_state.deactivate);
+
+    // Send login data
+    api_login(login_data.username, login_data.password, login_data.keep_logged_in, js_login_callback);
+}
+
+function js_logout() {
+    api_logout(js_logout_callback)
+}
+
 function js_register() {
     // Read input data
-    var username = document.getElementById("reg_username").value;
-    var password = document.getElementById("reg_password").value;
-    var rpassword = document.getElementById("reg_rpassword").value;
-    var invite_key = document.getElementById("reg_invite_key").value;
+    var register_data = ui_get_register_data();
 
     // Check password
-    if (password != rpassword) {
-        js_register_error("Die eingegebenen Passwörter stimmen nicht überein!");
+    if (register_data.password !== register_data.rpassword) {
+        ui_report_msg("Die eingegebenen Passwörter stimmen nicht überein!", ui_message_output.register, ui_message_type.error);
+
         return;
     }
 
-    // Disable register button
-    document.getElementById("reg_submit").disabled = true;
+    // Disable login and register button
+    ui_set_auth_state(ui_btn_state.deactivate);
 
     // Send register data
-    api_register(username, password, invite_key, js_register_callback);
+    api_register(register_data.username, register_data.password, register_data.invite_key, js_register_callback);
 }
 
-// Helper functions
+// Callback functions
+function js_login_callback(response_code, response_content) {
+    // Handle backend errors
+    if (response_code != 200) {
+        var error_msg = response_content.error_msg;
+
+        ui_report_msg(error_msg, ui_message_output.login, ui_message_type.error);
+        ui_set_auth_state(ui_btn_state.activate);
+
+        return;
+    }
+
+    // Report login success
+    ui_report_msg("Anmeldung erfolgreich. Die Seite wird in Kürze neu geladen.", ui_message_output.login, ui_message_type.success);
+
+    // Reload page after two seconds
+    window.setTimeout(ui_page_reload, 2000);
+}
+
+function js_logout_callback(response_code, response_content) {
+    ui_page_reload();
+}
+
 function js_register_callback(response_code, response_content) {
     // Handle backend errors
     if (response_code != 200) {
         var error_msg = response_content.error_msg;
         js_register_error(message);
+
+        document.getElementById("log_submit").disabled = false;
         document.getElementById("reg_submit").disabled = false;
+
         return;
     }
 
-    js_register_success("Registrierung erfolgreich abgeschlossen. Seite wird in Kürze neu geladen.");
+    // Report register success
+    ui_report_msg("Registrierung erfolgreich abgeschlossen. Sie werden in Kürze angemeldet.", ui_message_output.register, ui_message_type.success);
+
+    // Read input data
+    var register_data = ui_get_register_data();
+
+    // Login into the new registered account
+    api_login(register_data.username, register_data.password, false, js_reglogin_callback);
+}
+
+function js_reglogin_callback(response_code, response_content) {
+    // Handle backend errors
+    if (response_code != 200) {
+        var error_msg = response_content.error_msg;
+
+        ui_report_msg(error_msg, ui_message_output.register, ui_message_type.error);
+        ui_set_auth_state(ui_btn_state.activate);
+
+        return;
+    }
+
+    ui_report_msg("Anmeldung erfolgreich. Die Seite wird in Kürze neu geladen.", ui_message_output.register, ui_message_type.success);
 
     // Reload page after two seconds
-    window.setTimeout(js_page_reload, 2000);
-}
-
-function js_register_error(message) {
-    document.getElementById("div_register_error").innerHTML = message;
-    document.getElementById("div_register_error").style.color = "red";
-    document.getElementById("div_register_error").style.display = "block";
-}
-
-function js_register_success(message) {
-    document.getElementById("div_register_error").innerHTML = message;
-    document.getElementById("div_register_error").style.color = "green";
-    document.getElementById("div_register_error").style.display = "block";
-}
-
-function js_page_reload() {
-    location.reload();
+    window.setTimeout(ui_page_reload, 2000);
 }

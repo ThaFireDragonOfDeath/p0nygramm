@@ -3,13 +3,31 @@
     <head>
         <meta charset="utf-8">
         <title>P0nygramm - Die Datingplattform für Kellerponys</title>
-        <link rel="stylesheet" href="p0nygramm.css">
-        <script src="p0nygramm_api.js"></script>
-        <script src="p0nygramm.js"></script>
+        <link rel="stylesheet" href="static/p0nygramm.css">
+        <script src="static/p0nygramm_api.js"></script>
+        <script src="static/p0nygramm_ui.js"></script>
+        <script src="static/p0nygramm.js"></script>
     </head>
     <body>
-        {{#if is_logged_in}}
+        {{#if is_backend_error}}
+        <!-- Content, if there was an error in the backend !-->
+        <p>
+            Es ist ein Fehler im Backend aufgetreten, bitte versuchen Sie es später noch einmal!
+        </p>
+        <form>
+            <input type="button" onclick="location.reload()" value="Seite neu laden">
+        </form>
+        {{#else if is_logged_in}}
         <!-- Content, if user is logged in !-->
+        <header>
+            <a id="header_left">
+                <a>Logo</a>
+            </a>
+            <a id="header_right">
+                <a>{{username}}</a>
+                <a onclick="js_logout()">Abmelden</a>
+            </a>
+        </header>
         {{else}}
         <!-- Content, if user is not logged in !-->
         <p>
@@ -30,6 +48,19 @@
                 <input type="submit" id="reg_submit" value="Registrieren">
             </form>
             <div id="div_register_error">Platz für Fehlermeldungen</div>
+        </div>
+        <div id="div_login">
+            Anmelden:
+            <form onsubmit="js_login()">
+                <label for="log_username">Benutzername:</label><br>
+                <input type="text" id="log_username" name="username"><br><br>
+                <label for="log_password">Passwort:</label><br>
+                <input type="password" id="log_password" name="password"><br><br>
+                <input type="checkbox" id="log_keep_logged_in" name="keep_logged_in">
+                <label for="log_keep_logged_in">Eingeloggt bleiben</label><br><br>
+                <input type="submit" id="log_submit" value="Anmelden">
+            </form>
+            <div id="div_login_error">Platz für Fehlermeldungen</div>
         </div>
         {{/if}}
     </body>
