@@ -6,7 +6,7 @@ use crate::config::ProjectConfig;
 use actix_session::Session;
 use crate::db_api::DbConnection;
 use crate::security::{get_user_session, check_username, check_password, verify_password, check_invite_key, hash_password, check_filename};
-use crate::db_api::db_result::DbApiErrorType;
+use crate::db_api::db_result::{DbApiErrorType};
 use crate::db_api::db_result::SessionErrorType::DbError;
 use crate::js_api::request_data::{LoginData, RegisterData, check_file_mime, check_form_content_mime, TagData, CommentData};
 use crate::js_api::response_result::{BackendError, AddUploadSuccess, UserData, Filter, UserExists};
@@ -19,6 +19,7 @@ use crate::tokio::io::AsyncWriteExt;
 use crate::file_api::{get_upload_path_tmp, process_file, delete_upload_srv};
 use crate::file_api::FileProcessErrorType::FormatError;
 use crate::db_api::db_result::DbApiErrorType::PartFail;
+use std::ops::Deref;
 
 macro_rules! get_db_connection {
     ($config:ident, $req_postgres:expr, $req_redis:expr) => {
@@ -240,7 +241,9 @@ pub async fn check_username_exists(config: web::Data<ProjectConfig>, url_data: w
     }
 }
 
-pub async fn get_filter(config: web::Data<ProjectConfig>, session: Session) -> HttpResponse {
+// The get functions have additional _ref APIs for the frontend module
+// The _ref functions have the same behavior as the normal functions, except the parameters are passed as a reference
+pub async fn get_filter_ref(config: &web::Data<ProjectConfig>, session: &Session) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, true);
     let session_data = get_user_session_data!(db_connection, session, false);
 
@@ -277,11 +280,15 @@ pub async fn get_filter(config: web::Data<ProjectConfig>, session: Session) -> H
     }
 }
 
-pub async fn get_uploads(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i16, bool, bool)>) -> HttpResponse {
+pub async fn get_filter(config: web::Data<ProjectConfig>, session: Session) -> HttpResponse {
+    get_filter_ref(&config, &session).await
+}
+
+pub async fn get_uploads_ref(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<(i32, i16, bool, bool)>) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, true);
     let session_data = get_user_session_data!(db_connection, session, false);
 
-    let (start_id, amount, show_sfw, show_nsfw) = url_data.into_inner();
+    let (start_id, amount, show_sfw, show_nsfw) = url_data.deref().clone();
 
     if start_id < 1 {
         handle_error_str!(UserInputError, "Die Start ID kann nicht kleiner als 1 sein", BadRequest);
@@ -309,6 +316,10 @@ pub async fn get_uploads(config: web::Data<ProjectConfig>, session: Session, url
             handle_error_str!(DatabaseError, error.error_msg.as_str(), InternalServerError);
         }
     }
+}
+
+pub async fn get_uploads(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i16, bool, bool)>) -> HttpResponse {
+    get_uploads_ref(&config, &session, &url_data).await
 }
 
 pub async fn get_uploads_range(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i32, bool, bool)>) -> HttpResponse {

@@ -5,15 +5,7 @@ use argonautica::config::Variant;
 use crate::db_api::db_result::{SessionError, SessionData};
 use crate::db_api::DbConnection;
 use actix_session::Session;
-use crate::security::AccessLevel::User;
 use crate::db_api::db_result::SessionErrorType::NoSession;
-
-#[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
-pub enum AccessLevel {
-    None = 0,
-    User = 1,
-    Mod = 2, // -> Is gay
-}
 
 pub fn check_and_escape_comment(comment: &str) -> Option<String> {
     let comment_length = comment.len();

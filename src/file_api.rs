@@ -7,20 +7,20 @@ use crate::file_api::FileProcessErrorType::{FormatError, UnknownError, PrvGenErr
 use log::{trace, debug, info, warn, error};
 
 #[derive(Serialize, Deserialize)]
-struct FFprobeFormat {
+pub struct FFprobeFormat {
     format_name: String,
     duration: Option<f32>,
     size: u32,
 }
 
 #[derive(Serialize, Deserialize)]
-struct FFprobeOutput {
+pub struct FFprobeOutput {
     streams: Vec<FFprobeStream>,
     format: FFprobeFormat,
 }
 
 #[derive(Serialize, Deserialize)]
-struct FFprobeStream {
+pub struct FFprobeStream {
     codec_name: String,
     width: u32,
     height: u32,

@@ -86,7 +86,7 @@ async fn main() -> std::io::Result<()> {
                     )
                     .app_data(prj_config_data.clone())
                     .app_data(handlebars_data.clone())
-                    .route("/", web::post().to(frontend::index))
+                    .route("/", web::get().to(frontend::index))
                 )
                 .service(
                     web::scope("/js-api")

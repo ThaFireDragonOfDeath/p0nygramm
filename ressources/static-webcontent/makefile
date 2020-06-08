@@ -1,0 +1,4 @@
+# Install static webcontent
+.PHONY: install
+install: $(STATIC_WEBCONTENT_FILES)
+	$(INSTALL) $(STATIC_WEBCONTENT_FILES) $(STATIC_WEBCONTENT_PATH)
