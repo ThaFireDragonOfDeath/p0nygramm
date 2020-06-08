@@ -322,11 +322,11 @@ pub async fn get_uploads(config: web::Data<ProjectConfig>, session: Session, url
     get_uploads_ref(&config, &session, &url_data).await
 }
 
-pub async fn get_uploads_range(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i32, bool, bool)>) -> HttpResponse {
+pub async fn get_uploads_range_ref(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<(i32, i32, bool, bool)>) -> HttpResponse {
     let db_connection = get_db_connection!(config, true, true);
     let session_data = get_user_session_data!(db_connection, session, false);
 
-    let (start_id, end_id, show_sfw, show_nsfw) = url_data.into_inner();
+    let (start_id, end_id, show_sfw, show_nsfw) = url_data.deref().clone();
 
     if start_id < 1 {
         handle_error_str!(UserInputError, "Die Start ID kann nicht kleiner als 1 sein", BadRequest);
@@ -356,8 +356,12 @@ pub async fn get_uploads_range(config: web::Data<ProjectConfig>, session: Sessio
     }
 }
 
-pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>) -> HttpResponse {
-    let target_upload_id = url_data.into_inner();
+pub async fn get_uploads_range(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i32, bool, bool)>) -> HttpResponse {
+    get_uploads_range_ref(&config, &session, &url_data).await
+}
+
+pub async fn get_upload_data_ref(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<i32>) -> HttpResponse {
+    let target_upload_id = url_data.deref().clone();
 
     // Input checks
     if target_upload_id < 1 {
@@ -386,8 +390,12 @@ pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session,
     }
 }
 
-pub async fn get_userdata_by_username(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<String>) -> HttpResponse {
-    let target_username = url_data.into_inner();
+pub async fn get_upload_data(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>) -> HttpResponse {
+    get_upload_data_ref(&config, &session, &url_data).await
+}
+
+pub async fn get_userdata_by_username_ref(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<String>) -> HttpResponse {
+    let target_username = url_data.deref();
     let username_is_ok = check_username(target_username.as_str());
 
     if username_is_ok {
@@ -417,6 +425,10 @@ pub async fn get_userdata_by_username(config: web::Data<ProjectConfig>, session:
     else {
         handle_error_str!(UserInputError, "Benutzername ist ungültig", BadRequest);
     }
+}
+
+pub async fn get_userdata_by_username(config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<String>) -> HttpResponse {
+    get_userdata_by_username_ref(&config, &session, &url_data).await
 }
 
 pub async fn login(config: web::Data<ProjectConfig>, session: Session, login_data: web::Form<LoginData>) -> HttpResponse {

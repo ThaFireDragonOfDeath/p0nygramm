@@ -29,7 +29,7 @@ const ui_btn_state = {
 const ui_message_output = {
     login: 0,
     register: 1,
-    alert: 2
+    overlay: 2
 };
 
 const ui_message_type = {
@@ -105,7 +105,7 @@ function ui_report_msg(message, output_channel, message_type) {
     }
 
     // Get font color
-    if (output_channel !== ui_message_output.alert) {
+    if (output_channel !== ui_message_output.overlay) {
         if (message_type === ui_message_type.error) {
             msg_color = "red";
         }
