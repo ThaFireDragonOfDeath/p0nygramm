@@ -1,3 +1,5 @@
+pub mod template_data;
+
 use actix_web::{HttpResponse, web};
 use crate::config::ProjectConfig;
 use actix_session::Session;
@@ -8,26 +10,10 @@ use crate::js_api::response_result::BackendError;
 use crate::js_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use crate::security::{get_user_session};
 use crate::js_api::{get_filter_ref};
-
-#[derive(Clone, Serialize)]
-struct TemplateData {
-    backend_error: bool,
-    user_logged_in: bool,
-    error_msg: Option<String>,
-}
-
-impl TemplateData {
-    pub fn new() -> TemplateData {
-        TemplateData {
-            backend_error: false,
-            user_logged_in: true,
-            error_msg: None,
-        }
-    }
-}
+use crate::frontend::template_data::UploadViewTemplateData;
 
 pub async fn index(config: web::Data<ProjectConfig>, handlebars: web::Data<Handlebars<'_>>, session: Session) -> HttpResponse {
-    let mut template_data = TemplateData::new();
+    let mut template_data = UploadViewTemplateData::new_empty();
     let db_connection = DbConnection::new(config.as_ref(), true, true).await;
 
     if db_connection.is_ok() {
@@ -46,17 +32,17 @@ pub async fn index(config: web::Data<ProjectConfig>, handlebars: web::Data<Handl
             let error_type = session_error.error_type;
 
             if error_type == DbError {
-                template_data.backend_error = true;
-                template_data.error_msg = Some(String::from("Es ist ein unerwarteter Datenbankfehler aufgetreten!"));
+                //template_data.backend_error = true;
+                //template_data.error_msg = Some(String::from("Es ist ein unerwarteter Datenbankfehler aufgetreten!"));
             }
 
-            template_data.user_logged_in = false;
+            //template_data.user_logged_in = false;
         }
     }
     else {
-        template_data.backend_error = true;
-        template_data.user_logged_in = false;
-        template_data.error_msg = Some(String::from("Fehler beim Verbinden mit der Datenbank!"));
+        //template_data.backend_error = true;
+        //template_data.user_logged_in = false;
+        //template_data.error_msg = Some(String::from("Fehler beim Verbinden mit der Datenbank!"));
     }
 
     return HttpResponse::Ok().body("Test");
