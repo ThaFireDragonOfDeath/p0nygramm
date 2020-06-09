@@ -12,23 +12,23 @@ lto = true
 
 [dependencies]
 #actix-web-middleware-redirect-https = "1.0.0"
-actix-files = "0.2.1"
+actix-files = "0.2.2"
 actix-multipart = "0.2.0"
-actix-rt = "1.0.0"
+actix-rt = "1.1.1"
 actix-session = "0.3.0"
 actix-web = "2.0.0"
 argonautica = { version = "0.2.0", features = ["simd"] }
 chrono = { version = "0.4.11", features = ["serde"] }
 fern = "0.6.0"
-futures = "0.3.4"
-handlebars = { version = "3.0.1", features = ["dir_source"] }
+futures = "0.3.5"
+handlebars = { version = "3.1.0", features = ["dir_source"] }
 log = "0.4.8"
 mime = "0.3.16"
 rand = "0.7.3"
-redis = { version = "0.15.1", features = ["tokio-rt-core"] }
-serde = "1.0.104"
-serde_json = "1.0.48"
-tokio = { version = "0.2.13", features = ["fs", "io-util", "process", "rt-core"] }
-tokio-postgres = { version = "0.5.3", features = ["with-chrono-0_4"] }
+redis = { version = "0.16.0", features = ["tokio-rt-core"] }
+serde = "1.0.111"
+serde_json = "1.0.53"
+tokio = { version = "0.2.21", features = ["fs", "io-util", "process", "rt-core"] }
+tokio-postgres = { version = "0.5.4", features = ["with-chrono-0_4"] }
 toml = "0.5.6"
-v_htmlescape = "0.4.5"
+v_htmlescape = "0.6.0"
