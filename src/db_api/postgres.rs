@@ -6,11 +6,10 @@ use crate::config::ConnectionMethod::Tcp;
 use std::path::Path;
 use std::time::Duration;
 use crate::db_api::db_result::{UploadPrvList, DbApiError, UploadPreview, UploadData, UserData};
-use crate::db_api::db_result::DbApiErrorType::{QueryError, UnknownError, NoResult};
+use crate::db_api::db_result::DbApiErrorType::{QueryError, NoResult};
 use chrono::{DateTime, Local};
 use futures::future;
-use std::future::Future;
-use log::{trace, debug, info, warn, error};
+use log::{trace, warn, error};
 
 macro_rules! db_schema_version {
     () => { 1 };

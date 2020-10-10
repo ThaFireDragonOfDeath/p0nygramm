@@ -11,45 +11,38 @@
     </head>
     <body>
         {{#if TemplateData.backend_error}}
-        <!-- Content, if there was an error in the backend !-->
+        {{! Content, if there was an error in the backend}}
         <p>
             Es ist ein Fehler im Backend aufgetreten, bitte versuchen Sie es später noch einmal!
         </p>
-        <form>
+        <p>
             <input type="button" onclick="location.reload()" value="Seite neu laden">
-        </form>
-        {{#else if TemplateData.user_logged_in}}
-        <!-- Content, if user is logged in !-->
+        </p>
+        {{else}} {{#if TemplateData.user_logged_in}}
+        {{! Content, if user is logged in}}
         <header>
             <a id="header_left">
                 <a>Logo</a>
             </a>
             <a id="header_right">
-                <a>{{username}}</a>
+                <a>
+                    <input type="checkbox" id="cb_show_sfw">
+                    <label for="cb_show_sfw" {{#if isChecked}}checked{{/if}}>SFW</label>
+                </a>
+                <a>
+                    <input type="checkbox" id="cb_show_nsfw">
+                    <label for="cb_show_nsfw">NSFW</label>
+                </a>
+                <a>{{userdata.username}}</a>
                 <a onclick="js_logout()">Abmelden</a>
             </a>
         </header>
         {{else}}
-        <!-- Content, if user is not logged in !-->
+        {{! Content, if user is not logged in}}
         <p>
             Dies ist eine rein private Webseite, daher ist der Zugang nur für registrierte Personen zugänglich.<br>
-            Bitte anmelden oder registrieren!
+            Bitte anmelden!
         </p>
-        <div id="div_register">
-            Registrieren:
-            <form onsubmit="js_register()">
-                <label for="reg_username">Benutzername:</label><br>
-                <input type="text" id="reg_username" name="username"><br><br>
-                <label for="reg_password">Passwort:</label><br>
-                <input type="password" id="reg_password" name="password"><br><br>
-                <label for="reg_rpassword">Passwort wiederholen:</label><br>
-                <input type="password" id="reg_rpassword" name="rpassword"><br><br>
-                <label for="reg_invite_key">Invite Schlüssel:</label><br>
-                <input type="text" id="reg_invite_key" name="invite_key"><br><br>
-                <input type="submit" id="reg_submit" value="Registrieren">
-            </form>
-            <div id="div_register_error">Platz für Fehlermeldungen</div>
-        </div>
         <div id="div_login">
             Anmelden:
             <form onsubmit="js_login()">
@@ -63,6 +56,6 @@
             </form>
             <div id="div_login_error">Platz für Fehlermeldungen</div>
         </div>
-        {{/if}}
+        {{/if}}{{/if}}
     </body>
 </html>

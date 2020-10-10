@@ -1,63 +1,20 @@
-#[macro_use]
 mod js_api;
-
 mod config;
 mod db_api;
 mod file_api;
 mod frontend;
 mod security;
-
-#[macro_use]
-extern crate actix_web;
-
-#[macro_use]
-extern crate serde;
-
-#[macro_use]
-extern crate serde_json;
-
-extern crate argonautica;
-extern crate chrono;
-extern crate fern;
-extern crate handlebars;
-extern crate log;
-extern crate mime;
-extern crate rand;
-extern crate tokio;
+mod backend_api;
 
 use actix_web::web;
-use actix_web::{App, HttpResponse, HttpServer};
+use actix_web::{App, HttpServer};
 use actix_files as fs;
 use crate::config::ProjectConfig;
-use log::{trace, debug, info, warn, error};
 use actix_session::CookieSession;
-use std::borrow::Borrow;
 use handlebars::Handlebars;
-
-fn configure_debug_log() {
-    fern::Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-                record.target(),
-                record.level(),
-                message
-            ))
-        })
-        .level(log::LevelFilter::Trace)
-        .chain(std::io::stdout())
-        .apply()
-        .unwrap();
-}
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    if cfg!(debug_assertions) {
-        configure_debug_log();
-        info!("Application is build in debug mode, all traces are activated");
-    }
-
     let prj_config = ProjectConfig::init();
 
     if prj_config.is_some() {

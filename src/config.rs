@@ -6,7 +6,7 @@ use crate::config::ConnectionMethod::{Tcp, UnixSocket};
 use std::path::Path;
 use std::fs::File;
 use std::io::Read;
-use log::{trace, debug, info, warn, error};
+use log::{error};
 
 macro_rules! read_toml_entry_connection_method {
     ($self:ident, $toml_obj:ident, $main_entry:expr, $config_name:ident) => {

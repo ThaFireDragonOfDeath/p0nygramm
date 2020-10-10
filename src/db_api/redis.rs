@@ -1,11 +1,10 @@
-use redis::{Client, ConnectionInfo, ConnectionAddr, AsyncCommands, RedisResult, Commands, RedisFuture, ErrorKind};
-use redis::aio::{Connection, MultiplexedConnection};
+use redis::{Client, ConnectionInfo, ConnectionAddr, RedisResult, ErrorKind};
+use redis::aio::{MultiplexedConnection};
 use crate::config::ProjectConfig;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::PathBuf;
-use crate::db_api::db_result::{SessionData, DbApiError, SessionError, SessionErrorType};
-use crate::db_api::db_result::DbApiErrorType::{UnknownError, NoResult};
-use chrono::{ParseResult, DateTime, FixedOffset, Local, Duration};
+use crate::db_api::db_result::{SessionData, SessionError, SessionErrorType};
+use chrono::{Local, Duration};
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
 use crate::db_api::db_result::SessionErrorType::{DbError, SessionInvalid};
@@ -196,6 +195,7 @@ impl RedisConnection {
         let unix_socket_file = project_config.redis_config.unix_socket_file.get_value();
         let port = project_config.redis_config.port.get_value();
         let db_nr = 0;
+        let username: Option<String> = None;
         let password: Option<String> = None;
         let connection_method = project_config.redis_config.connection_method.get_value();
         let connection_addr: ConnectionAddr;
@@ -210,6 +210,7 @@ impl RedisConnection {
         let connection_info = ConnectionInfo {
             addr: Box::from(connection_addr),
             db: db_nr,
+            username,
             passwd: password,
         };
 

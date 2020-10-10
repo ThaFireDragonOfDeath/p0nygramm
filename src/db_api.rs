@@ -1,11 +1,10 @@
 use crate::db_api::postgres::PostgresConnection;
 use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
-use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
 use crate::db_api::db_result::{UploadPrvList, DbApiError, SessionData, SessionError, UploadData, UserData};
 use crate::db_api::db_result::DbApiErrorType::{UnknownError, ConnectionError, PartFail, QueryError, NoResult};
 use crate::db_api::db_result::SessionErrorType::DbError;
-use log::{trace, debug, info, warn, error};
+use log::{trace};
 use actix_session::Session;
 
 mod postgres;

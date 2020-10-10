@@ -1,7 +1,8 @@
 use crate::security::{check_tag, check_and_escape_comment};
-use log::{trace, debug, info, warn, error};
+use log::{warn};
 use mime::Mime;
 use crate::db_api::DbConnection;
+use serde::{Deserialize};
 
 #[derive(Deserialize)]
 pub struct CommentData {

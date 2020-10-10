@@ -1,4 +1,6 @@
 use crate::db_api::db_result;
+use serde::{Serialize, Deserialize};
+use actix_web::http::StatusCode;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Copy, Clone)]
 pub enum ErrorCode {
@@ -14,13 +16,15 @@ pub enum ErrorCode {
 
 #[derive(Serialize, Deserialize)]
 pub struct BackendError {
-    error_code: ErrorCode,
-    error_msg: String,
+    pub http_status_code: u16,
+    pub error_code: ErrorCode,
+    pub error_msg: String,
 }
 
 impl BackendError {
-    pub fn new(error_code: ErrorCode, error_msg: &str) -> BackendError {
+    pub fn new(http_status_code: u16, error_code: ErrorCode, error_msg: &str) -> BackendError {
         BackendError {
+            http_status_code,
             error_code,
             error_msg: error_msg.to_owned(),
         }
@@ -68,6 +72,19 @@ impl Filter {
         Filter {
             show_sfw,
             show_nsfw,
+        }
+    }
+}
+
+#[derive(Clone, Serialize)]
+pub struct SuccessReport {
+    pub success: bool,
+}
+
+impl SuccessReport {
+    pub fn new(success: bool) -> SuccessReport {
+        SuccessReport {
+            success,
         }
     }
 }

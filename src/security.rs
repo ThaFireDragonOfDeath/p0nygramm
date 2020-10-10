@@ -1,7 +1,6 @@
 extern crate v_htmlescape;
 use v_htmlescape::escape;
 use argonautica::{Hasher, Verifier};
-use argonautica::config::Variant;
 use crate::db_api::db_result::{SessionError, SessionData};
 use crate::db_api::DbConnection;
 use actix_session::Session;

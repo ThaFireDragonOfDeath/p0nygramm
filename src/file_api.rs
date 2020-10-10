@@ -2,9 +2,9 @@ use crate::config::ProjectConfig;
 use tokio::process::Command;
 use std::path::Path;
 use std::process::Output;
-use serde_json::Value;
 use crate::file_api::FileProcessErrorType::{FormatError, UnknownError, PrvGenError, CopyError};
-use log::{trace, debug, info, warn, error};
+use log::{warn, error};
+use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct FFprobeFormat {
