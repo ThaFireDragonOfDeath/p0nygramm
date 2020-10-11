@@ -1,6 +1,5 @@
 use crate::db_api::db_result;
 use serde::{Serialize, Deserialize};
-use actix_web::http::StatusCode;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Copy, Clone)]
 pub enum ErrorCode {

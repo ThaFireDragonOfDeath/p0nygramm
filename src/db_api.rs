@@ -2,7 +2,7 @@ use crate::db_api::postgres::PostgresConnection;
 use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
 use crate::db_api::db_result::{UploadPrvList, DbApiError, SessionData, SessionError, UploadData, UserData};
-use crate::db_api::db_result::DbApiErrorType::{UnknownError, ConnectionError, PartFail, QueryError, NoResult};
+use crate::db_api::db_result::DbApiErrorType::{ConnectionError, PartFail, QueryError, NoResult};
 use crate::db_api::db_result::SessionErrorType::DbError;
 use log::{trace};
 use actix_session::Session;
@@ -21,7 +21,7 @@ macro_rules! check_postgres_connection {
 
 macro_rules! check_redis_connection {
     ($self:ident) => {
-        if !$self.have_postgres_connection() {
+        if !$self.have_redis_connection() {
             return Err(SessionError::new(DbError, "Keine Verbindung zum Redis Server vorhanden!"));
         }
     };
@@ -214,13 +214,12 @@ impl DbConnection {
         return Ok(db_connection);
     }
 
-    pub fn search_uploads(&self, search_string: &str, start_id: i32, amount: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
-        trace!("Enter DbConnection::search_uploads");
-
-        // TODO: Implement
-
-        Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
-    }
+    // TODO: Implement
+    //pub fn search_uploads(&self, search_string: &str, start_id: i32, amount: i16, show_nsfw: bool) -> Result<UploadPrvList, DbApiError> {
+    //    trace!("Enter DbConnection::search_uploads");
+    //
+    //    Err(DbApiError::new(UnknownError, "Unbekannter Fehler"))
+    //}
 
     pub async fn vote_comment(&self, comment_id: i32, user_id: i32, vote_value: i32) -> Result<(), DbApiError> {
         trace!("Enter DbConnection::vote_comment");

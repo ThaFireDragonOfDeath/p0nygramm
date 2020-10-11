@@ -43,9 +43,7 @@ impl CommentList {
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DbApiErrorType {
-    UnknownError,
     ConnectionError,
-    ParameterError,
     QueryError,
     NoResult,
     PartFail,
@@ -89,7 +87,6 @@ impl SessionData {
 pub enum SessionErrorType {
     UnknownError,
     DbError,
-    SessionExpired,
     SessionInvalid,
     NoSession,
 }

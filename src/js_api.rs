@@ -5,8 +5,6 @@ use crate::backend_api::request_data::{CommentData, RegisterData, LoginData};
 use actix_web::dev::HttpResponseBuilder;
 use actix_web::http::StatusCode;
 use actix_multipart::Multipart;
-use crate::backend_api::response_result::{Filter, BackendError, UserExists, AddUploadSuccess, UserData, SuccessReport};
-use crate::db_api::db_result::{UploadPrvList, UploadData};
 
 macro_rules! implement_jsapi_func_backend_call {
     ($func_name:ident, $( $func_arg_names:ident: $func_arg_types:ty ),+) => {

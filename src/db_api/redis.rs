@@ -1,4 +1,4 @@
-use redis::{Client, ConnectionInfo, ConnectionAddr, RedisResult, ErrorKind};
+use redis::{ConnectionInfo, ConnectionAddr, RedisResult, ErrorKind};
 use redis::aio::{MultiplexedConnection};
 use crate::config::ProjectConfig;
 use crate::config::ConnectionMethod::Tcp;
@@ -16,7 +16,6 @@ const TTL_BUFFER: u8 = 30; // If the value ttl is smaller than this value, the s
 const STS_DURATION : u32 = 24; // Short time sessions are valid for 1 day without activity
 
 pub struct RedisConnection {
-    redis_client: Client,
     redis_connection: MultiplexedConnection,
 }
 
@@ -167,9 +166,9 @@ impl RedisConnection {
                 return Ok(session_data);
             }
             else {
-                info!("RedisConnection::get_session_data: Unknown or invalid session id");
+                info!("RedisConnection::get_session_data: Expired or invalid session id");
 
-                return Err(SessionError::new(SessionInvalid, "Session ID ist ungültig"));
+                return Err(SessionError::new(SessionInvalid, "Session ID ist abgelaufen oder ungültig"));
             }
         }
         else {
@@ -224,7 +223,6 @@ impl RedisConnection {
                 let connection = connection.unwrap();
 
                 let redis_connection_obj = RedisConnection {
-                    redis_client: client,
                     redis_connection: connection,
                 };
 

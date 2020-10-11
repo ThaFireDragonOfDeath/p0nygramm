@@ -6,7 +6,6 @@ use crate::config::ProjectConfig;
 use serde::{Serialize};
 use crate::backend_api::{get_filter, get_own_userdata, get_uploads};
 use crate::backend_api::response_result::ErrorCode::{Unauthorized};
-use actix_web::http::StatusCode;
 
 // Main struct
 #[derive(Clone, Serialize)]
@@ -85,6 +84,5 @@ impl IndexViewTemplateData {
             uploads_prv_list: Some(uploads_prv),
             user_data: Some(user_data)
         }
-
     }
 }
