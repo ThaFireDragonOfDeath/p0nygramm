@@ -2,7 +2,7 @@ use crate::config::ProjectConfig;
 use tokio::process::Command;
 use std::path::Path;
 use std::process::Output;
-use crate::file_api::FileProcessErrorType::{FormatError, UnknownError, PrvGenError, CopyError};
+use crate::file_api::FileProcessErrorType::{FormatError, PrvGenError, CopyError};
 use log::{warn, error};
 use serde::{Serialize, Deserialize};
 
@@ -42,7 +42,6 @@ impl FileProcessError {
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum FileProcessErrorType {
-    UnknownError,
     FormatError,
     PrvGenError,
     CopyError,
@@ -307,7 +306,7 @@ pub async fn process_file(config: &ProjectConfig, filename: &str) -> Result<(), 
     let tmp_upload_filepath = get_upload_path_tmp(filename);
     let tmp_upload_prv_filepath = get_upload_prv_path_tmp(filename);
 
-    let mut return_val : Result<(), FileProcessError> = Err(FileProcessError::new(UnknownError, "Unbekannter Fehler"));
+    let return_val;
 
     if format_data.is_some() {
         let format_data = format_data.unwrap();

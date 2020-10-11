@@ -10,10 +10,14 @@
         <script src="static/p0nygramm.js"></script>
     </head>
     <body>
-        {{#if backend_data.backend_error}}
+        {{#if backend_error}}
             {{! Content, if there was an error in the backend}}
-            <p>
+            <h3>
                 Es ist ein Fehler im Backend aufgetreten, bitte versuchen Sie es später noch einmal!
+            </h3>
+            <p>
+                Fehlermeldung:<br>
+                {{backend_error.error_msg}}
             </p>
             <p>
                 <input type="button" onclick="location.reload()" value="Seite neu laden">

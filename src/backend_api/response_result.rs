@@ -14,7 +14,7 @@ pub enum ErrorCode {
     InternalError,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct BackendError {
     pub http_status_code: u16,
     pub error_code: ErrorCode,
