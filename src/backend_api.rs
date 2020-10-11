@@ -6,7 +6,7 @@ use crate::config::ProjectConfig;
 use actix_session::Session;
 use crate::db_api::DbConnection;
 use crate::security::{get_user_session, check_username, check_password, verify_password, check_invite_key, hash_password, check_filename};
-use crate::db_api::db_result::{DbApiErrorType, UploadPrvList, UploadData};
+use crate::db_api::db_result::{DbApiErrorType, UploadPrvList, UploadData, SessionData};
 use crate::db_api::db_result::SessionErrorType::DbError;
 use crate::backend_api::response_result::ErrorCode::{DatabaseError, Unauthorized, UserInputError, NoResult, Ignored, UnknownError, CookieError, InternalError};
 use actix_multipart::{Multipart, Field};
@@ -162,7 +162,7 @@ pub async fn add_upload(config: &web::Data<ProjectConfig>, session: &Session, pa
                         let db_success = db_connection.add_tags(taglist_vec, uploader_id, upload_id).await;
 
                         if db_success.is_ok() {
-                            let ret_val = AddUploadSuccess::new(true, true, taglist_full_success);
+                            let ret_val = AddUploadSuccess::new(true, upload_id, true, taglist_full_success);
 
                             return Ok(ret_val);
                         }
@@ -171,14 +171,14 @@ pub async fn add_upload(config: &web::Data<ProjectConfig>, session: &Session, pa
                             let error_type = error.error_type;
 
                             if error_type == PartFail {
-                                let ret_val = AddUploadSuccess::new(true, true, false);
+                                let ret_val = AddUploadSuccess::new(true, upload_id, true, false);
 
                                 return Ok(ret_val);
                             }
                         }
                     }
 
-                    let ret_val = AddUploadSuccess::new(true, false, false);
+                    let ret_val = AddUploadSuccess::new(true, upload_id, false, false);
 
                     return Ok(ret_val);
                 }
@@ -273,6 +273,22 @@ pub async fn get_filter(config: &web::Data<ProjectConfig>, session: &Session) ->
     }
 }
 
+pub async fn get_own_userdata(config: &web::Data<ProjectConfig>, session: &Session) -> Result<UserData, BackendError> {
+    let db_connection = get_db_connection!(config, true, true);
+    let session_data = get_user_session_data!(db_connection, session, false);
+    let target_user_id = session_data.user_id;
+    let url_data = web::Path::from(target_user_id);
+
+    get_userdata_by_id(config, session, &url_data).await
+}
+
+//pub async fn get_session_data(config: &web::Data<ProjectConfig>, session: &Session) -> Result<SessionData, BackendError> {
+//    let db_connection = get_db_connection!(config, true, true);
+//    let session_data = get_user_session_data!(db_connection, session, false);
+//
+//    return Ok(session_data);
+//}
+
 pub async fn get_uploads(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<(i32, i16, bool, bool)>) -> Result<UploadPrvList, BackendError> {
     let db_connection = get_db_connection!(config, true, true);
     let _session_data = get_user_session_data!(db_connection, session, false);
@@ -365,6 +381,38 @@ pub async fn get_upload_data(config: &web::Data<ProjectConfig>, session: &Sessio
         else {
             handle_error_str!(DatabaseError, error.error_msg.as_str(), INTERNAL_SERVER_ERROR);
         }
+    }
+}
+
+pub async fn get_userdata_by_id(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<i32>) -> Result<UserData, BackendError> {
+    let target_user_id = url_data.as_ref().clone();
+
+    if target_user_id > 0 {
+        let db_connection = get_db_connection!(config, true, true);
+        let _session_data = get_user_session_data!(db_connection, session, false);
+
+        let user_data = db_connection.get_userdata_by_id(target_user_id).await;
+
+        if user_data.is_ok() {
+            let user_data = UserData::new(&user_data.ok().unwrap());
+
+            return Ok(user_data);
+        }
+        else {
+            let error = user_data.err().unwrap();
+            let error_type = error.error_type;
+            let error_msg = error.error_msg;
+
+            if error_type == DbApiErrorType::NoResult {
+                handle_error_str!(NoResult, error_msg.as_str(), NOT_FOUND);
+            }
+            else {
+                handle_error_str!(DatabaseError, error_msg.as_str(), INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
+    else {
+        handle_error_str!(UserInputError, "Benutzer ID ist ungültig", BAD_REQUEST);
     }
 }
 

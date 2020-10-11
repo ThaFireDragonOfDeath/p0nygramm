@@ -287,6 +287,39 @@ impl PostgresConnection {
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
+    pub async fn get_userdata_by_id(&self, user_id: i32) -> Result<UserData, DbApiError> {
+        trace!("Enter PostgresConnection::get_userdata_by_id");
+
+        let sql_cmd = include_str!(get_filepath!("get_userdata_by_id.sql"));
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&user_id];
+        let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            let result_rows_vec = result_rows.unwrap();
+
+            if !result_rows_vec.is_empty() {
+                let row = result_rows_vec.get(0).unwrap();
+                let user_id = row.get(0);
+                let user_name = row.get(1);
+                let user_pass = row.get(2);
+                let user_is_mod = row.get(3);
+                let user_data = UserData::new(user_id, user_name, user_pass, user_is_mod);
+
+                return Ok(user_data);
+            }
+            else {
+                warn!("PostgresConnection::get_userdata_by_username: User not found");
+            }
+
+            return Err(DbApiError::new(NoResult, "Benutzer ist nicht vorhanden"));
+        }
+        else {
+            error!("PostgresConnection::get_userdata_by_username: Failed to execute sql statement");
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
     pub async fn get_userdata_by_username(&self, username: &str) -> Result<UserData, DbApiError> {
         trace!("Enter PostgresConnection::get_userdata_by_username");
 

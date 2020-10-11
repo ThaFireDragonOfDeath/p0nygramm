@@ -62,6 +62,8 @@ implement_jsapi_func!(get_uploads_range, config: web::Data<ProjectConfig>, sessi
 
 implement_jsapi_func!(get_upload_data, config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>);
 
+implement_jsapi_func!(get_userdata_by_id, config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>);
+
 implement_jsapi_func!(get_userdata_by_username, config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<String>);
 
 implement_jsapi_func!(login, config: web::Data<ProjectConfig>, session: Session, login_data: web::Form<LoginData>);

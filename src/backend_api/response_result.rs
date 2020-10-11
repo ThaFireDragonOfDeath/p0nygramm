@@ -34,14 +34,16 @@ impl BackendError {
 #[derive(Clone, Serialize)]
 pub struct AddUploadSuccess {
     upload_success: bool,
+    upload_id: i32,
     tags_part_success: bool,
     tags_full_success: bool,
 }
 
 impl AddUploadSuccess {
-    pub fn new(upload_success: bool, tags_part_success: bool, tags_full_success: bool) -> AddUploadSuccess {
+    pub fn new(upload_success: bool, upload_id: i32, tags_part_success: bool, tags_full_success: bool) -> AddUploadSuccess {
         AddUploadSuccess {
             upload_success,
+            upload_id,
             tags_part_success,
             tags_full_success,
         }

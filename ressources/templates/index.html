@@ -10,52 +10,83 @@
         <script src="static/p0nygramm.js"></script>
     </head>
     <body>
-        {{#if TemplateData.backend_error}}
-        {{! Content, if there was an error in the backend}}
-        <p>
-            Es ist ein Fehler im Backend aufgetreten, bitte versuchen Sie es später noch einmal!
-        </p>
-        <p>
-            <input type="button" onclick="location.reload()" value="Seite neu laden">
-        </p>
-        {{else}} {{#if TemplateData.user_logged_in}}
-        {{! Content, if user is logged in}}
-        <header>
-            <a id="header_left">
-                <a>Logo</a>
-            </a>
-            <a id="header_right">
-                <a>
-                    <input type="checkbox" id="cb_show_sfw">
-                    <label for="cb_show_sfw" {{#if isChecked}}checked{{/if}}>SFW</label>
+        {{#if backend_data.backend_error}}
+            {{! Content, if there was an error in the backend}}
+            <p>
+                Es ist ein Fehler im Backend aufgetreten, bitte versuchen Sie es später noch einmal!
+            </p>
+            <p>
+                <input type="button" onclick="location.reload()" value="Seite neu laden">
+            </p>
+        {{else}} {{#if user_data}}
+            {{! Content, if user is logged in}}
+            <header>
+                <a id="header_left">
+                    <a>Logo</a>
                 </a>
-                <a>
-                    <input type="checkbox" id="cb_show_nsfw">
-                    <label for="cb_show_nsfw">NSFW</label>
+                <a id="header_right">
+                    <a>
+                        <input type="checkbox" id="cb_show_sfw" {{#if session_settings.show_sfw}}checked{{/if}}>
+                        <label for="cb_show_sfw">SFW</label>
+                    </a>
+                    <a>
+                        <input type="checkbox" id="cb_show_nsfw" {{#if session_settings.show_nsfw}}checked{{/if}}>
+                        <label for="cb_show_nsfw">NSFW</label>
+                    </a>
+                    <a>{{userdata.username}}</a>
+                    <a onclick="js_logout()">Abmelden</a>
                 </a>
-                <a>{{userdata.username}}</a>
-                <a onclick="js_logout()">Abmelden</a>
-            </a>
-        </header>
+            </header>
+            <section id="main_content">
+                {{! Main Content section}}
+
+                {{#each uploads_prv_list}}
+                    <a id="prvh_{{this.upload_id}}" class="prvh"></a>
+                {{else}}
+                    <h3>Es sind noch keine Hochlads vorhanden!</h3>
+                {{/each}}
+            </section>
         {{else}}
-        {{! Content, if user is not logged in}}
-        <p>
-            Dies ist eine rein private Webseite, daher ist der Zugang nur für registrierte Personen zugänglich.<br>
-            Bitte anmelden!
-        </p>
-        <div id="div_login">
-            Anmelden:
-            <form onsubmit="js_login()">
-                <label for="log_username">Benutzername:</label><br>
-                <input type="text" id="log_username" name="username"><br><br>
-                <label for="log_password">Passwort:</label><br>
-                <input type="password" id="log_password" name="password"><br><br>
-                <input type="checkbox" id="log_keep_logged_in" name="keep_logged_in">
-                <label for="log_keep_logged_in">Eingeloggt bleiben</label><br><br>
-                <input type="submit" id="log_submit" value="Anmelden">
-            </form>
-            <div id="div_login_error">Platz für Fehlermeldungen</div>
-        </div>
+            {{! Content, if user is not logged in}}
+            <p>
+                Dies ist eine rein private Webseite, daher ist der Zugang nur für registrierte Personen zugänglich.<br>
+                Bitte anmelden oder registrieren!
+            </p>
+            <div id="div_login">
+                Anmelden:
+                <form onsubmit="js_login()">
+                    <label for="log_username">Benutzername:</label><br>
+                    <input type="text" id="log_username" name="username"><br><br>
+
+                    <label for="log_password">Passwort:</label><br>
+                    <input type="password" id="log_password" name="password"><br><br>
+
+                    <input type="checkbox" id="log_keep_logged_in" name="keep_logged_in">
+                    <label for="log_keep_logged_in">Eingeloggt bleiben</label><br><br>
+
+                    <input type="submit" id="log_submit" value="Anmelden">
+                </form>
+                <div id="div_login_error">Platz für Fehlermeldungen</div>
+            </div>
+            <div id="div_register">
+                Anmelden:
+                <form onsubmit="js_register()">
+                    <label for="reg_username">Benutzername:</label><br>
+                    <input type="text" id="reg_username" name="username"><br><br>
+
+                    <label for="log_password">Passwort:</label><br>
+                    <input type="password" id="reg_password" name="password"><br><br>
+
+                    <input type="password" id="reg_rep_pass" name="password_rep">
+                    <label for="reg_rep_pass">Passwort wiederholen:</label><br><br>
+
+                    <input type="text" id="reg_inv_key" name="inv_key">
+                    <label for="reg_inv_key">Invite Key:</label><br><br>
+
+                    <input type="submit" id="reg_submit" value="Registrieren">
+                </form>
+                <div id="div_reg_error">Platz für Fehlermeldungen</div>
+            </div>
         {{/if}}{{/if}}
     </body>
 </html>

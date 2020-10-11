@@ -1,9 +1,11 @@
 use crate::db_api::db_result::{UploadData, UploadPreview};
-use crate::backend_api::response_result::UserData;
+use crate::backend_api::response_result::{UserData, Filter, BackendError};
 use actix_web::web;
 use actix_session::Session;
 use crate::config::ProjectConfig;
 use serde::{Serialize};
+use crate::backend_api::{get_filter, get_own_userdata};
+use crate::security::get_user_session;
 
 // Helper struct
 #[derive(Clone, Serialize)]
@@ -28,47 +30,48 @@ impl BackendData {
     }
 }
 
-#[derive(Clone, Serialize)]
-pub struct SessionSettings {
-    pub show_sfw: bool,
-    pub show_nsfw: bool,
-}
-
 // Main struct
 #[derive(Clone, Serialize)]
-pub struct UploadViewTemplateData {
+pub struct IndexViewTemplateData {
     pub backend_data: BackendData,
-    pub session_settings: Option<SessionSettings>,
-    pub uploads_prv: Vec<UploadPreview>,
+    pub session_settings: Option<Filter>,
+    pub uploads_prv_list: Vec<UploadPreview>,
     pub user_data: Option<UserData>,
-    pub upload_data: Option<UploadData>,
 }
 
-impl UploadViewTemplateData {
+impl IndexViewTemplateData {
     // Used if the user is not logged in
-    pub fn new_empty() -> UploadViewTemplateData {
-        UploadViewTemplateData {
+    pub fn new_empty() -> IndexViewTemplateData {
+        IndexViewTemplateData {
             backend_data: BackendData::new_default(),
             session_settings: None,
-            uploads_prv: Vec::new(),
+            uploads_prv_list: Vec::new(),
             user_data: None,
-            upload_data: None,
         }
     }
 
     // Used for backend errors (for example if the database is offline)
-    pub fn new_error(error_msg: &str) -> UploadViewTemplateData {
-        UploadViewTemplateData {
+    pub fn new_error(error_msg: &str) -> IndexViewTemplateData {
+        IndexViewTemplateData {
             backend_data: BackendData::new(true, error_msg),
             session_settings: None,
-            uploads_prv: Vec::new(),
+            uploads_prv_list: Vec::new(),
             user_data: None,
-            upload_data: None,
         }
     }
 
     // Generate template data for the index view
-    pub async fn new_index(config: web::Data<ProjectConfig>, session: Session) -> UploadViewTemplateData {
-        return UploadViewTemplateData::new_error("Es ist ein unbekannter Fehler aufgetreten");
+    pub async fn new_index(config: web::Data<ProjectConfig>, session: Session) -> IndexViewTemplateData {
+        let filter_data = get_filter(&config, &session).await;
+
+        if filter_data.is_err() {
+            let backend_error = filter_data.err().unwrap();
+
+            return IndexViewTemplateData::new_error(backend_error.error_msg.as_str());
+        }
+
+        let user_data = get_own_userdata(&config, &session);
+
+        return IndexViewTemplateData::new_error("Es ist ein unbekannter Fehler aufgetreten");
     }
 }

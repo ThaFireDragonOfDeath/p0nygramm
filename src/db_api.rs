@@ -169,6 +169,14 @@ impl DbConnection {
         return self.postgres_connection.as_ref().unwrap().get_uploads_range(start_id, end_id, show_sfw, show_nsfw).await;
     }
 
+    pub async fn get_userdata_by_id(&self, user_id: i32) -> Result<UserData, DbApiError> {
+        trace!("Enter DbConnection::get_userdata_by_id");
+
+        check_postgres_connection!(self);
+
+        return self.postgres_connection.as_ref().unwrap().get_userdata_by_id(user_id).await;
+    }
+
     pub async fn get_userdata_by_username(&self, username: &str) -> Result<UserData, DbApiError> {
         trace!("Enter DbConnection::get_userdata_by_username");
 

@@ -62,6 +62,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/get_uploads/{start_id}/{amount}/{show_sfw}/{show_nsfw}", web::get().to(js_api::get_uploads))
                     .route("/get_uploads_range/{start_id}/{amount}/{show_sfw}/{show_nsfw}", web::get().to(js_api::get_uploads_range))
                     .route("/get_upload_data/{upload_id}", web::get().to(js_api::get_upload_data))
+                    .route("/get_userdata_by_username/{user_id}", web::get().to(js_api::get_userdata_by_id))
                     .route("/get_userdata_by_username/{username}", web::get().to(js_api::get_userdata_by_username))
                     .route("/login", web::post().to(js_api::login))
                     .route("/logout", web::get().to(js_api::logout))
@@ -81,6 +82,7 @@ async fn main() -> std::io::Result<()> {
     }
     else {
         let error = std::io::Error::new(std::io::ErrorKind::Other, "Failed to read config");
+
         return Err(error);
     }
 }
