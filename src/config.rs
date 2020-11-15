@@ -308,8 +308,8 @@ pub struct ProjectConfig {
 
 impl ProjectConfig {
     pub fn init() -> Option<ProjectConfig> {
-        let const_config_str = include_str!("../ressources/config/const-config.toml");
-        let system_config_str = include_str!("../ressources/config/system-config.toml");
+        let const_config_str = include_str!("../resources/config/const-config.toml");
+        let system_config_str = include_str!("../resources/config/system-config.toml");
 
         let const_config_toml_obj: Result<Value, Error> = toml::from_str(const_config_str);
         let system_config_toml_obj: Result<Value, Error> = toml::from_str(system_config_str);

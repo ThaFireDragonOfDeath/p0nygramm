@@ -17,7 +17,7 @@ macro_rules! db_schema_version {
 
 macro_rules! get_filepath {
     ($filename:expr) => {
-        concat!("../../ressources/sql/Schema-v", db_schema_version!(), "/", $filename)
+        concat!("../../resources/sql/Schema-v", db_schema_version!(), "/", $filename)
     };
 }
 
@@ -386,7 +386,7 @@ impl PostgresConnection {
 
             // The connection object performs the actual communication with the database,
             // so spawn it off to run on its own.
-            tokio::spawn(async move {
+            actix_rt::spawn(async move {
                 let active_connection = connection.await;
 
                 if active_connection.is_err() {

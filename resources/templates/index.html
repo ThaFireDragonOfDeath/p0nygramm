@@ -45,7 +45,19 @@
                 {{! Main Content section}}
 
                 {{#each uploads_prv_list}}
-                    <a id="prvh_{{this.upload_id}}" class="prvh"></a>
+                    <a id="prvh_{{this.upload_id}}" class="prvh">
+                        <img src="{{this.upload_prv_url}}" width="100" height="100">
+                    </a>
+
+                    {{#if (eq this.upload_id upload_data.upload_id)}}
+                        <div id="uplh_{{upload_data.upload_id}}" class="uh">
+                            {{#if upload_data.upload_is_video}}
+                                <video src="{{this.upload_url}}" autoplay loop controls></video>
+                            {{else}}
+                                <img src="{{this.upload_url}}">
+                            {{/if}}
+                        </div>
+                    {{/if}}
                 {{else}}
                     <h3>Es sind noch keine Hochlads vorhanden!</h3>
                 {{/each}}

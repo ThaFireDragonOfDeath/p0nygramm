@@ -24,15 +24,15 @@ UPLOADS_DIR_NAME := uploads
 UPLOADS_PRV_DIR_NAME := uploads-prv
 
 # Path variables (source)
-SRC_CONFIG_PATH := $(MAKEFILE_DIR)/ressources/config
-SRC_STATIC_WEBCONTENT_PATH := $(MAKEFILE_DIR)/ressources/static-webcontent
-SRC_TEMPLATES_PATH := $(MAKEFILE_DIR)/ressources/templates
+SRC_CONFIG_PATH := $(MAKEFILE_DIR)/resources/config
+SRC_STATIC_WEBCONTENT_PATH := $(MAKEFILE_DIR)/resources/static-webcontent
+SRC_TEMPLATES_PATH := $(MAKEFILE_DIR)/resources/templates
 
 # Path variables (target)
 PROJECT_PATH := $(INSTALL_DIR)/$(PROJECT_NAME)
 CONFIG_PATH := $(PROJECT_PATH)/$(CONFIG_DIR_NAME)
-STATIC_WEBCONTENT_PATH := $(PROJECT_PATH)/$(STATIC_WEBCONTENT_DIR_NAME)
-TEMPLATES_PATH := $(PROJECT_PATH)/$(TEMPLATES_DIR_NAME)
+STATIC_WEBCONTENT_PATH := $(PROJECT_PATH)/static/$(STATIC_WEBCONTENT_DIR_NAME)
+TEMPLATES_PATH := $(PROJECT_PATH)/static/$(TEMPLATES_DIR_NAME)
 UPLOADS_PATH := $(PROJECT_PATH)/$(UPLOADS_DIR_NAME)
 UPLOADS_PRV_PATH := $(PROJECT_PATH)/$(UPLOADS_PRV_DIR_NAME)
 
@@ -62,8 +62,10 @@ $(PROJECT_NAME):
 	$(CARGO) build $(CARGOFLAGS)
 	$(CP) $(MAKEFILE_DIR)/target/$(BUILDMODE)/$(PROJECT_NAME) $(MAKEFILE_DIR)/$(PROJECT_NAME)
 
+.PHONY: install
 install: $(PROJECT_NAME) install-resources
 
+.PHONY: install-resources
 install-resources: create-dir-structure install-config-files install-static-webcontent install-template-files
 
 uninstall:
@@ -76,8 +78,8 @@ create-dir-structure:
 	$(MKPATH) $(CONFIG_PATH)
 	$(MKPATH) $(STATIC_WEBCONTENT_PATH)
 	$(MKPATH) $(TEMPLATES_PATH)
-	$(MKPATH) $(UPLOADS_DIR_NAME)
-	$(MKPATH) $(UPLOADS_PRV_DIR_NAME)
+	$(MKPATH) $(UPLOADS_PATH)
+	$(MKPATH) $(UPLOADS_PRV_PATH)
 
 .PHONY: install-config-files
 install-config-files:

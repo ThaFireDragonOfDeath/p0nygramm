@@ -20,6 +20,15 @@ const ui_log_username = "log_username";
 const ui_log_password = "log_password";
 const ui_keep_logged_in = "log_keep_logged_in";
 
+// Upload elements
+const ui_uploads_section_id = "main_content";
+const ui_prv_id_prefix = "prvh_";
+const ui_upl_id_prefix = "uplh_";
+
+// Size constants
+const ui_prv_size = 100;
+const ui_prv_padding = 2;
+
 // Enums
 const ui_btn_state = {
     activate: 0,
@@ -39,6 +48,13 @@ const ui_message_type = {
 };
 
 // API Functions
+function ui_calc_row_len() {
+    var display_width = document.getElementById(ui_uploads_section_id).offsetWidth;
+    var req_len = display_width / (ui_prv_size + ui_prv_padding)
+
+    return Math.ceil(req_len);
+}
+
 function ui_get_login_data() {
     var login_data = {
         username: document.getElementById(ui_log_username).value,
@@ -58,6 +74,37 @@ function ui_get_register_data() {
     };
 
     return register_data;
+}
+
+// Get all displayed uploads in the upload view
+function ui_get_upload_view_data() {
+    var upload_section = document.getElementById(ui_uploads_section_id);
+
+    var upload_ids = []; // Displayed upload previews
+    var current_upload = null; // Currently displayed upload
+
+    for (node in upload_section) {
+        var tag_name = node.nodeName;
+
+        if (tag_name == "a") {
+            var upload_id = node.id;
+            upload_id = upload_id.slice(ui_prv_id_prefix.length);
+
+            upload_ids.push(upload_id);
+        }
+        else if(tag_name == "div") {
+            var upload_id = node.id;
+            upload_id = upload_id.slice(ui_upl_id_prefix.length);
+            current_upload = upload_id;
+        }
+    }
+
+    var upload_view_data = {
+        upload_ids: upload_ids,
+        current_upload: current_upload
+    };
+
+    return upload_view_data;
 }
 
 // Hide message

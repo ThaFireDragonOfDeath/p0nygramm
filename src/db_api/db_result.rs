@@ -149,6 +149,7 @@ pub struct UploadData {
     pub uploader_username: String,
     pub upload_timestamp: DateTime<Local>,
     pub upload_upvotes: i32,
+    pub upload_is_video: bool,
     pub tag_list: TagList,
     pub comment_list: CommentList,
 }
@@ -164,6 +165,7 @@ impl UploadData {
             uploader_username: uploader_username.to_owned(),
             upload_timestamp,
             upload_upvotes,
+            upload_is_video: upload_filename.ends_with(".mp4"),
             tag_list: TagList::new(),
             comment_list: CommentList::new(),
         }

@@ -1,6 +1,18 @@
 // Common functions called from HTML
 
 // API functions
+function js_align_uploads() {
+    var upload_data = ui_get_upload_view_data();
+
+    if (upload_data && upload_data.upload_ids) {
+        var uploads_per_row = ui_calc_row_len();
+
+        for (upload_id in upload_data.upload_ids) {
+            
+        }
+    }
+}
+
 function js_login() {
     // Read input data
     var login_data = ui_get_login_data();
