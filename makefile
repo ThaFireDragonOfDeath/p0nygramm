@@ -28,13 +28,14 @@ SRC_CONFIG_PATH := $(MAKEFILE_DIR)/resources/config
 SRC_STATIC_WEBCONTENT_PATH := $(MAKEFILE_DIR)/resources/static-webcontent
 SRC_TEMPLATES_PATH := $(MAKEFILE_DIR)/resources/templates
 
-# Path variables (target)
+# Path variables (install target)
 PROJECT_PATH := $(INSTALL_DIR)/$(PROJECT_NAME)
 CONFIG_PATH := $(PROJECT_PATH)/$(CONFIG_DIR_NAME)
 STATIC_WEBCONTENT_PATH := $(PROJECT_PATH)/static/$(STATIC_WEBCONTENT_DIR_NAME)
 TEMPLATES_PATH := $(PROJECT_PATH)/static/$(TEMPLATES_DIR_NAME)
 UPLOADS_PATH := $(PROJECT_PATH)/$(UPLOADS_DIR_NAME)
 UPLOADS_PRV_PATH := $(PROJECT_PATH)/$(UPLOADS_PRV_DIR_NAME)
+CARGO_TARGET_OUT_DIR := $(MAKEFILE_DIR)/target
 
 # File names (source)
 CONFIG_FILES := system-config.toml
@@ -49,6 +50,10 @@ ifeq ($(BUILDMODE),release)
 CARGOFLAGS := --release
 endif
 
+# Path variables for the resulting output executable
+BIN_OUTPUT_DIR := $(CARGO_TARGET_OUT_DIR)/$(BUILDMODE)
+BIN_OUTPUT_FILE := $(BIN_OUTPUT_DIR)/$(PROJECT_NAME)
+
 # Add user provided cargo flags
 ifneq ($(EXTRA_CARGOFLAGS),)
 CARGOFLAGS += $(EXTRA_CARGOFLAGS)
@@ -60,18 +65,34 @@ all: $(PROJECT_NAME)
 $(PROJECT_NAME):
 	cd $(MAKEFILE_DIR)
 	$(CARGO) build $(CARGOFLAGS)
-	$(CP) $(MAKEFILE_DIR)/target/$(BUILDMODE)/$(PROJECT_NAME) $(MAKEFILE_DIR)/$(PROJECT_NAME)
+	$(CP) $(BIN_OUTPUT_FILE) $(MAKEFILE_DIR)/$(PROJECT_NAME)
 
+# Main install targets
 .PHONY: install
 install: $(PROJECT_NAME) install-resources
+	$(INSTALL) $(PROJECT_NAME) $(PROJECT_PATH)
 
 .PHONY: install-resources
 install-resources: create-dir-structure install-config-files install-static-webcontent install-template-files
 
+# Main uninstall targets
+# Uninstall server binary but keep the project data
+.PHONY: uninstall
 uninstall:
+	$(RM) $(PROJECT_PATH)/$(PROJECT_NAME)
+
+# Uninstall project including the config and upload files
+.PHONY: full-uninstall
+full-uninstall:
 	$(RM_RECURSIVE) $(PROJECT_PATH)
 
-# Helper build targets
+# Main clean targets
+.PHONY: clean
+clean:
+	$(RM_RECURSIVE) CARGO_TARGET_OUT_DIR
+	$(RM) $(PROJECT_NAME)
+
+# Helper targets
 .PHONY: create-dir-structure
 create-dir-structure:
 	$(MKPATH) $(PROJECT_PATH)
