@@ -48,15 +48,14 @@ async fn main() -> std::io::Result<()> {
         HttpServer::new(move || {
             App::new()
                 .wrap(middleware::Logger::default())
-                .service(
-                    web::scope("/js-api")
-                        .wrap(CookieSession::signed(session_private_key.as_bytes())
-                            .http_only(true)
-                            .max_age(2592000) // 30 days
-                            .name("session_data")
-                            .path("/")
-                            .secure(true)
-                        )
+                .wrap(CookieSession::signed(session_private_key.as_bytes())
+                    .http_only(true)
+                    .max_age(2592000) // 30 days
+                    .name("session_data")
+                    .path("/")
+                    .secure(true)
+                )
+                .service(web::scope("/js-api")
                         .app_data(prj_config_data.clone())
                         .route("/add_comment", web::post().to(js_api::add_comment))
                         .route("/add_upload", web::post().to(js_api::add_upload))
@@ -78,13 +77,6 @@ async fn main() -> std::io::Result<()> {
                 .service(fs::Files::new("/uploads", uploads_path.as_str()).index_file("index.html"))
                 .service(fs::Files::new("/prv", uploads_prv_path.as_str()).index_file("index.html"))
                 .service(fs::Files::new("/static", static_content_path.as_str()).index_file("index.html"))
-                .wrap(CookieSession::signed(session_private_key.as_bytes())
-                    .http_only(true)
-                    .max_age(2592000) // 30 days
-                    .name("session_data")
-                    .path("/")
-                    .secure(true)
-                )
                 .app_data(prj_config_data.clone())
                 .app_data(handlebars_data.clone())
                 .route("/", web::get().to(frontend::index))
