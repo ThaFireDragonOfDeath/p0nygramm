@@ -19,7 +19,7 @@ PROJECT_NAME := p0nygramm
 INSTALL_DIR := /srv
 CONFIG_DIR_NAME := config
 STATIC_WEBCONTENT_DIR_NAME := webcontent
-TEMPLATES_DIR_NAME := template
+TEMPLATES_DIR_NAME := templates
 UPLOADS_DIR_NAME := uploads
 UPLOADS_PRV_DIR_NAME := uploads-prv
 

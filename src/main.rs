@@ -32,6 +32,7 @@ async fn main() -> std::io::Result<()> {
         let static_content_path = prj_config.filesystem_config.static_webcontent_path.get_value();
 
         info!("Serving static webcontent from: {}", static_content_path.as_str());
+        info!("Serving templates from: {}", template_path.as_str());
         info!("Serving uploads from: {}", uploads_path.as_str());
         info!("Serving upload previews from: {}", uploads_prv_path.as_str());
 

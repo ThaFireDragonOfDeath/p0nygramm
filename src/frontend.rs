@@ -16,7 +16,8 @@ pub async fn index(config: web::Data<ProjectConfig>, handlebars: web::Data<Handl
     let resp_body = handlebars.render("index", &index_view);
 
     if resp_body.is_err() {
-        error!("Handlebars error");
+        let handlebars_err = resp_body.err().unwrap();
+        error!("Handlebars error: {}", handlebars_err);
 
         return HttpResponse::InternalServerError().body(HANDLEBARS_ERROR_RESP);
     }
