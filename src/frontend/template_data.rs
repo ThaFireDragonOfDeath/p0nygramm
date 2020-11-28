@@ -17,6 +17,7 @@ pub struct IndexViewTemplateData {
     pub uploads_prv_list: Option<UploadPrvList>,
     pub upload_data: Option<UploadData>,
     pub user_data: Option<UserData>,
+    pub read_access: bool,
 }
 
 impl IndexViewTemplateData {
@@ -28,6 +29,7 @@ impl IndexViewTemplateData {
             uploads_prv_list: None,
             upload_data: None,
             user_data: None,
+            read_access: false,
         }
     }
 
@@ -39,6 +41,7 @@ impl IndexViewTemplateData {
             uploads_prv_list: None,
             upload_data: None,
             user_data: None,
+            read_access: false,
         }
     }
 
@@ -87,7 +90,8 @@ impl IndexViewTemplateData {
             filter_settings: Some(filter_data),
             uploads_prv_list: Some(uploads_prv),
             upload_data: None,
-            user_data: Some(user_data)
+            user_data: Some(user_data),
+            read_access: true,
         }
     }
 }

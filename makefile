@@ -1,7 +1,7 @@
 # Export all variables by default
 export
 
-# Programms
+# Programs
 CARGO := cargo
 CP := cp -f
 INSTALL := install
@@ -60,7 +60,8 @@ CARGOFLAGS += $(EXTRA_CARGOFLAGS)
 endif
 
 # Main build targets
-all: $(PROJECT_NAME)
+.PHONY: all
+all: light-clean $(PROJECT_NAME)
 
 $(PROJECT_NAME):
 	cd $(MAKEFILE_DIR)
@@ -88,8 +89,12 @@ full-uninstall:
 
 # Main clean targets
 .PHONY: clean
-clean:
+clean: light-clean
 	$(RM_RECURSIVE) CARGO_TARGET_OUT_DIR
+
+# Only remove the exec binary from the makefile directory (don't touch the target directory)
+.PHONY: light-clean
+light-clean:
 	$(RM) $(PROJECT_NAME)
 
 # Helper targets
