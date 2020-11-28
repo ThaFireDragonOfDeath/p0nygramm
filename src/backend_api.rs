@@ -138,6 +138,8 @@ pub async fn add_upload(config: &web::Data<ProjectConfig>, session: &Session, pa
         handle_error_str!(UserInputError, "Upload muss entweder als SFW oder als NSFW gekennzeichnet sein", BAD_REQUEST);
     }
 
+    // TODO: Get upload_type and write it into the database
+
     if filename.is_some() {
         let filename = filename.unwrap();
         let filename_is_ok = check_filename(filename.as_str());
