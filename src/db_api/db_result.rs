@@ -140,6 +140,7 @@ impl TagList {
     }
 }
 
+// TODO: Implement newest changes from the database structure
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UploadData {
     pub upload_id: i32,

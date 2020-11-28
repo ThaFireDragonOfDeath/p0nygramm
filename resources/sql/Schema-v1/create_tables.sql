@@ -1,18 +1,18 @@
 -- Database generated with pgModeler (PostgreSQL Database Modeler).
--- pgModeler  version: 0.9.2
--- PostgreSQL version: 12.0
+-- pgModeler  version: 0.9.3-beta1
+-- PostgreSQL version: 13.0
 -- Project Site: pgmodeler.io
 -- Model Author: ---
 
-
--- Database creation must be done outside a multicommand file.
+-- Database creation must be performed outside a multi lined SQL file. 
 -- These commands were put in this file only as a convenience.
--- -- object: p0nygramm | type: DATABASE --
--- -- DROP DATABASE IF EXISTS p0nygramm;
--- CREATE DATABASE p0nygramm
--- 	OWNER = postgres;
--- -- ddl-end --
 -- 
+-- object: p0nygramm | type: DATABASE --
+-- DROP DATABASE IF EXISTS p0nygramm;
+CREATE DATABASE p0nygramm
+	OWNER = postgres;
+-- ddl-end --
+
 
 -- object: public.users | type: TABLE --
 -- DROP TABLE IF EXISTS public.users CASCADE;
@@ -28,25 +28,15 @@ CREATE TABLE public.users (
 -- ddl-end --
 COMMENT ON COLUMN public.users.user_pass IS E'Hashed password';
 -- ddl-end --
--- ALTER TABLE public.users OWNER TO postgres;
+ALTER TABLE public.users OWNER TO postgres;
 -- ddl-end --
 
--- object: public.uploads | type: TABLE --
--- DROP TABLE IF EXISTS public.uploads CASCADE;
-CREATE TABLE public.uploads (
-	upload_id serial NOT NULL,
-	upload_filename varchar(70) NOT NULL,
-	upload_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
-	upload_is_sfw bool NOT NULL DEFAULT true,
-	upload_is_nsfw bool NOT NULL DEFAULT false,
-	upload_upvotes integer NOT NULL DEFAULT 0,
-	uploader integer NOT NULL,
-	CONSTRAINT uploads_pk PRIMARY KEY (upload_id),
-	CONSTRAINT upload_filename_unique UNIQUE (upload_filename)
-
-);
+-- object: public."UploadType" | type: TYPE --
+-- DROP TYPE IF EXISTS public."UploadType" CASCADE;
+CREATE TYPE public."UploadType" AS
+ ENUM ('Image','AnimatedImage','Video');
 -- ddl-end --
--- ALTER TABLE public.uploads OWNER TO postgres;
+ALTER TYPE public."UploadType" OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.comments | type: TABLE --
@@ -62,7 +52,7 @@ CREATE TABLE public.comments (
 
 );
 -- ddl-end --
--- ALTER TABLE public.comments OWNER TO postgres;
+ALTER TABLE public.comments OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.tags | type: TABLE --
@@ -75,7 +65,7 @@ CREATE TABLE public.tags (
 
 );
 -- ddl-end --
--- ALTER TABLE public.tags OWNER TO postgres;
+ALTER TABLE public.tags OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.tag_upload_map | type: TABLE --
@@ -90,7 +80,7 @@ CREATE TABLE public.tag_upload_map (
 
 );
 -- ddl-end --
--- ALTER TABLE public.tag_upload_map OWNER TO postgres;
+ALTER TABLE public.tag_upload_map OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.user_banns | type: TABLE --
@@ -107,22 +97,23 @@ CREATE TABLE public.user_banns (
 -- ddl-end --
 COMMENT ON COLUMN public.user_banns.ban_duration IS E'Ban duration in hours';
 -- ddl-end --
--- ALTER TABLE public.user_banns OWNER TO postgres;
+ALTER TABLE public.user_banns OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.project_kvconfig | type: TABLE --
 -- DROP TABLE IF EXISTS public.project_kvconfig CASCADE;
 CREATE TABLE public.project_kvconfig (
 	kv_key varchar(64) NOT NULL,
-	kv_value varchar(64) NOT NULL,
+	kv_value_str varchar(64),
+	kv_value_int integer,
 	CONSTRAINT project_kvconfig_pk PRIMARY KEY (kv_key)
 
 );
 -- ddl-end --
--- ALTER TABLE public.project_kvconfig OWNER TO postgres;
+ALTER TABLE public.project_kvconfig OWNER TO postgres;
 -- ddl-end --
 
-INSERT INTO public.project_kvconfig (kv_key, kv_value) VALUES (E'schema_version', E'1');
+INSERT INTO public.project_kvconfig (kv_key) VALUES (E'schema_version');
 -- ddl-end --
 
 -- object: public.votes_tum | type: TABLE --
@@ -136,7 +127,7 @@ CREATE TABLE public.votes_tum (
 
 );
 -- ddl-end --
--- ALTER TABLE public.votes_tum OWNER TO postgres;
+ALTER TABLE public.votes_tum OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.votes_uploads | type: TABLE --
@@ -150,7 +141,7 @@ CREATE TABLE public.votes_uploads (
 
 );
 -- ddl-end --
--- ALTER TABLE public.votes_uploads OWNER TO postgres;
+ALTER TABLE public.votes_uploads OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.votes_comments | type: TABLE --
@@ -164,7 +155,7 @@ CREATE TABLE public.votes_comments (
 
 );
 -- ddl-end --
--- ALTER TABLE public.votes_comments OWNER TO postgres;
+ALTER TABLE public.votes_comments OWNER TO postgres;
 -- ddl-end --
 
 -- object: username_uq | type: INDEX --
@@ -174,6 +165,25 @@ CREATE UNIQUE INDEX username_uq ON public.users
 	(
 	  (LOWER(user_name))
 	);
+-- ddl-end --
+
+-- object: public.uploads | type: TABLE --
+-- DROP TABLE IF EXISTS public.uploads CASCADE;
+CREATE TABLE public.uploads (
+	upload_id serial NOT NULL,
+	upload_filename varchar(70) NOT NULL,
+	upload_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
+	upload_is_sfw bool NOT NULL DEFAULT true,
+	upload_is_nsfw bool NOT NULL DEFAULT false,
+	upload_type public."UploadType" NOT NULL DEFAULT Image,
+	upload_upvotes integer NOT NULL DEFAULT 0,
+	uploader integer NOT NULL,
+	CONSTRAINT uploads_pk PRIMARY KEY (upload_id),
+	CONSTRAINT upload_filename_unique UNIQUE (upload_filename)
+
+);
+-- ddl-end --
+ALTER TABLE public.uploads OWNER TO postgres;
 -- ddl-end --
 
 -- object: uploader_fk | type: CONSTRAINT --
