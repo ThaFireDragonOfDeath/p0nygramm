@@ -1,6 +1,7 @@
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
 use chrono::{DateTime, Local};
 use serde::{Serialize, Deserialize};
+use postgres_types::{ToSql, FromSql};
 
 #[derive(Clone, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct CommentData {
@@ -140,33 +141,41 @@ impl TagList {
     }
 }
 
-// TODO: Implement newest changes from the database structure
+#[derive(Clone, Serialize, Deserialize, Debug, ToSql, FromSql)]
+pub enum UploadType {
+    Image,
+    AnimatedImage,
+    Video,
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UploadData {
     pub upload_id: i32,
+    pub upload_is_sfw: bool,
     pub upload_is_nsfw: bool,
+    pub upload_type: UploadType,
     pub upload_url: String,
     pub uploader_id: i32,
     pub uploader_username: String,
     pub upload_timestamp: DateTime<Local>,
     pub upload_upvotes: i32,
-    pub upload_is_video: bool,
     pub tag_list: TagList,
     pub comment_list: CommentList,
 }
 
 impl UploadData {
-    pub fn new(upload_id: i32, upload_is_nsfw: bool, upload_filename: &str, uploader_id: i32,
+    pub fn new(upload_id: i32, upload_is_nsfw: bool, upload_type: UploadType, upload_filename: &str, uploader_id: i32,
                uploader_username: &str, upload_timestamp: DateTime<Local>, upload_upvotes: i32) -> UploadData {
         UploadData {
             upload_id,
+            upload_is_sfw: !upload_is_nsfw,
             upload_is_nsfw,
+            upload_type,
             upload_url: get_url_from_filename(upload_filename),
             uploader_id,
             uploader_username: uploader_username.to_owned(),
             upload_timestamp,
             upload_upvotes,
-            upload_is_video: upload_filename.ends_with(".mp4"),
             tag_list: TagList::new(),
             comment_list: CommentList::new(),
         }

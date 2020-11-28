@@ -5,7 +5,7 @@ use tokio_postgres::config::SslMode::Disable;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::Path;
 use std::time::Duration;
-use crate::db_api::db_result::{UploadPrvList, DbApiError, UploadPreview, UploadData, UserData};
+use crate::db_api::db_result::{UploadPrvList, DbApiError, UploadPreview, UploadData, UserData, UploadType};
 use crate::db_api::db_result::DbApiErrorType::{QueryError, NoResult};
 use chrono::{DateTime, Local};
 use futures::future;
@@ -173,11 +173,12 @@ impl PostgresConnection {
                     let upload_filename : String = first_result_row.get(0);
                     let upload_timestamp : DateTime<Local> = first_result_row.get(1);
                     let upload_is_nsfw : bool = first_result_row.get(2);
-                    let uploader_id : i32 = first_result_row.get(3);
-                    let uploader_username : String = first_result_row.get(4);
-                    let upload_upvotes : i32 = first_result_row.get(5);
+                    let upload_type : UploadType = first_result_row.get(3);
+                    let uploader_id : i32 = first_result_row.get(4);
+                    let uploader_username : String = first_result_row.get(5);
+                    let upload_upvotes : i32 = first_result_row.get(6);
 
-                    let mut upload_data = UploadData::new(upload_id, upload_is_nsfw, upload_filename.as_str(),
+                    let mut upload_data = UploadData::new(upload_id, upload_is_nsfw, upload_type, upload_filename.as_str(),
                                     uploader_id, uploader_username.as_str(), upload_timestamp, upload_upvotes);
 
                     // Process comments
