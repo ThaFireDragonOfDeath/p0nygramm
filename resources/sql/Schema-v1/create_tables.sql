@@ -9,8 +9,7 @@
 -- 
 -- object: p0nygramm | type: DATABASE --
 -- DROP DATABASE IF EXISTS p0nygramm;
-CREATE DATABASE p0nygramm
-	OWNER = postgres;
+--CREATE DATABASE p0nygramm;
 -- ddl-end --
 
 
@@ -28,15 +27,11 @@ CREATE TABLE public.users (
 -- ddl-end --
 COMMENT ON COLUMN public.users.user_pass IS E'Hashed password';
 -- ddl-end --
-ALTER TABLE public.users OWNER TO postgres;
--- ddl-end --
 
 -- object: public."UploadType" | type: TYPE --
 -- DROP TYPE IF EXISTS public."UploadType" CASCADE;
 CREATE TYPE public."UploadType" AS
  ENUM ('Image','AnimatedImage','Video');
--- ddl-end --
-ALTER TYPE public."UploadType" OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.comments | type: TABLE --
@@ -52,8 +47,6 @@ CREATE TABLE public.comments (
 
 );
 -- ddl-end --
-ALTER TABLE public.comments OWNER TO postgres;
--- ddl-end --
 
 -- object: public.tags | type: TABLE --
 -- DROP TABLE IF EXISTS public.tags CASCADE;
@@ -64,8 +57,6 @@ CREATE TABLE public.tags (
 	CONSTRAINT tag_text_unique UNIQUE (tag_text)
 
 );
--- ddl-end --
-ALTER TABLE public.tags OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.tag_upload_map | type: TABLE --
@@ -79,8 +70,6 @@ CREATE TABLE public.tag_upload_map (
 	CONSTRAINT tag_upload_map_pk PRIMARY KEY (tum_id)
 
 );
--- ddl-end --
-ALTER TABLE public.tag_upload_map OWNER TO postgres;
 -- ddl-end --
 
 -- object: public.user_banns | type: TABLE --
@@ -97,8 +86,6 @@ CREATE TABLE public.user_banns (
 -- ddl-end --
 COMMENT ON COLUMN public.user_banns.ban_duration IS E'Ban duration in hours';
 -- ddl-end --
-ALTER TABLE public.user_banns OWNER TO postgres;
--- ddl-end --
 
 -- object: public.project_kvconfig | type: TABLE --
 -- DROP TABLE IF EXISTS public.project_kvconfig CASCADE;
@@ -109,8 +96,6 @@ CREATE TABLE public.project_kvconfig (
 	CONSTRAINT project_kvconfig_pk PRIMARY KEY (kv_key)
 
 );
--- ddl-end --
-ALTER TABLE public.project_kvconfig OWNER TO postgres;
 -- ddl-end --
 
 INSERT INTO public.project_kvconfig (kv_key) VALUES (E'schema_version');
@@ -127,8 +112,6 @@ CREATE TABLE public.votes_tum (
 
 );
 -- ddl-end --
-ALTER TABLE public.votes_tum OWNER TO postgres;
--- ddl-end --
 
 -- object: public.votes_uploads | type: TABLE --
 -- DROP TABLE IF EXISTS public.votes_uploads CASCADE;
@@ -141,8 +124,6 @@ CREATE TABLE public.votes_uploads (
 
 );
 -- ddl-end --
-ALTER TABLE public.votes_uploads OWNER TO postgres;
--- ddl-end --
 
 -- object: public.votes_comments | type: TABLE --
 -- DROP TABLE IF EXISTS public.votes_comments CASCADE;
@@ -154,8 +135,6 @@ CREATE TABLE public.votes_comments (
 	CONSTRAINT votes_comments_pk PRIMARY KEY (vote_id)
 
 );
--- ddl-end --
-ALTER TABLE public.votes_comments OWNER TO postgres;
 -- ddl-end --
 
 -- object: username_uq | type: INDEX --
@@ -182,15 +161,6 @@ CREATE TABLE public.uploads (
 	CONSTRAINT upload_filename_unique UNIQUE (upload_filename)
 
 );
--- ddl-end --
-ALTER TABLE public.uploads OWNER TO postgres;
--- ddl-end --
-
--- object: uploader_fk | type: CONSTRAINT --
--- ALTER TABLE public.uploads DROP CONSTRAINT IF EXISTS uploader_fk CASCADE;
-ALTER TABLE public.uploads ADD CONSTRAINT uploader_fk FOREIGN KEY (uploader)
-REFERENCES public.users (user_id) MATCH FULL
-ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: user_fk | type: CONSTRAINT --
@@ -273,6 +243,13 @@ ON DELETE CASCADE ON UPDATE CASCADE;
 -- object: user_fk | type: CONSTRAINT --
 -- ALTER TABLE public.votes_comments DROP CONSTRAINT IF EXISTS user_fk CASCADE;
 ALTER TABLE public.votes_comments ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
+REFERENCES public.users (user_id) MATCH FULL
+ON DELETE CASCADE ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: uploader_fk | type: CONSTRAINT --
+-- ALTER TABLE public.uploads DROP CONSTRAINT IF EXISTS uploader_fk CASCADE;
+ALTER TABLE public.uploads ADD CONSTRAINT uploader_fk FOREIGN KEY (uploader)
 REFERENCES public.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
