@@ -2,57 +2,57 @@
 export
 
 # Programs
-CARGO := cargo
-CP := cp -f
-INSTALL := install
-MKPATH := mkdir -p
-RM := rm -f
-RM_RECURSIVE := rm -rf
+override CARGO := cargo
+override CP := cp -f
+override INSTALL := install
+override MKPATH := mkdir -p
+override RM := rm -f
+override RM_RECURSIVE := rm -rf
 
 # Directory of this makefile (ends without '/')
-MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+override MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 # Project name
-PROJECT_NAME := p0nygramm
+override PROJECT_NAME := p0nygramm
 
 # Dir names (target)
-INSTALL_DIR := /srv
-CONFIG_DIR_NAME := config
-STATIC_WEBCONTENT_DIR_NAME := webcontent
-TEMPLATES_DIR_NAME := templates
-UPLOADS_DIR_NAME := uploads
-UPLOADS_PRV_DIR_NAME := uploads-prv
+override INSTALL_DIR := /srv
+override CONFIG_DIR_NAME := config
+override STATIC_WEBCONTENT_DIR_NAME := webcontent
+override TEMPLATES_DIR_NAME := templates
+override UPLOADS_DIR_NAME := uploads
+override UPLOADS_PRV_DIR_NAME := uploads-prv
 
 # Path variables (source)
-SRC_CONFIG_PATH := $(MAKEFILE_DIR)/resources/config
-SRC_STATIC_WEBCONTENT_PATH := $(MAKEFILE_DIR)/resources/static-webcontent
-SRC_TEMPLATES_PATH := $(MAKEFILE_DIR)/resources/templates
+override SRC_CONFIG_PATH := $(MAKEFILE_DIR)/resources/config
+override SRC_STATIC_WEBCONTENT_PATH := $(MAKEFILE_DIR)/resources/static-webcontent
+override SRC_TEMPLATES_PATH := $(MAKEFILE_DIR)/resources/templates
 
 # Path variables (install target)
-PROJECT_PATH := $(INSTALL_DIR)/$(PROJECT_NAME)
-CONFIG_PATH := $(PROJECT_PATH)/$(CONFIG_DIR_NAME)
-STATIC_WEBCONTENT_PATH := $(PROJECT_PATH)/static/$(STATIC_WEBCONTENT_DIR_NAME)
-TEMPLATES_PATH := $(PROJECT_PATH)/static/$(TEMPLATES_DIR_NAME)
-UPLOADS_PATH := $(PROJECT_PATH)/$(UPLOADS_DIR_NAME)
-UPLOADS_PRV_PATH := $(PROJECT_PATH)/$(UPLOADS_PRV_DIR_NAME)
-CARGO_TARGET_OUT_DIR := $(MAKEFILE_DIR)/target
+override PROJECT_PATH := $(INSTALL_DIR)/$(PROJECT_NAME)
+override CONFIG_PATH := $(PROJECT_PATH)/$(CONFIG_DIR_NAME)
+override STATIC_WEBCONTENT_PATH := $(PROJECT_PATH)/static/$(STATIC_WEBCONTENT_DIR_NAME)
+override TEMPLATES_PATH := $(PROJECT_PATH)/static/$(TEMPLATES_DIR_NAME)
+override UPLOADS_PATH := $(PROJECT_PATH)/$(UPLOADS_DIR_NAME)
+override UPLOADS_PRV_PATH := $(PROJECT_PATH)/$(UPLOADS_PRV_DIR_NAME)
+override CARGO_TARGET_OUT_DIR := $(MAKEFILE_DIR)/target
 
 # File names (source)
-CONFIG_FILES := system-config.toml
-STATIC_WEBCONTENT_FILES := p0nygramm.css p0nygramm.js p0nygramm_api.js p0nygramm_ui.js
-TEMPLATE_FILES := index.html
+override CONFIG_FILES := system-config.toml
+override STATIC_WEBCONTENT_FILES := p0nygramm.css p0nygramm.js p0nygramm_api.js p0nygramm_ui.js
+override TEMPLATE_FILES := index.html
 
 # Build options
-BUILDMODE := debug
-CARGOFLAGS :=
+BUILDMODE ?= debug
+CARGOFLAGS ?=
 
 ifeq ($(BUILDMODE),release)
-CARGOFLAGS := --release
+CARGOFLAGS += --release
 endif
 
 # Path variables for the resulting output executable
-BIN_OUTPUT_DIR := $(CARGO_TARGET_OUT_DIR)/$(BUILDMODE)
-BIN_OUTPUT_FILE := $(BIN_OUTPUT_DIR)/$(PROJECT_NAME)
+override BIN_OUTPUT_DIR := $(CARGO_TARGET_OUT_DIR)/$(BUILDMODE)
+override BIN_OUTPUT_FILE := $(BIN_OUTPUT_DIR)/$(PROJECT_NAME)
 
 # Add user provided cargo flags
 ifneq ($(EXTRA_CARGOFLAGS),)
