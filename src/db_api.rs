@@ -1,7 +1,7 @@
 use crate::db_api::postgres::PostgresConnection;
 use crate::db_api::redis::RedisConnection;
 use crate::config::ProjectConfig;
-use crate::db_api::db_result::{UploadPrvList, DbApiError, SessionData, SessionError, UploadData, UserData};
+use crate::db_api::db_result::{UploadPrvList, DbApiError, SessionData, SessionError, UploadData, UserData, UploadType};
 use crate::db_api::db_result::DbApiErrorType::{ConnectionError, PartFail, QueryError, NoResult};
 use crate::db_api::db_result::SessionErrorType::DbError;
 use log::{trace};
@@ -73,12 +73,12 @@ impl DbConnection {
     }
 
     // Returns the upload_id of the new inserted upload or error
-    pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
+    pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, upload_type: UploadType, uploader: i32) -> Result<i32, DbApiError> {
         trace!("Enter DbConnection::add_upload");
 
         check_postgres_connection!(self);
 
-        return self.postgres_connection.as_ref().unwrap().add_upload(upload_filename, upload_is_nsfw, uploader).await;
+        return self.postgres_connection.as_ref().unwrap().add_upload(upload_filename, upload_is_nsfw, upload_type, uploader).await;
     }
 
     // Returns the id of the new created user

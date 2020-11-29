@@ -1,9 +1,10 @@
 use crate::file_api::{get_preview_url_from_filename, get_url_from_filename};
 use chrono::{DateTime, Local};
-use serde::{Serialize, Deserialize};
+use serde::{Serialize};
 use postgres_types::{ToSql, FromSql};
+use crate::db_api::db_result::UploadType::{AnimatedImage, Image, Video};
 
-#[derive(Clone, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct CommentData {
     comment_timestamp: DateTime<Local>,
     comment_text: String,
@@ -25,7 +26,7 @@ impl CommentData {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize)]
 pub struct CommentList {
     comment_list: Vec<CommentData>,
 }
@@ -107,7 +108,7 @@ impl SessionError {
     }
 }
 
-#[derive(Clone, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct TagData {
     pub tag_id: i32,
     pub tag_text: String,
@@ -124,7 +125,7 @@ impl TagData {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize)]
 pub struct TagList {
     pub tag_list: Vec<TagData>,
 }
@@ -141,14 +142,33 @@ impl TagList {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, ToSql, FromSql)]
+#[derive(Clone, Serialize, Eq, PartialEq, Debug, ToSql, FromSql)]
 pub enum UploadType {
     Image,
     AnimatedImage,
     Video,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+impl UploadType {
+    pub fn new(is_image: bool, is_animated_image: bool, is_video: bool) -> Option<UploadType> {
+        if is_image {
+            if is_animated_image {
+                Some(AnimatedImage)
+            }
+            else {
+                Some(Image)
+            }
+        }
+        else if is_video {
+            Some(Video)
+        }
+        else {
+            None
+        }
+    }
+}
+
+#[derive(Clone, Serialize)]
 pub struct UploadData {
     pub upload_id: i32,
     pub upload_is_sfw: bool,
@@ -196,7 +216,7 @@ impl UploadData {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize)]
 pub struct UploadPreview {
     pub upload_id: i32,
     pub upload_is_nsfw: bool,
@@ -215,7 +235,7 @@ impl UploadPreview {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize)]
 pub struct UploadPrvList {
     pub uploads: Vec<UploadPreview>,
 }

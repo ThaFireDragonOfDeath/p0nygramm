@@ -91,12 +91,12 @@ impl PostgresConnection {
     }
 
     // Returns the upload_id of the new inserted upload or error
-    pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, uploader: i32) -> Result<i32, DbApiError> {
+    pub async fn add_upload(&self, upload_filename: &str, upload_is_nsfw: bool, upload_type: UploadType, uploader: i32) -> Result<i32, DbApiError> {
         trace!("Enter PostgresConnection::add_upload");
 
         let sql_cmd = include_str!(get_filepath!("add_upload.sql"));
         let upload_is_sfw = !upload_is_nsfw;
-        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&upload_filename, &upload_is_sfw, &upload_is_nsfw, &uploader];
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&upload_filename, &upload_is_sfw, &upload_is_nsfw, &upload_type, &uploader];
         let result_rows = self.postgres_client.query(sql_cmd, sql_parameters).await;
 
         if result_rows.is_ok() {

@@ -138,8 +138,6 @@ pub async fn add_upload(config: &web::Data<ProjectConfig>, session: &Session, pa
         handle_error_str!(UserInputError, "Upload muss entweder als SFW oder als NSFW gekennzeichnet sein", BAD_REQUEST);
     }
 
-    // TODO: Get upload_type and write it into the database
-
     if filename.is_some() {
         let filename = filename.unwrap();
         let filename_is_ok = check_filename(filename.as_str());
@@ -148,8 +146,10 @@ pub async fn add_upload(config: &web::Data<ProjectConfig>, session: &Session, pa
             let file_process_success = process_file(&config, filename).await;
 
             if file_process_success.is_ok() {
+                let file_process_success = file_process_success.ok().unwrap();
                 let uploader_id = session_data.user_id;
-                let db_success = db_connection.add_upload(filename, upload_is_nsfw, uploader_id).await;
+                let upload_type = file_process_success.upload_type;
+                let db_success = db_connection.add_upload(filename, upload_is_nsfw, upload_type, uploader_id).await;
 
                 if db_success.is_ok() {
                     let upload_id = db_success.ok().unwrap();
@@ -192,7 +192,7 @@ pub async fn add_upload(config: &web::Data<ProjectConfig>, session: &Session, pa
                 }
             }
             else {
-                let error = file_process_success.unwrap_err();
+                let error = file_process_success.err().unwrap();
                 let error_type = error.error_code;
                 let error_msg = error.error_msg;
 

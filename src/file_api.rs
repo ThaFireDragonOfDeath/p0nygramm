@@ -4,26 +4,41 @@ use std::path::Path;
 use std::process::Output;
 use crate::file_api::FileProcessErrorType::{FormatError, PrvGenError, CopyError};
 use log::{warn, error};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize};
+use crate::db_api::db_result::UploadType;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct FFprobeFormat {
-    format_name: String,
-    duration: Option<f32>,
-    size: u32,
+    pub format_name: String,
+    pub duration: Option<f32>,
+    pub size: u32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct FFprobeOutput {
-    streams: Vec<FFprobeStream>,
-    format: FFprobeFormat,
+    pub streams: Vec<FFprobeStream>,
+    pub format: FFprobeFormat,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct FFprobeStream {
-    codec_name: String,
-    width: u32,
-    height: u32,
+    pub codec_name: String,
+    pub width: u32,
+    pub height: u32,
+}
+
+pub struct FileProbeResult {
+    pub ffprobe_output: FFprobeOutput,
+    pub upload_type: UploadType,
+}
+
+impl FileProbeResult {
+    pub fn new(ffprobe_output: FFprobeOutput, upload_type: UploadType) -> FileProbeResult {
+        FileProbeResult {
+            ffprobe_output,
+            upload_type,
+        }
+    }
 }
 
 pub struct FileProcessError {
@@ -40,11 +55,24 @@ impl FileProcessError {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub enum FileProcessErrorType {
     FormatError,
     PrvGenError,
     CopyError,
+}
+
+#[derive(Clone)]
+pub struct FileProcessResult {
+    pub upload_type: UploadType,
+}
+
+impl FileProcessResult {
+    pub fn new(upload_type: UploadType) -> FileProcessResult {
+        FileProcessResult {
+            upload_type,
+        }
+    }
 }
 
 pub async fn delete_upload_srv(config: &ProjectConfig, filename: &str) {
@@ -162,6 +190,22 @@ pub fn get_upload_prv_path_tmp(filename: &str) -> String {
     format!("./tmp/p0nygramm/preview_files/{}", filename)
 }
 
+pub fn is_animated_image_file(filename: &str) -> bool {
+    let path_obj = Path::new(filename);
+    let file_extension = path_obj.extension();
+
+    if file_extension.is_some() {
+        let file_extension = file_extension.unwrap();
+
+        // Detect .gif files
+        if file_extension == "gif" {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 pub fn is_image_file(filename: &str) -> bool {
     let path_obj = Path::new(filename);
     let file_extension = path_obj.extension();
@@ -169,7 +213,8 @@ pub fn is_image_file(filename: &str) -> bool {
     if file_extension.is_some() {
         let file_extension = file_extension.unwrap();
 
-        if file_extension == "gif" || file_extension == "jpg" || file_extension == "png" {
+        // Detect .jpg and .png files
+        if file_extension == "jpg" || file_extension == "png" {
             return true;
         }
     }
@@ -193,11 +238,22 @@ pub fn is_video_file(filename: &str) -> bool {
 }
 
 // Returns Some(FFprobeOutput) if the file format and codex is valid (if not -> None)
-pub async fn probe_file(ffprobe_filepath: &str, upload_filename: &str) -> Option<FFprobeOutput> {
+pub async fn probe_file(ffprobe_filepath: &str, upload_filename: &str) -> Option<FileProbeResult> {
     let upload_filepath = get_upload_path_tmp(upload_filename);
 
+    // Get media typ from the file extension (that will be later validated by ffprobe)
     let is_image_file = is_image_file(upload_filename);
+    let is_animated_image_file = is_animated_image_file(upload_filename);
     let is_video_file = is_video_file(upload_filename);
+    let upload_type = UploadType::new(is_image_file, is_animated_image_file, is_video_file);
+
+    if upload_type.is_none() {
+        error!("Failed to get upload type!");
+
+        return None;
+    }
+
+    let upload_type = upload_type.unwrap();
 
     // Let the OS take care of finding the ffprobe binary if there is no path provided
     let command = if !ffprobe_filepath.is_empty() {
@@ -235,11 +291,13 @@ pub async fn probe_file(ffprobe_filepath: &str, upload_filename: &str) -> Option
                     if ffprobe_stdout_json.is_ok() {
                         let ffprobe_stdout_json = ffprobe_stdout_json.unwrap();
 
-                        if is_image_file && probe_image_file(&ffprobe_stdout_json) {
-                            return Some(ffprobe_stdout_json);
-                        }
-                        else if is_video_file && probe_video_file(&ffprobe_stdout_json) {
-                            return  Some(ffprobe_stdout_json);
+                        // If the detected upload type detected from file extension equals the test from the ffprobe data
+                        if ( is_image_file && probe_image_file(&ffprobe_stdout_json) ) ||
+                            ( is_animated_image_file && probe_animated_image_file(&ffprobe_stdout_json) ) ||
+                            ( is_video_file && probe_video_file(&ffprobe_stdout_json) ) {
+
+                            let ret_val = FileProbeResult::new(ffprobe_stdout_json, upload_type);
+                            return Some(ret_val);
                         }
                     }
                 }
@@ -248,6 +306,26 @@ pub async fn probe_file(ffprobe_filepath: &str, upload_filename: &str) -> Option
     }
 
     return None;
+}
+
+fn probe_animated_image_file(ffprobe_stdout_json: &FFprobeOutput) -> bool {
+    let stream_count = ffprobe_stdout_json.streams.len();
+
+    if stream_count == 1 {
+        let image_format = ffprobe_stdout_json.format.format_name.as_str();
+
+        // Allow gif as container format
+        if image_format == "gif" {
+            let image_codec = ffprobe_stdout_json.streams.get(0).unwrap().codec_name.as_str();
+
+            // Allow gif as codec
+            if image_codec == "gif" {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 fn probe_image_file(ffprobe_stdout_json: &FFprobeOutput) -> bool {
@@ -299,7 +377,7 @@ fn probe_video_file(ffprobe_stdout_json: &FFprobeOutput) -> bool {
     return false;
 }
 
-pub async fn process_file(config: &ProjectConfig, filename: &str) -> Result<(), FileProcessError> {
+pub async fn process_file(config: &ProjectConfig, filename: &str) -> Result<FileProcessResult, FileProcessError> {
     let ffmpeg_filepath = config.filesystem_config.ffmpeg_path.get_value();
     let ffprobe_path = config.filesystem_config.ffprobe_path.get_value();
     let format_data = probe_file(ffprobe_path.as_str(), filename).await;
@@ -309,8 +387,9 @@ pub async fn process_file(config: &ProjectConfig, filename: &str) -> Result<(), 
     let return_val;
 
     if format_data.is_some() {
-        let format_data = format_data.unwrap();
-        let generate_preview_success = generate_preview(ffmpeg_filepath.as_str(), &format_data, filename).await;
+        let file_probe_result = format_data.unwrap();
+        let ffprobe_data = &file_probe_result.ffprobe_output;
+        let generate_preview_success = generate_preview(ffmpeg_filepath.as_str(), &ffprobe_data, filename).await;
 
         if generate_preview_success {
             let srv_upload_directory = config.filesystem_config.uploads_path.get_value();
@@ -322,7 +401,9 @@ pub async fn process_file(config: &ProjectConfig, filename: &str) -> Result<(), 
             let cpy_upload_prv_success : core::result::Result<u64, _> = tokio::fs::copy(tmp_upload_prv_filepath.as_str(), srv_upload_prv_filepath.as_str()).await;
 
             if cpy_upload_success.is_ok() && cpy_upload_prv_success.is_ok() {
-                return_val = Ok(());
+                let file_process_result = FileProcessResult::new(file_probe_result.upload_type);
+
+                return_val = Ok(file_process_result);
             }
             else {
                 return_val = Err(FileProcessError::new(CopyError, "Fehler beim Kopieren der Dateien ins Serververzeichnis"));
