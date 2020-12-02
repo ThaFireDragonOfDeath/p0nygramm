@@ -11,13 +11,9 @@ use chrono::{DateTime, Local};
 use futures::future;
 use log::{trace, warn, error};
 
-macro_rules! db_schema_version {
-    () => { 1 };
-}
-
 macro_rules! get_filepath {
     ($filename:expr) => {
-        concat!("../../resources/sql/Schema-v", db_schema_version!(), "/", $filename)
+        concat!("../../resources/sql/postgres/", $filename)
     };
 }
 
