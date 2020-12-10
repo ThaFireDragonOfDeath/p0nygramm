@@ -18,7 +18,7 @@
 CREATE TABLE public.users (
 	user_id serial NOT NULL,
 	user_name varchar(40) NOT NULL,
-	user_pass varchar(70) NOT NULL,
+	user_pass varchar(128) NOT NULL,
 	user_is_mod bool NOT NULL DEFAULT false,
 	CONSTRAINT users_pk PRIMARY KEY (user_id),
 	CONSTRAINT user_name_unique UNIQUE (user_name)

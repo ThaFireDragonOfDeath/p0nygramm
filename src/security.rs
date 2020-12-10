@@ -1,10 +1,11 @@
-extern crate v_htmlescape;
 use v_htmlescape::escape;
-use argonautica::{Hasher, Verifier};
 use crate::db_api::db_result::{SessionError, SessionData};
 use crate::db_api::DbConnection;
 use actix_session::Session;
 use crate::db_api::db_result::SessionErrorType::NoSession;
+use argon2::{Config, ThreadMode, Variant, Version};
+use rand::{thread_rng, Rng};
+use rand::distributions::Alphanumeric;
 
 pub fn check_and_escape_comment(comment: &str) -> Option<String> {
     let comment_length = comment.len();
@@ -182,16 +183,24 @@ pub async fn get_user_session(db_connection: &DbConnection, session: &Session, f
 }
 
 pub fn hash_password(password: &str, secret_key: &str) -> Option<String> {
-    let mut argon2_hasher = Hasher::default();
+    let salt: String = thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(10)
+        .collect();
 
-    // Don't block all CPU cores
-    argon2_hasher.configure_lanes(2);
-    argon2_hasher.configure_threads(2);
+    let config = Config {
+        variant: Variant::Argon2id,
+        version: Version::Version13,
+        mem_cost: 4096,
+        time_cost: 192,
+        lanes: 2,
+        thread_mode: ThreadMode::Parallel,
+        secret: secret_key.as_ref(),
+        ad: &[],
+        hash_length: 32
+    };
 
-    argon2_hasher.with_password(password);
-    argon2_hasher.with_secret_key(secret_key);
-
-    let hash_result = argon2_hasher.hash();
+    let hash_result = argon2::hash_encoded(password.as_ref(), salt.as_ref(), &config);
 
     if hash_result.is_ok() {
         return Some(hash_result.unwrap());
@@ -202,16 +211,7 @@ pub fn hash_password(password: &str, secret_key: &str) -> Option<String> {
 }
 
 pub fn verify_password(password_hash: &str, password: &str, secret_key: &str) -> Option<bool> {
-    let mut argon2_verifier = Verifier::default();
-
-    // Don't block all CPU cores
-    argon2_verifier.configure_threads(2);
-
-    argon2_verifier.with_hash(password_hash);
-    argon2_verifier.with_password(password);
-    argon2_verifier.with_secret_key(secret_key);
-
-    let verify_result = argon2_verifier.verify();
+    let verify_result = argon2::verify_encoded_ext(password_hash, password.as_ref(), secret_key.as_ref(), &[]);
 
     if verify_result.is_ok() {
         return Some(verify_result.unwrap());
