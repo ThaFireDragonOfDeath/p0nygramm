@@ -211,7 +211,22 @@ impl DbConnection {
             redis_connection,
         };
 
-        return Ok(db_connection);
+        Ok(db_connection)
+    }
+
+    pub async fn new_pg_root_connection(project_config: &ProjectConfig, user: &str, password: &str) -> Result<DbConnection, DbApiError> {
+        let postgres_connection = PostgresConnection::new_root_connection(project_config, user, password).await;
+
+        if postgres_connection.is_none() {
+            return Err(DbApiError::new(ConnectionError, "Keine Verbindung zum Postgres Server vorhanden!"));
+        }
+
+        let db_connection = DbConnection {
+            postgres_connection,
+            redis_connection: None,
+        };
+
+        Ok(db_connection)
     }
 
     // TODO: Implement

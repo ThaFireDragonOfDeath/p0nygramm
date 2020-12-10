@@ -1,6 +1,6 @@
 use tokio_postgres::{NoTls, Error, Client, Config, Statement};
 use tokio_postgres::types::ToSql;
-use crate::config::ProjectConfig;
+use crate::config::{ProjectConfig, ConnectionMethod};
 use tokio_postgres::config::SslMode::Disable;
 use crate::config::ConnectionMethod::Tcp;
 use std::path::Path;
@@ -360,20 +360,47 @@ impl PostgresConnection {
         let password = project_config.postgres_config.password.get_value();
         let db_name = project_config.postgres_config.db_name.get_value();
         let connection_method = project_config.postgres_config.connection_method.get_value();
-        let mut connection_config = Config::new();
 
-        connection_config.user(user.as_str());
-        connection_config.password(password.as_str());
-        connection_config.dbname(db_name.as_str());
+        PostgresConnection::new_with_parameters(host.as_str(), unix_socket_dir.as_str(),
+                                                port, user.as_str(), password.as_str(),
+                                                db_name.as_str(), connection_method).await
+    }
+
+    // Connect to db as admin (to create or drop the database)
+    pub async fn new_root_connection(project_config: &ProjectConfig, user: &str, password: &str) -> Option<PostgresConnection> {
+        trace!("Enter PostgresConnection::new_root_connection");
+
+        let host = project_config.postgres_config.host.get_value();
+        let unix_socket_dir = project_config.postgres_config.unix_socket_dir.get_value();
+        let port = project_config.postgres_config.port.get_value();
+        let connection_method = project_config.postgres_config.connection_method.get_value();
+
+        PostgresConnection::new_with_parameters(host.as_str(), unix_socket_dir.as_str(),
+                                                port, user, password, "", connection_method).await
+    }
+
+    pub async fn new_with_parameters(host: &str, unix_socket_dir: &str, port: u16, user: &str,
+                                     password: &str, db_name: &str,
+                                     connection_method: ConnectionMethod) -> Option<PostgresConnection> {
+
+        trace!("Enter PostgresConnection::new_with_parameters");
+
+        let mut connection_config = Config::new();
+        connection_config.user(user);
+        connection_config.password(password);
         connection_config.ssl_mode(Disable);
-        connection_config.connect_timeout(Duration::new(2, 0));
+        connection_config.connect_timeout(Duration::new(3, 0));
+
+        if db_name != "" {
+            connection_config.dbname(db_name);
+        }
 
         if connection_method == Tcp {
-            connection_config.host(host.as_str());
+            connection_config.host(host);
             connection_config.port(port);
         }
         else {
-            connection_config.host_path(Path::new(unix_socket_dir.as_str()));
+            connection_config.host_path(Path::new(unix_socket_dir));
         }
 
         let connection_result = connection_config.connect(NoTls).await;
@@ -388,7 +415,7 @@ impl PostgresConnection {
 
                 if active_connection.is_err() {
                     let connection_error = active_connection.unwrap_err();
-                    error!("PostgresConnection::new: Postgres connection error: {}", connection_error);
+                    error!("PostgresConnection::new_with_parameters: Postgres connection error: {}", connection_error);
                 }
             });
 
@@ -399,7 +426,7 @@ impl PostgresConnection {
             return Some(postgres_connection_object);
         }
         else {
-            error!("PostgresConnection::new: Failed to connect to postgres");
+            error!("PostgresConnection::new_with_parameters: Failed to connect to postgres");
         }
 
         return None;
