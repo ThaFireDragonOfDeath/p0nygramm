@@ -1,0 +1,30 @@
+name: p0nygramm-server
+version: "0.1.0"
+author: Voldracarno Draconor <thafiredragonofdeath@gmail.com>
+about: Open image board server software
+subcommands:
+  - install:
+      about: Install tools for the p0nygramm server
+      version: "0.1.0"
+      author: Voldracarno Draconor <thafiredragonofdeath@gmail.com>
+      args:
+        - create-db:
+            long: create-db
+            help: Creates postgres database
+        - create-user:
+            long: create-db-user
+            help: Creates database user
+        - create-tables:
+            long: create-db-tables
+            help: Creates the tables for the server application
+  - uninstall:
+      about: Uninstall tools for the p0nygramm server
+      version: "0.1.0"
+      author: Voldracarno Draconor <thafiredragonofdeath@gmail.com>
+      args:
+        - drop-db:
+            long: drop-db
+            help: Creates postgres database
+        - drop-user:
+            long: drop-db-user
+            help: Creates database user

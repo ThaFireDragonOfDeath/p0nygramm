@@ -14,10 +14,14 @@ use actix_session::CookieSession;
 use handlebars::Handlebars;
 use log::LevelFilter;
 use log::{info, trace};
+use clap::load_yaml;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     env_logger::builder().filter_level(LevelFilter::Trace).init();
+
+    let cli_yaml = load_yaml!("cli.yml");
+    let matches = clap::App::from_yaml(cli_yaml).get_matches();
 
     trace!("Starting server");
 
