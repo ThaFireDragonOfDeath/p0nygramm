@@ -112,6 +112,30 @@ impl DbConnection {
         }
     }
 
+    pub async fn create_pg_database(&self, db_name: &str, user: &str) -> Result<(), DbApiError> {
+        trace!("Enter DbConnection::create_pg_database");
+
+        check_postgres_connection!(self);
+
+        return self.postgres_connection.as_ref().unwrap().create_pg_database(db_name, user).await;
+    }
+
+    pub async fn create_pg_tables(&self) -> Result<(), DbApiError> {
+        trace!("Enter DbConnection::create_pg_tables");
+
+        check_postgres_connection!(self);
+
+        return self.postgres_connection.as_ref().unwrap().create_pg_tables().await;
+    }
+
+    pub async fn create_pg_user(&self, username: &str, password: &str) -> Result<(), DbApiError> {
+        trace!("Enter DbConnection::create_pg_user");
+
+        check_postgres_connection!(self);
+
+        return self.postgres_connection.as_ref().unwrap().create_pg_user(username, password).await;
+    }
+
     pub async fn create_session(&self, user_id: i32, is_lts: bool) -> Result<SessionData, SessionError> {
         trace!("Enter DbConnection::create_session");
 

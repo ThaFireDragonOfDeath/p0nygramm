@@ -33,7 +33,6 @@ impl PostgresConnection {
             return Ok(());
         }
 
-        error!("PostgresConnection::add_comment: Failed to execute sql statement");
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
@@ -135,7 +134,50 @@ impl PostgresConnection {
             }
         }
 
-        error!("PostgresConnection::add_user: Failed to execute sql statement");
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
+    pub async fn create_pg_database(&self, db_name: &str, user: &str) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::create_pg_user");
+
+        let sql_cmd_1 = format!("CREATE DATABASE {};", db_name);
+        let sql_cmd_2 = format!("GRANT ALL PRIVILEGES ON DATABASE {} TO {};", db_name, user);
+        let sql_cmd = format!("{}\n{}", sql_cmd_1, sql_cmd_2);
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
+        let result_rows = self.postgres_client.execute(sql_cmd.as_str(), sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
+    pub async fn create_pg_tables(&self) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::create_pg_tables");
+
+        let sql_cmd = include_str!(get_filepath!("create_tables.sql"));
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
+        let result_rows = self.postgres_client.execute(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
+    pub async fn create_pg_user(&self, username: &str, password: &str) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::create_pg_user");
+
+        let sql_cmd = format!("CREATE USER {} WITH ENCRYPTED PASSWORD '{}';", username, password);
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
+        let result_rows = self.postgres_client.execute(sql_cmd.as_str(), sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
