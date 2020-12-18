@@ -13,30 +13,25 @@
 -- ddl-end --
 
 
--- object: public.users | type: TABLE --
--- DROP TABLE IF EXISTS public.users CASCADE;
-CREATE TABLE public.users (
-	user_id serial NOT NULL,
-	user_name varchar(40) NOT NULL,
-	user_pass varchar(128) NOT NULL,
-	user_is_mod bool NOT NULL DEFAULT false,
-	CONSTRAINT users_pk PRIMARY KEY (user_id),
-	CONSTRAINT user_name_unique UNIQUE (user_name)
-
-);
+-- object: p0nygramm | type: SCHEMA --
+-- DROP SCHEMA IF EXISTS p0nygramm CASCADE;
+--CREATE SCHEMA p0nygramm;
 -- ddl-end --
-COMMENT ON COLUMN public.users.user_pass IS E'Hashed password';
+--ALTER SCHEMA p0nygramm OWNER TO postgres;
 -- ddl-end --
 
--- object: public."UploadType" | type: TYPE --
--- DROP TYPE IF EXISTS public."UploadType" CASCADE;
-CREATE TYPE public."UploadType" AS
+SET search_path TO pg_catalog,public,p0nygramm;
+-- ddl-end --
+
+-- object: p0nygramm."UploadType" | type: TYPE --
+-- DROP TYPE IF EXISTS p0nygramm."UploadType" CASCADE;
+CREATE TYPE p0nygramm."UploadType" AS
  ENUM ('Image','AnimatedImage','Video');
 -- ddl-end --
 
--- object: public.comments | type: TABLE --
--- DROP TABLE IF EXISTS public.comments CASCADE;
-CREATE TABLE public.comments (
+-- object: p0nygramm.comments | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.comments CASCADE;
+CREATE TABLE p0nygramm.comments (
 	comment_id serial NOT NULL,
 	comment_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
 	comment_text text NOT NULL,
@@ -48,9 +43,9 @@ CREATE TABLE public.comments (
 );
 -- ddl-end --
 
--- object: public.tags | type: TABLE --
--- DROP TABLE IF EXISTS public.tags CASCADE;
-CREATE TABLE public.tags (
+-- object: p0nygramm.tags | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.tags CASCADE;
+CREATE TABLE p0nygramm.tags (
 	tag_id serial NOT NULL,
 	tag_text varchar(70) NOT NULL,
 	CONSTRAINT taggs_pk PRIMARY KEY (tag_id),
@@ -59,9 +54,9 @@ CREATE TABLE public.tags (
 );
 -- ddl-end --
 
--- object: public.tag_upload_map | type: TABLE --
--- DROP TABLE IF EXISTS public.tag_upload_map CASCADE;
-CREATE TABLE public.tag_upload_map (
+-- object: p0nygramm.tag_upload_map | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.tag_upload_map CASCADE;
+CREATE TABLE p0nygramm.tag_upload_map (
 	tum_id serial NOT NULL,
 	tag_upvotes integer NOT NULL DEFAULT 0,
 	tag_poster integer NOT NULL,
@@ -72,9 +67,9 @@ CREATE TABLE public.tag_upload_map (
 );
 -- ddl-end --
 
--- object: public.user_banns | type: TABLE --
--- DROP TABLE IF EXISTS public.user_banns CASCADE;
-CREATE TABLE public.user_banns (
+-- object: p0nygramm.user_banns | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.user_banns CASCADE;
+CREATE TABLE p0nygramm.user_banns (
 	ban_id serial NOT NULL,
 	ban_reason text NOT NULL DEFAULT 'Willkür',
 	ban_start timestamp with time zone NOT NULL DEFAULT Now(),
@@ -84,12 +79,12 @@ CREATE TABLE public.user_banns (
 
 );
 -- ddl-end --
-COMMENT ON COLUMN public.user_banns.ban_duration IS E'Ban duration in hours';
+COMMENT ON COLUMN p0nygramm.user_banns.ban_duration IS E'Ban duration in hours';
 -- ddl-end --
 
--- object: public.project_kvconfig | type: TABLE --
--- DROP TABLE IF EXISTS public.project_kvconfig CASCADE;
-CREATE TABLE public.project_kvconfig (
+-- object: p0nygramm.project_kvconfig | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.project_kvconfig CASCADE;
+CREATE TABLE p0nygramm.project_kvconfig (
 	kv_key varchar(64) NOT NULL,
 	kv_value_str varchar(64),
 	kv_value_int integer,
@@ -98,12 +93,12 @@ CREATE TABLE public.project_kvconfig (
 );
 -- ddl-end --
 
-INSERT INTO public.project_kvconfig (kv_key) VALUES (E'schema_version');
+INSERT INTO p0nygramm.project_kvconfig (kv_key) VALUES (E'schema_version');
 -- ddl-end --
 
--- object: public.votes_tum | type: TABLE --
--- DROP TABLE IF EXISTS public.votes_tum CASCADE;
-CREATE TABLE public.votes_tum (
+-- object: p0nygramm.votes_tum | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.votes_tum CASCADE;
+CREATE TABLE p0nygramm.votes_tum (
 	vote_id serial NOT NULL,
 	vote_tagmap integer NOT NULL,
 	vote_number integer NOT NULL DEFAULT 0,
@@ -113,9 +108,9 @@ CREATE TABLE public.votes_tum (
 );
 -- ddl-end --
 
--- object: public.votes_uploads | type: TABLE --
--- DROP TABLE IF EXISTS public.votes_uploads CASCADE;
-CREATE TABLE public.votes_uploads (
+-- object: p0nygramm.votes_uploads | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.votes_uploads CASCADE;
+CREATE TABLE p0nygramm.votes_uploads (
 	vote_id serial NOT NULL,
 	vote_upload integer NOT NULL,
 	vote_number integer NOT NULL DEFAULT 0,
@@ -125,9 +120,9 @@ CREATE TABLE public.votes_uploads (
 );
 -- ddl-end --
 
--- object: public.votes_comments | type: TABLE --
--- DROP TABLE IF EXISTS public.votes_comments CASCADE;
-CREATE TABLE public.votes_comments (
+-- object: p0nygramm.votes_comments | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.votes_comments CASCADE;
+CREATE TABLE p0nygramm.votes_comments (
 	vote_id serial NOT NULL,
 	vote_comment integer NOT NULL,
 	vote_number integer NOT NULL DEFAULT 0,
@@ -137,24 +132,15 @@ CREATE TABLE public.votes_comments (
 );
 -- ddl-end --
 
--- object: username_uq | type: INDEX --
--- DROP INDEX IF EXISTS public.username_uq CASCADE;
-CREATE UNIQUE INDEX username_uq ON public.users
-	USING btree
-	(
-	  (LOWER(user_name))
-	);
--- ddl-end --
-
--- object: public.uploads | type: TABLE --
--- DROP TABLE IF EXISTS public.uploads CASCADE;
-CREATE TABLE public.uploads (
+-- object: p0nygramm.uploads | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.uploads CASCADE;
+CREATE TABLE p0nygramm.uploads (
 	upload_id serial NOT NULL,
 	upload_filename varchar(70) NOT NULL,
 	upload_timestamp timestamp with time zone NOT NULL DEFAULT Now(),
 	upload_is_sfw bool NOT NULL DEFAULT true,
 	upload_is_nsfw bool NOT NULL DEFAULT false,
-	upload_type public."UploadType" NOT NULL DEFAULT Image,
+	upload_type p0nygramm."UploadType" NOT NULL DEFAULT Image,
 	upload_upvotes integer NOT NULL DEFAULT 0,
 	uploader integer NOT NULL,
 	CONSTRAINT uploads_pk PRIMARY KEY (upload_id),
@@ -163,94 +149,118 @@ CREATE TABLE public.uploads (
 );
 -- ddl-end --
 
+-- object: p0nygramm.users | type: TABLE --
+-- DROP TABLE IF EXISTS p0nygramm.users CASCADE;
+CREATE TABLE p0nygramm.users (
+	user_id serial NOT NULL,
+	user_name varchar(40) NOT NULL,
+	user_pass varchar(128) NOT NULL,
+	user_is_mod bool NOT NULL DEFAULT false,
+	CONSTRAINT users_pk PRIMARY KEY (user_id),
+	CONSTRAINT user_name_unique UNIQUE (user_name)
+
+);
+-- ddl-end --
+COMMENT ON COLUMN p0nygramm.users.user_pass IS E'Hashed password';
+-- ddl-end --
+
+-- object: username_uq | type: INDEX --
+-- DROP INDEX IF EXISTS p0nygramm.username_uq CASCADE;
+CREATE UNIQUE INDEX username_uq ON p0nygramm.users
+	USING btree
+	(
+	  (LOWER(user_name))
+	);
+-- ddl-end --
+
 -- object: user_fk | type: CONSTRAINT --
--- ALTER TABLE public.comments DROP CONSTRAINT IF EXISTS user_fk CASCADE;
-ALTER TABLE public.comments ADD CONSTRAINT user_fk FOREIGN KEY (comment_poster)
-REFERENCES public.users (user_id) MATCH FULL
+-- ALTER TABLE p0nygramm.comments DROP CONSTRAINT IF EXISTS user_fk CASCADE;
+ALTER TABLE p0nygramm.comments ADD CONSTRAINT user_fk FOREIGN KEY (comment_poster)
+REFERENCES p0nygramm.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: upload_fk | type: CONSTRAINT --
--- ALTER TABLE public.comments DROP CONSTRAINT IF EXISTS upload_fk CASCADE;
-ALTER TABLE public.comments ADD CONSTRAINT upload_fk FOREIGN KEY (comment_upload)
-REFERENCES public.uploads (upload_id) MATCH FULL
+-- ALTER TABLE p0nygramm.comments DROP CONSTRAINT IF EXISTS upload_fk CASCADE;
+ALTER TABLE p0nygramm.comments ADD CONSTRAINT upload_fk FOREIGN KEY (comment_upload)
+REFERENCES p0nygramm.uploads (upload_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: tag_poster_fk | type: CONSTRAINT --
--- ALTER TABLE public.tag_upload_map DROP CONSTRAINT IF EXISTS tag_poster_fk CASCADE;
-ALTER TABLE public.tag_upload_map ADD CONSTRAINT tag_poster_fk FOREIGN KEY (tag_poster)
-REFERENCES public.users (user_id) MATCH FULL
+-- ALTER TABLE p0nygramm.tag_upload_map DROP CONSTRAINT IF EXISTS tag_poster_fk CASCADE;
+ALTER TABLE p0nygramm.tag_upload_map ADD CONSTRAINT tag_poster_fk FOREIGN KEY (tag_poster)
+REFERENCES p0nygramm.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: tag_link | type: CONSTRAINT --
--- ALTER TABLE public.tag_upload_map DROP CONSTRAINT IF EXISTS tag_link CASCADE;
-ALTER TABLE public.tag_upload_map ADD CONSTRAINT tag_link FOREIGN KEY (tag_id)
-REFERENCES public.tags (tag_id) MATCH FULL
+-- ALTER TABLE p0nygramm.tag_upload_map DROP CONSTRAINT IF EXISTS tag_link CASCADE;
+ALTER TABLE p0nygramm.tag_upload_map ADD CONSTRAINT tag_link FOREIGN KEY (tag_id)
+REFERENCES p0nygramm.tags (tag_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: upload_link | type: CONSTRAINT --
--- ALTER TABLE public.tag_upload_map DROP CONSTRAINT IF EXISTS upload_link CASCADE;
-ALTER TABLE public.tag_upload_map ADD CONSTRAINT upload_link FOREIGN KEY (upload_id)
-REFERENCES public.uploads (upload_id) MATCH FULL
+-- ALTER TABLE p0nygramm.tag_upload_map DROP CONSTRAINT IF EXISTS upload_link CASCADE;
+ALTER TABLE p0nygramm.tag_upload_map ADD CONSTRAINT upload_link FOREIGN KEY (upload_id)
+REFERENCES p0nygramm.uploads (upload_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: user_fk | type: CONSTRAINT --
--- ALTER TABLE public.user_banns DROP CONSTRAINT IF EXISTS user_fk CASCADE;
-ALTER TABLE public.user_banns ADD CONSTRAINT user_fk FOREIGN KEY (ban_user)
-REFERENCES public.users (user_id) MATCH FULL
+-- ALTER TABLE p0nygramm.user_banns DROP CONSTRAINT IF EXISTS user_fk CASCADE;
+ALTER TABLE p0nygramm.user_banns ADD CONSTRAINT user_fk FOREIGN KEY (ban_user)
+REFERENCES p0nygramm.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: tum_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_tum DROP CONSTRAINT IF EXISTS tum_fk CASCADE;
-ALTER TABLE public.votes_tum ADD CONSTRAINT tum_fk FOREIGN KEY (vote_tagmap)
-REFERENCES public.tag_upload_map (tum_id) MATCH FULL
+-- ALTER TABLE p0nygramm.votes_tum DROP CONSTRAINT IF EXISTS tum_fk CASCADE;
+ALTER TABLE p0nygramm.votes_tum ADD CONSTRAINT tum_fk FOREIGN KEY (vote_tagmap)
+REFERENCES p0nygramm.tag_upload_map (tum_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: user_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_tum DROP CONSTRAINT IF EXISTS user_fk CASCADE;
-ALTER TABLE public.votes_tum ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
-REFERENCES public.users (user_id) MATCH FULL
+-- ALTER TABLE p0nygramm.votes_tum DROP CONSTRAINT IF EXISTS user_fk CASCADE;
+ALTER TABLE p0nygramm.votes_tum ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
+REFERENCES p0nygramm.users (user_id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
 -- ddl-end --
 
 -- object: upload_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_uploads DROP CONSTRAINT IF EXISTS upload_fk CASCADE;
-ALTER TABLE public.votes_uploads ADD CONSTRAINT upload_fk FOREIGN KEY (vote_upload)
-REFERENCES public.uploads (upload_id) MATCH FULL
+-- ALTER TABLE p0nygramm.votes_uploads DROP CONSTRAINT IF EXISTS upload_fk CASCADE;
+ALTER TABLE p0nygramm.votes_uploads ADD CONSTRAINT upload_fk FOREIGN KEY (vote_upload)
+REFERENCES p0nygramm.uploads (upload_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: user_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_uploads DROP CONSTRAINT IF EXISTS user_fk CASCADE;
-ALTER TABLE public.votes_uploads ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
-REFERENCES public.users (user_id) MATCH FULL
+-- ALTER TABLE p0nygramm.votes_uploads DROP CONSTRAINT IF EXISTS user_fk CASCADE;
+ALTER TABLE p0nygramm.votes_uploads ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
+REFERENCES p0nygramm.users (user_id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
 -- ddl-end --
 
 -- object: comment_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_comments DROP CONSTRAINT IF EXISTS comment_fk CASCADE;
-ALTER TABLE public.votes_comments ADD CONSTRAINT comment_fk FOREIGN KEY (vote_comment)
-REFERENCES public.comments (comment_id) MATCH FULL
+-- ALTER TABLE p0nygramm.votes_comments DROP CONSTRAINT IF EXISTS comment_fk CASCADE;
+ALTER TABLE p0nygramm.votes_comments ADD CONSTRAINT comment_fk FOREIGN KEY (vote_comment)
+REFERENCES p0nygramm.comments (comment_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: user_fk | type: CONSTRAINT --
--- ALTER TABLE public.votes_comments DROP CONSTRAINT IF EXISTS user_fk CASCADE;
-ALTER TABLE public.votes_comments ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
-REFERENCES public.users (user_id) MATCH FULL
+-- ALTER TABLE p0nygramm.votes_comments DROP CONSTRAINT IF EXISTS user_fk CASCADE;
+ALTER TABLE p0nygramm.votes_comments ADD CONSTRAINT user_fk FOREIGN KEY (vote_user)
+REFERENCES p0nygramm.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 -- object: uploader_fk | type: CONSTRAINT --
--- ALTER TABLE public.uploads DROP CONSTRAINT IF EXISTS uploader_fk CASCADE;
-ALTER TABLE public.uploads ADD CONSTRAINT uploader_fk FOREIGN KEY (uploader)
-REFERENCES public.users (user_id) MATCH FULL
+-- ALTER TABLE p0nygramm.uploads DROP CONSTRAINT IF EXISTS uploader_fk CASCADE;
+ALTER TABLE p0nygramm.uploads ADD CONSTRAINT uploader_fk FOREIGN KEY (uploader)
+REFERENCES p0nygramm.users (user_id) MATCH FULL
 ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 

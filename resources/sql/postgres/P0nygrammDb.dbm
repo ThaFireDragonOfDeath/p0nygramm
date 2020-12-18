@@ -11,38 +11,18 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <schema name="public" layer="0" fill-color="#e1e1e1" sql-disabled="true">
 </schema>
 
-<table name="users" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
-	<schema name="public"/>
-	<position x="1200" y="100"/>
-	<column name="user_id" not-null="true">
-		<type name="serial" length="0"/>
-	</column>
-	<column name="user_name" not-null="true">
-		<type name="varchar" length="40"/>
-	</column>
-	<column name="user_pass" not-null="true">
-		<type name="varchar" length="128"/>
-		<comment><![CDATA[Hashed password]]></comment>
-	</column>
-	<column name="user_is_mod" not-null="true" default-value="false">
-		<type name="bool" length="0"/>
-	</column>
-	<constraint name="users_pk" type="pk-constr" table="public.users">
-		<columns names="user_id" ref-type="src-columns"/>
-	</constraint>
-	<constraint name="user_name_unique" type="uq-constr" table="public.users">
-		<columns names="user_name" ref-type="src-columns"/>
-	</constraint>
-</table>
+<schema name="p0nygramm" layer="0" rect-visible="true" fill-color="#0fabe6">
+	<role name="postgres"/>
+</schema>
 
 <usertype name="UploadType" configuration="enumeration">
-	<schema name="public"/>
+	<schema name="p0nygramm"/>
 	<enumeration values="Image,AnimatedImage,Video"/>
 </usertype>
 
 <table name="comments" layer="0" collapse-mode="2" max-obj-count="7" z-value="0">
-	<schema name="public"/>
-	<position x="140" y="260"/>
+	<schema name="p0nygramm"/>
+	<position x="180" y="300"/>
 	<column name="comment_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -61,31 +41,31 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="comment_upload" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
-	<constraint name="comments_pk" type="pk-constr" table="public.comments">
+	<constraint name="comments_pk" type="pk-constr" table="p0nygramm.comments">
 		<columns names="comment_id" ref-type="src-columns"/>
 	</constraint>
 </table>
 
 <table name="tags" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
-	<schema name="public"/>
-	<position x="140" y="940"/>
+	<schema name="p0nygramm"/>
+	<position x="180" y="980"/>
 	<column name="tag_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
 	<column name="tag_text" not-null="true">
 		<type name="varchar" length="70"/>
 	</column>
-	<constraint name="taggs_pk" type="pk-constr" table="public.tags">
+	<constraint name="taggs_pk" type="pk-constr" table="p0nygramm.tags">
 		<columns names="tag_id" ref-type="src-columns"/>
 	</constraint>
-	<constraint name="tag_text_unique" type="uq-constr" table="public.tags">
+	<constraint name="tag_text_unique" type="uq-constr" table="p0nygramm.tags">
 		<columns names="tag_text" ref-type="src-columns"/>
 	</constraint>
 </table>
 
 <table name="tag_upload_map" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
-	<schema name="public"/>
-	<position x="140" y="520"/>
+	<schema name="p0nygramm"/>
+	<position x="180" y="560"/>
 	<column name="tum_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -101,14 +81,14 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="upload_id" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
-	<constraint name="tag_upload_map_pk" type="pk-constr" table="public.tag_upload_map">
+	<constraint name="tag_upload_map_pk" type="pk-constr" table="p0nygramm.tag_upload_map">
 		<columns names="tum_id" ref-type="src-columns"/>
 	</constraint>
 </table>
 
 <table name="user_banns" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
-	<schema name="public"/>
-	<position x="1600" y="100"/>
+	<schema name="p0nygramm"/>
+	<position x="1640" y="140"/>
 	<column name="ban_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -125,14 +105,14 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="ban_user" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
-	<constraint name="user_banns_pk" type="pk-constr" table="public.user_banns">
+	<constraint name="user_banns_pk" type="pk-constr" table="p0nygramm.user_banns">
 		<columns names="ban_id" ref-type="src-columns"/>
 	</constraint>
 </table>
 
 <table name="project_kvconfig" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
-	<schema name="public"/>
-	<position x="140" y="80"/>
+	<schema name="p0nygramm"/>
+	<position x="180" y="120"/>
 	<column name="kv_key" not-null="true">
 		<type name="varchar" length="64"/>
 	</column>
@@ -142,7 +122,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="kv_value_int">
 		<type name="integer" length="0"/>
 	</column>
-	<constraint name="project_kvconfig_pk" type="pk-constr" table="public.project_kvconfig">
+	<constraint name="project_kvconfig_pk" type="pk-constr" table="p0nygramm.project_kvconfig">
 		<columns names="kv_key" ref-type="src-columns"/>
 	</constraint>
 	<initial-data>
@@ -152,8 +132,8 @@ schema_version•1]]>
 </table>
 
 <table name="votes_tum" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
-	<schema name="public"/>
-	<position x="400" y="880"/>
+	<schema name="p0nygramm"/>
+	<position x="440" y="920"/>
 	<column name="vote_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -166,14 +146,14 @@ schema_version•1]]>
 	<column name="vote_user" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
-	<constraint name="votes_tum_pk" type="pk-constr" table="public.votes_tum">
+	<constraint name="votes_tum_pk" type="pk-constr" table="p0nygramm.votes_tum">
 		<columns names="vote_id" ref-type="src-columns"/>
 	</constraint>
 </table>
 
 <table name="votes_uploads" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
-	<schema name="public"/>
-	<position x="1440" y="580"/>
+	<schema name="p0nygramm"/>
+	<position x="1480" y="620"/>
 	<column name="vote_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -186,14 +166,14 @@ schema_version•1]]>
 	<column name="vote_user" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
-	<constraint name="votes_uploads_pk" type="pk-constr" table="public.votes_uploads">
+	<constraint name="votes_uploads_pk" type="pk-constr" table="p0nygramm.votes_uploads">
 		<columns names="vote_id" ref-type="src-columns"/>
 	</constraint>
 </table>
 
 <table name="votes_comments" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
-	<schema name="public"/>
-	<position x="600" y="20"/>
+	<schema name="p0nygramm"/>
+	<position x="640" y="60"/>
 	<column name="vote_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -206,22 +186,14 @@ schema_version•1]]>
 	<column name="vote_user" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
-	<constraint name="votes_comments_pk" type="pk-constr" table="public.votes_comments">
+	<constraint name="votes_comments_pk" type="pk-constr" table="p0nygramm.votes_comments">
 		<columns names="vote_id" ref-type="src-columns"/>
 	</constraint>
 </table>
 
-<index name="username_uq" table="public.users"
-	 concurrent="false" unique="true" fast-update="false" buffering="false"
-	 index-type="btree" factor="0">
-		<idxelement use-sorting="false">
-			<expression><![CDATA[LOWER(user_name)]]></expression>
-		</idxelement>
-</index>
-
 <table name="uploads" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
-	<schema name="public"/>
-	<position x="880" y="880"/>
+	<schema name="p0nygramm"/>
+	<position x="920" y="920"/>
 	<column name="upload_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -238,7 +210,7 @@ schema_version•1]]>
 		<type name="bool" length="0"/>
 	</column>
 	<column name="upload_type" not-null="true" default-value="Image">
-		<type name="public.&quot;UploadType&quot;" length="0"/>
+		<type name="p0nygramm.&quot;UploadType&quot;" length="0"/>
 	</column>
 	<column name="upload_upvotes" not-null="true" default-value="0">
 		<type name="integer" length="0"/>
@@ -246,110 +218,146 @@ schema_version•1]]>
 	<column name="uploader" not-null="true">
 		<type name="integer" length="0"/>
 	</column>
-	<constraint name="uploads_pk" type="pk-constr" table="public.uploads">
+	<constraint name="uploads_pk" type="pk-constr" table="p0nygramm.uploads">
 		<columns names="upload_id" ref-type="src-columns"/>
 	</constraint>
-	<constraint name="upload_filename_unique" type="uq-constr" table="public.uploads">
+	<constraint name="upload_filename_unique" type="uq-constr" table="p0nygramm.uploads">
 		<columns names="upload_filename" ref-type="src-columns"/>
 	</constraint>
 </table>
 
+<table name="users" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="p0nygramm"/>
+	<position x="1240" y="140"/>
+	<column name="user_id" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="user_name" not-null="true">
+		<type name="varchar" length="40"/>
+	</column>
+	<column name="user_pass" not-null="true">
+		<type name="varchar" length="128"/>
+		<comment><![CDATA[Hashed password]]></comment>
+	</column>
+	<column name="user_is_mod" not-null="true" default-value="false">
+		<type name="bool" length="0"/>
+	</column>
+	<constraint name="users_pk" type="pk-constr" table="p0nygramm.users">
+		<columns names="user_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="user_name_unique" type="uq-constr" table="p0nygramm.users">
+		<columns names="user_name" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<index name="username_uq" table="p0nygramm.users"
+	 concurrent="false" unique="true" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<expression><![CDATA[LOWER(user_name)]]></expression>
+		</idxelement>
+</index>
+
 <constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.comments">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.users" table="p0nygramm.comments">
 	<columns names="comment_poster" ref-type="src-columns"/>
 	<columns names="user_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="upload_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.uploads" table="public.comments">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.uploads" table="p0nygramm.comments">
 	<columns names="comment_upload" ref-type="src-columns"/>
 	<columns names="upload_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="tag_poster_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.tag_upload_map">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.users" table="p0nygramm.tag_upload_map">
 	<columns names="tag_poster" ref-type="src-columns"/>
 	<columns names="user_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="tag_link" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.tags" table="public.tag_upload_map">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.tags" table="p0nygramm.tag_upload_map">
 	<columns names="tag_id" ref-type="src-columns"/>
 	<columns names="tag_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="upload_link" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.uploads" table="public.tag_upload_map">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.uploads" table="p0nygramm.tag_upload_map">
 	<columns names="upload_id" ref-type="src-columns"/>
 	<columns names="upload_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.user_banns">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.users" table="p0nygramm.user_banns">
 	<columns names="ban_user" ref-type="src-columns"/>
 	<columns names="user_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="tum_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.tag_upload_map" table="public.votes_tum">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.tag_upload_map" table="p0nygramm.votes_tum">
 	<columns names="vote_tagmap" ref-type="src-columns"/>
 	<columns names="tum_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="public.users" table="public.votes_tum">
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="p0nygramm.users" table="p0nygramm.votes_tum">
 	<columns names="vote_user" ref-type="src-columns"/>
 	<columns names="user_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="upload_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.uploads" table="public.votes_uploads">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.uploads" table="p0nygramm.votes_uploads">
 	<columns names="vote_upload" ref-type="src-columns"/>
 	<columns names="upload_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="public.users" table="public.votes_uploads">
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="p0nygramm.users" table="p0nygramm.votes_uploads">
 	<columns names="vote_user" ref-type="src-columns"/>
 	<columns names="user_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="comment_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.comments" table="public.votes_comments">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.comments" table="p0nygramm.votes_comments">
 	<columns names="vote_comment" ref-type="src-columns"/>
 	<columns names="comment_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="user_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.votes_comments">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.users" table="p0nygramm.votes_comments">
 	<columns names="vote_user" ref-type="src-columns"/>
 	<columns names="user_id" ref-type="dst-columns"/>
 </constraint>
 
 <constraint name="uploader_fk" type="fk-constr" comparison-type="MATCH FULL"
-	 upd-action="CASCADE" del-action="CASCADE" ref-table="public.users" table="public.uploads">
+	 upd-action="CASCADE" del-action="CASCADE" ref-table="p0nygramm.users" table="p0nygramm.uploads">
 	<columns names="uploader" ref-type="src-columns"/>
 	<columns names="user_id" ref-type="dst-columns"/>
 </constraint>
 
 <relationship name="rel_uploads_users" type="relfk" layer="0"
-	 src-table="public.uploads"
-	 dst-table="public.users" reference-fk="uploader_fk"
+	 src-table="p0nygramm.uploads"
+	 dst-table="p0nygramm.users" reference-fk="uploader_fk"
 	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_comments_users" type="relfk" layer="0"
-	 src-table="public.comments"
-	 dst-table="public.users" reference-fk="user_fk"
-	 src-required="false" dst-required="false"/>
+	 src-table="p0nygramm.comments"
+	 dst-table="p0nygramm.users" reference-fk="user_fk"
+	 src-required="false" dst-required="false">
+	<label ref-type="name-label">
+		<position x="-6.31615" y="-6.34696"/>
+	</label>
+</relationship>
 
 <relationship name="rel_comments_uploads" type="relfk" layer="0"
-	 src-table="public.comments"
-	 dst-table="public.uploads" reference-fk="upload_fk"
+	 src-table="p0nygramm.comments"
+	 dst-table="p0nygramm.uploads" reference-fk="upload_fk"
 	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_tag_upload_map_tags" type="relfk" layer="0"
-	 src-table="public.tag_upload_map"
-	 dst-table="public.tags" reference-fk="tag_link"
+	 src-table="p0nygramm.tag_upload_map"
+	 dst-table="p0nygramm.tags" reference-fk="tag_link"
 	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="3.23574" y="-8.355"/>
@@ -357,8 +365,8 @@ schema_version•1]]>
 </relationship>
 
 <relationship name="rel_tag_upload_map_uploads" type="relfk" layer="0"
-	 src-table="public.tag_upload_map"
-	 dst-table="public.uploads" reference-fk="upload_link"
+	 src-table="p0nygramm.tag_upload_map"
+	 dst-table="p0nygramm.uploads" reference-fk="upload_link"
 	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="0.365639" y="1.5283"/>
@@ -366,38 +374,38 @@ schema_version•1]]>
 </relationship>
 
 <relationship name="rel_user_banns_users" type="relfk" layer="0"
-	 src-table="public.user_banns"
-	 dst-table="public.users" reference-fk="user_fk"
+	 src-table="p0nygramm.user_banns"
+	 dst-table="p0nygramm.users" reference-fk="user_fk"
 	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_tag_upload_map_users" type="relfk" layer="0"
-	 src-table="public.tag_upload_map"
-	 dst-table="public.users" reference-fk="tag_poster_fk"
+	 src-table="p0nygramm.tag_upload_map"
+	 dst-table="p0nygramm.users" reference-fk="tag_poster_fk"
 	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_votes_tum_tag_upload_map" type="relfk" layer="0"
-	 src-table="public.votes_tum"
-	 dst-table="public.tag_upload_map" reference-fk="tum_fk"
+	 src-table="p0nygramm.votes_tum"
+	 dst-table="p0nygramm.tag_upload_map" reference-fk="tum_fk"
 	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_votes_tum_users" type="relfk" layer="0"
-	 src-table="public.votes_tum"
-	 dst-table="public.users" reference-fk="user_fk"
+	 src-table="p0nygramm.votes_tum"
+	 dst-table="p0nygramm.users" reference-fk="user_fk"
 	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_votes_uploads_uploads" type="relfk" layer="0"
-	 src-table="public.votes_uploads"
-	 dst-table="public.uploads" reference-fk="upload_fk"
+	 src-table="p0nygramm.votes_uploads"
+	 dst-table="p0nygramm.uploads" reference-fk="upload_fk"
 	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_votes_uploads_users" type="relfk" layer="0"
-	 src-table="public.votes_uploads"
-	 dst-table="public.users" reference-fk="user_fk"
+	 src-table="p0nygramm.votes_uploads"
+	 dst-table="p0nygramm.users" reference-fk="user_fk"
 	 src-required="false" dst-required="false"/>
 
 <relationship name="rel_votes_comments_comments" type="relfk" layer="0"
-	 src-table="public.votes_comments"
-	 dst-table="public.comments" reference-fk="comment_fk"
+	 src-table="p0nygramm.votes_comments"
+	 dst-table="p0nygramm.comments" reference-fk="comment_fk"
 	 src-required="false" dst-required="false">
 	<label ref-type="name-label">
 		<position x="81.1839" y="2.74534"/>
@@ -405,8 +413,8 @@ schema_version•1]]>
 </relationship>
 
 <relationship name="rel_votes_comments_users" type="relfk" layer="0"
-	 src-table="public.votes_comments"
-	 dst-table="public.users" reference-fk="user_fk"
+	 src-table="p0nygramm.votes_comments"
+	 dst-table="p0nygramm.users" reference-fk="user_fk"
 	 src-required="false" dst-required="false"/>
 
 </dbmodel>

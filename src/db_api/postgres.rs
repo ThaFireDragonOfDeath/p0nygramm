@@ -153,6 +153,35 @@ impl PostgresConnection {
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
+    pub async fn drop_pg_schema(&self) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::drop_pg_schema");
+
+        let sql_cmd = "DROP SCHEMA IF EXISTS p0nygramm CASCADE;";
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
+        let result_rows = self.postgres_client.execute(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
+    pub async fn create_pg_schema(&self, username: &str) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::create_pg_schema");
+
+        let sql_cmd = format!("CREATE SCHEMA IF NOT EXISTS p0nygramm AUTHORIZATION {};", username);
+
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
+        let result_rows = self.postgres_client.execute(sql_cmd.as_str(), sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
     pub async fn create_pg_tables(&self) -> Result<(), DbApiError> {
         trace!("Enter PostgresConnection::create_pg_tables");
 

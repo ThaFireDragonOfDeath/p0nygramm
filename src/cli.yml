@@ -11,12 +11,12 @@ subcommands:
         - create-db:
             long: create-db
             help: Creates postgres database
-        - create-user:
-            long: create-db-user
-            help: Creates database user
         - create-tables:
             long: create-db-tables
             help: Creates the tables for the server application
+        - create-user:
+            long: create-db-user
+            help: Creates database user
   - uninstall:
       about: Uninstall tools for the p0nygramm server
       version: "0.1.0"
@@ -24,7 +24,10 @@ subcommands:
       args:
         - drop-db:
             long: drop-db
-            help: Creates postgres database
+            help: Deletes the hole postgres database
+        - drop-tables:
+            long: drop-db-tables
+            help: Drops all tables within the database
         - drop-user:
             long: drop-db-user
-            help: Creates database user
+            help: Deletes the postgres user
