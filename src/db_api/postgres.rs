@@ -137,6 +137,20 @@ impl PostgresConnection {
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
+    pub async fn change_user_pw_by_username(&self, username: &str, pw_hash: &str) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::change_user_pw_by_username");
+
+        let sql_cmd = include_str!(get_filepath!("change_user_pw_by_username.sql"));
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[&pw_hash, &username];
+        let result_rows = self.postgres_client.execute(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
     pub async fn create_pg_database(&self, db_name: &str, user: &str) -> Result<(), DbApiError> {
         trace!("Enter PostgresConnection::create_pg_user");
 
@@ -153,27 +167,13 @@ impl PostgresConnection {
         return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
     }
 
-    pub async fn drop_pg_schema(&self) -> Result<(), DbApiError> {
-        trace!("Enter PostgresConnection::drop_pg_schema");
-
-        let sql_cmd = "DROP SCHEMA IF EXISTS p0nygramm CASCADE;";
-        let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
-        let result_rows = self.postgres_client.execute(sql_cmd, sql_parameters).await;
-
-        if result_rows.is_ok() {
-            return Ok(());
-        }
-
-        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
-    }
-
-    pub async fn create_pg_schema(&self, username: &str) -> Result<(), DbApiError> {
+    pub async fn create_pg_schema(&self) -> Result<(), DbApiError> {
         trace!("Enter PostgresConnection::create_pg_schema");
 
-        let sql_cmd = format!("CREATE SCHEMA IF NOT EXISTS p0nygramm AUTHORIZATION {};", username);
+        let sql_cmd = "CREATE SCHEMA IF NOT EXISTS p0nygramm;";
 
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
-        let result_rows = self.postgres_client.execute(sql_cmd.as_str(), sql_parameters).await;
+        let result_rows = self.postgres_client.execute(sql_cmd, sql_parameters).await;
 
         if result_rows.is_ok() {
             return Ok(());
@@ -202,6 +202,49 @@ impl PostgresConnection {
         let sql_cmd = format!("CREATE USER {} WITH ENCRYPTED PASSWORD '{}';", username, password);
         let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
         let result_rows = self.postgres_client.execute(sql_cmd.as_str(), sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
+    pub async fn drop_pg_db(&self) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::drop_pg_db");
+
+        let sql_cmd = "DROP DATABASE IF EXISTS p0nygramm;";
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
+        let result_rows = self.postgres_client.execute(sql_cmd, sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
+    pub async fn drop_pg_db_user(&self, username: &str) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::drop_pg_db_user");
+
+        let sql_cmd = format!("DROP USER IF EXISTS {};", username);
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
+        let result_rows =
+            self.postgres_client.execute(sql_cmd.as_str(), sql_parameters).await;
+
+        if result_rows.is_ok() {
+            return Ok(());
+        }
+
+        return Err(DbApiError::new(QueryError, "Fehler beim Ausführen der SQL Anweisung"));
+    }
+
+    pub async fn drop_pg_schema(&self) -> Result<(), DbApiError> {
+        trace!("Enter PostgresConnection::drop_pg_schema");
+
+        let sql_cmd = "DROP SCHEMA IF EXISTS p0nygramm CASCADE;";
+        let sql_parameters : &[&(dyn ToSql + Sync)] = &[];
+        let result_rows = self.postgres_client.execute(sql_cmd, sql_parameters).await;
 
         if result_rows.is_ok() {
             return Ok(());

@@ -13,6 +13,8 @@
       <w>iter</w>
       <w>nsfw</w>
       <w>returncode</w>
+      <w>stdin</w>
+      <w>subcmd</w>
       <w>taglist</w>
       <w>threadpool</w>
       <w>toml</w>

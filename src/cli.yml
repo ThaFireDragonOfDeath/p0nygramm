@@ -11,12 +11,25 @@ subcommands:
         - create-db:
             long: create-db
             help: Creates postgres database
-        - create-tables:
+        - create-db-tables:
             long: create-db-tables
             help: Creates the tables for the server application
-        - create-user:
+        - create-db-user:
             long: create-db-user
             help: Creates database user
+        - create-admin-user:
+            long: create-p0nygramm-admin-user
+            help: Create a new admin user for the p0nygramm application
+  - maintenance:
+      about: Maintenace tools
+      version: "0.1.0"
+      author: Voldracarno Draconor <thafiredragonofdeath@gmail.com>
+      args:
+        - change-user-password:
+            long: change-user-password
+            help: Set a new password for the provided user
+            takes_value: true
+            value_name: username
   - uninstall:
       about: Uninstall tools for the p0nygramm server
       version: "0.1.0"
@@ -25,9 +38,9 @@ subcommands:
         - drop-db:
             long: drop-db
             help: Deletes the hole postgres database
-        - drop-tables:
+        - drop-db-tables:
             long: drop-db-tables
             help: Drops all tables within the database
-        - drop-user:
+        - drop-db-user:
             long: drop-db-user
             help: Deletes the postgres user

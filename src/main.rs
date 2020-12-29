@@ -1,3 +1,4 @@
+mod cli;
 mod js_api;
 mod config;
 mod db_api;
@@ -15,6 +16,8 @@ use handlebars::Handlebars;
 use log::LevelFilter;
 use log::{info, trace};
 use clap::load_yaml;
+use crate::cli::do_cli_actions;
+use std::io::{ErrorKind, Error};
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -22,19 +25,33 @@ async fn main() -> std::io::Result<()> {
 
     let cli_yaml = load_yaml!("cli.yml");
     let matches = clap::App::from_yaml(cli_yaml).get_matches();
-
-    trace!("Starting server");
-
     let prj_config = ProjectConfig::init();
 
     if prj_config.is_some() {
         let prj_config = prj_config.unwrap();
+        let cli_result  = do_cli_actions(&matches, &prj_config).await;
+
+        if cli_result.is_err() {
+            let cli_error = cli_result.err().unwrap();
+            let error = Error::new(ErrorKind::Other, cli_error.error_msg);
+
+            return Err(error);
+        }
+        else {
+            let cli_success = cli_result.ok().unwrap();
+
+            if cli_success.term_after_cli_actions {
+                return Ok(());
+            }
+        }
+
         let session_private_key = prj_config.security_config.session_private_key.get_value();
         let template_path = prj_config.filesystem_config.template_path.get_value();
         let uploads_path = prj_config.filesystem_config.uploads_path.get_value();
         let uploads_prv_path = prj_config.filesystem_config.uploads_prv_path.get_value();
         let static_content_path = prj_config.filesystem_config.static_webcontent_path.get_value();
 
+        trace!("Starting server");
         info!("Serving static webcontent from: {}", static_content_path.as_str());
         info!("Serving templates from: {}", template_path.as_str());
         info!("Serving uploads from: {}", uploads_path.as_str());
