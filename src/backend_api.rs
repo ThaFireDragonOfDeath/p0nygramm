@@ -290,11 +290,15 @@ pub async fn get_own_userdata(config: &web::Data<ProjectConfig>, session: &Sessi
 //    return Ok(session_data);
 //}
 
-pub async fn get_uploads(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<(i32, i16, bool, bool)>) -> Result<UploadPrvList, BackendError> {
+pub async fn get_uploads(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<(i32, i16)>) -> Result<UploadPrvList, BackendError> {
     let db_connection = get_db_connection!(config, true, true);
     let _session_data = get_user_session_data!(db_connection, session, false);
+    let filter_settings = get_filter(config, session).await;
+    let filter_settings = filter_settings.unwrap_or(Filter::new(true, false));
 
-    let (start_id, amount, show_sfw, show_nsfw) = url_data.as_ref().clone();
+    let (start_id, amount) = url_data.as_ref().clone();
+    let show_sfw = filter_settings.show_sfw;
+    let show_nsfw = filter_settings.show_nsfw;
 
     if start_id < 1 {
         handle_error_str!(UserInputError, "Die Start ID kann nicht kleiner als 1 sein", BAD_REQUEST);
@@ -323,11 +327,15 @@ pub async fn get_uploads(config: &web::Data<ProjectConfig>, session: &Session, u
     }
 }
 
-pub async fn get_uploads_range(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<(i32, i32, bool, bool)>) -> Result<UploadPrvList, BackendError> {
+pub async fn get_uploads_range(config: &web::Data<ProjectConfig>, session: &Session, url_data: &web::Path<(i32, i32)>) -> Result<UploadPrvList, BackendError> {
     let db_connection = get_db_connection!(config, true, true);
     let _session_data = get_user_session_data!(db_connection, session, false);
+    let filter_settings = get_filter(config, session).await;
+    let filter_settings = filter_settings.unwrap_or(Filter::new(true, false));
 
-    let (start_id, end_id, show_sfw, show_nsfw) = url_data.as_ref().clone();
+    let (start_id, end_id) = url_data.as_ref().clone();
+    let show_sfw = filter_settings.show_sfw;
+    let show_nsfw = filter_settings.show_nsfw;
 
     if start_id < 1 {
         handle_error_str!(UserInputError, "Die Start ID kann nicht kleiner als 1 sein", BAD_REQUEST);

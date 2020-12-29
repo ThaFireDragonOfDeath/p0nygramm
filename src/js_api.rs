@@ -54,9 +54,9 @@ implement_jsapi_func!(check_username_exists, config: web::Data<ProjectConfig>, u
 
 implement_jsapi_func!(get_filter, config: web::Data<ProjectConfig>, session: Session);
 
-implement_jsapi_func!(get_uploads, config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i16, bool, bool)>);
+implement_jsapi_func!(get_uploads, config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i16)>);
 
-implement_jsapi_func!(get_uploads_range, config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i32, bool, bool)>);
+implement_jsapi_func!(get_uploads_range, config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<(i32, i32)>);
 
 implement_jsapi_func!(get_upload_data, config: web::Data<ProjectConfig>, session: Session, url_data: web::Path<i32>);
 

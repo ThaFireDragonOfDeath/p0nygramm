@@ -8,23 +8,8 @@
         <script src="static/p0nygramm_api.js"></script>
         <script src="static/p0nygramm_ui.js"></script>
         <script src="static/p0nygramm.js"></script>
-
-        <script>
-        {{#if read_access}}
-            function index_add_upl_prv() {
-                // TODO: Display first 50 uploads
-
-                return;
-            }
-        {{else}}
-            function index_add_upl_prv() {
-                return;
-            }
-        {{/if}}
-        </script>
-
     </head>
-    <body onload="index_add_upl_prv()">
+    <body>
         {{#if backend_error}}
             {{! Content, if there was an error in the backend}}
             <h3>
@@ -56,7 +41,7 @@
                     <a onclick="js_logout()">Abmelden</a>
                 </a>
             </header>
-            <section id="main_content">
+            <section id="main_content" onload="js_index_add_upl_prv()">
                 {{! Main Content section}}
             </section>
         {{else}}

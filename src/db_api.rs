@@ -102,9 +102,9 @@ impl DbConnection {
             if user_data_error.error_type == NoResult {
                 return Ok(false);
             }
-        }
 
-        Err(user_data_error)
+            Err(user_data_error)
+        }
     }
 
     pub async fn create_pg_database(&self, db_name: &str, user: &str) -> Result<(), DbApiError> {

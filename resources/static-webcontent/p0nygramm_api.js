@@ -16,17 +16,21 @@ var last_send_progress = -1;
 var xhttp_ref = null; // Reference to the current request (used to cancel uploads)
 
 // API functions
+function api_get_uploads(start_id, amount, callback) {
+    api_send_http_request("GET", null, "/js-api/get-uploads", url_encoded_form_data, callback, null);
+}
+
 function api_login(username, password, keep_logged_in, callback) {
     var url_encoded_form_data = "";
     url_encoded_form_data.concat("username=", username, "&");
     url_encoded_form_data.concat("password=", password, "&");
     url_encoded_form_data.concat("keep_logged_in=", keep_logged_in);
 
-    api_send_http_request("POST", post_urlencoded, "js-api/login", url_encoded_form_data, callback, null);
+    api_send_http_request("POST", post_urlencoded, "/js-api/login", url_encoded_form_data, callback, null);
 }
 
 function api_logout(callback) {
-    api_send_http_request("GET", null, "js-api/logout", null, callback, null);
+    api_send_http_request("GET", null, "/js-api/logout", null, callback, null);
 }
 
 function api_register(username, password, invite_key, callback) {
@@ -35,11 +39,11 @@ function api_register(username, password, invite_key, callback) {
     url_encoded_form_data.concat("password=", password, "&");
     url_encoded_form_data.concat("invite_key=", invite_key);
 
-    api_send_http_request("POST", post_urlencoded, "js-api/register", url_encoded_form_data, callback, null);
+    api_send_http_request("POST", post_urlencoded, "/js-api/register", url_encoded_form_data, callback, null);
 }
 
 function api_set_filter(show_sfw, show_nsfw, callback) {
-    var url_path = "js-api/set_filter/" + show_sfw + "/" + show_nsfw;
+    var url_path = "/js-api/set_filter/" + show_sfw + "/" + show_nsfw;
 
     api_send_http_request("GET", null, url_path, null, callback, null);
 }
