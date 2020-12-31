@@ -5,23 +5,25 @@
 const ui_login_btn = "log_submit";
 const ui_register_btn = "reg_submit";
 
-// Message outputs
-const ui_login_output_element = "div_login_error";
-const ui_register_output_element = "div_register_error";
-
-// Register input elements
+// Register elements
 const ui_reg_username = "reg_username";
 const ui_reg_password = "reg_password";
 const ui_reg_rpassword = "reg_rpassword";
 const ui_reg_invite_key = "reg_invite_key";
+const ui_register_output_element = "div_register_error";
 
-// Login input elements
+// Login elements
 const ui_log_username = "log_username";
 const ui_log_password = "log_password";
 const ui_keep_logged_in = "log_keep_logged_in";
+const ui_login_output_element = "div_login_error";
+
+// Overlay elements
+const ui_overlay_container_id = "overlay_container";
+const ui_overlay_msg_id = "overlay_msg_txt";
 
 // Upload elements
-const ui_uploads_section_id = "main_content";
+const ui_main_content_section_id = "main_content";
 const ui_prv_id_prefix = "prvh_";
 const ui_upl_id_prefix = "uplh_";
 
@@ -35,10 +37,11 @@ const ui_btn_state = {
     deactivate: 1
 };
 
-const ui_message_output = {
+const ui_message_output_channel = {
     login: 0,
     register: 1,
-    overlay: 2
+    overlay: 2,
+    content_section: 3
 };
 
 const ui_message_type = {
@@ -49,10 +52,22 @@ const ui_message_type = {
 
 // API Functions
 function ui_calc_row_len() {
-    var display_width = document.getElementById(ui_uploads_section_id).offsetWidth;
+    var display_width = document.getElementById(ui_main_content_section_id).offsetWidth;
     var req_len = display_width / (ui_prv_size + ui_prv_padding)
 
     return Math.ceil(req_len);
+}
+
+function ui_clear_content_section() {
+    var content_element = document.getElementById(ui_main_content_section_id);
+
+    content_element.innerHTML = "";
+}
+
+function ui_close_overlay() {
+    var overlay_container = document.getElementById(ui_overlay_container_id);
+
+    output_element.style.display = "none";
 }
 
 function ui_get_login_data() {
@@ -78,7 +93,7 @@ function ui_get_register_data() {
 
 // Get all displayed uploads in the upload view
 function ui_get_upload_view_data() {
-    var upload_section = document.getElementById(ui_uploads_section_id);
+    var upload_section = document.getElementById(ui_main_content_section_id);
 
     var upload_ids = []; // Displayed upload previews
     var current_upload = null; // Currently displayed upload
@@ -112,14 +127,21 @@ function ui_hide_msg(output_channel) {
     var output_element = null;
 
     // Get output element
-    if (output_channel === ui_message_output.login) {
+    if (output_channel === ui_message_output_channel.login) {
         output_element = document.getElementById(ui_login_output_element);
     }
-    else if (output_channel === ui_message_output.register) {
+    else if (output_channel === ui_message_output_channel.register) {
         output_element = document.getElementById(ui_register_output_element);
     }
+    else if (output_channel === ui_message_output_channel.overlay) {
+        ui_close_overlay();
 
-    output_element.style.display = "none";
+        return;
+    }
+
+    if (output_element != null) {
+        output_element.style.display = "none";
+    }
 }
 
 // Enable or disable the login and register button
@@ -144,15 +166,28 @@ function ui_report_msg(message, output_channel, message_type) {
     var msg_color = "white";
 
     // Get output element
-    if (output_channel === ui_message_output.login) {
+    if (output_channel === ui_message_output_channel.login) {
         output_element = document.getElementById(ui_login_output_element);
     }
-    else if (output_channel === ui_message_output.register) {
+    else if (output_channel === ui_message_output_channel.register) {
         output_element = document.getElementById(ui_register_output_element);
+    }
+    else if (output_channel === ui_message_output_channel.overlay) {
+        output_element = document.getElementById(ui_overlay_msg_id);
+    }
+    else if (output_channel === ui_message_output_channel.content_element) {
+        output_element = document.getElementById(ui_main_content_section_id);
+    }
+
+    // Put message in paragraph for content section messages
+    if (output_channel === ui_message_output_channel.content_element) {
+        output_element = document.getElementById(ui_main_content_section_id);
+        message = "<p id=\"cnt_msg\">" + message + "</p>";
     }
 
     // Get font color
-    if (output_channel !== ui_message_output.overlay) {
+    if (output_channel !== ui_message_output_channel.overlay ||
+        output_channel !== ui_message_output_channel.content_element) {
         if (message_type === ui_message_type.error) {
             msg_color = "red";
         }
@@ -166,5 +201,10 @@ function ui_report_msg(message, output_channel, message_type) {
         output_element.innerHTML = message;
         output_element.style.color = msg_color;
         output_element.style.display = "block";
+
+        if (output_channel === ui_message_output_channel.overlay) {
+            var overlay_element = document.getElementById(ui_overlay_container_id);
+            overlay_element.style.display = "block";
+        }
     }
 }

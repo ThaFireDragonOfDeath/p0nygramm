@@ -20,7 +20,7 @@
                 {{backend_error.error_msg}}
             </p>
             <p>
-                <input type="button" onclick="location.reload()" value="Seite neu laden">
+                <input type="button" onclick="ui_page_reload()" value="Seite neu laden">
             </p>
         {{else}} {{#if user_data}}
             {{! Content, if user is logged in}}
@@ -44,6 +44,14 @@
             <section id="main_content" onload="js_index_add_upl_prv()">
                 {{! Main Content section}}
             </section>
+            <div id="overlay_container">
+                <div id="overlay_content">
+                    <p id="overlay_msg_txt"></p>
+                    <p>
+                        <a onclick="ui_close_overlay()">Schließen</a>
+                    </p>
+                </div>
+            </div>
         {{else}}
             {{! Content, if user is not logged in}}
             <p>

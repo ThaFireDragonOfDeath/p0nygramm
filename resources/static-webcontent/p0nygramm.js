@@ -14,7 +14,7 @@ function js_align_uploads() {
 }
 
 function js_index_add_upl_prv() {
-    // TODO: Clear uploads prv section
+    ui_clear_content_section();
 
     // Send request to get the newest 50 uploads
     api_get_uploads(999999999, 50, js_display_uploads_prv_callback)
@@ -60,9 +60,7 @@ function js_display_uploads_prv_callback(response_code, response_content) {
     // Handle backend errors
     if (response_code != 200) {
         var error_msg = response_content.error_msg;
-
-        // TODO: Report error
-
+        ui_report_msg(error_msg, ui_message_output_channel.overlay, ui_message_type.error);
         return;
     }
 
@@ -70,7 +68,8 @@ function js_display_uploads_prv_callback(response_code, response_content) {
     var uploads_count = uploads.length;
 
     if (uploads_count < 1) {
-        // TODO: Report, that there are no uploads yet
+        var error_msg = "Es sind noch keine Uploads vorhanden!";
+        ui_report_msg(error_msg, ui_message_output_channel.content_element, ui_message_type.error);
     }
     else {
         for (i = 0; i < uploads_count; i++) {
