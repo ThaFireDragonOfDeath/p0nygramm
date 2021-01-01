@@ -50,6 +50,10 @@ const ui_message_type = {
     success: 2
 };
 
+// Global variables
+var active_upload_prv_objects = null;
+var active_upload_object = null;
+
 // API Functions
 function ui_calc_row_len() {
     var display_width = document.getElementById(ui_main_content_section_id).offsetWidth;
@@ -59,6 +63,9 @@ function ui_calc_row_len() {
 }
 
 function ui_clear_content_section() {
+    active_upload_prv_objects = null;
+    active_upload_object = null;
+
     var content_element = document.getElementById(ui_main_content_section_id);
 
     content_element.innerHTML = "";
@@ -68,6 +75,41 @@ function ui_close_overlay() {
     var overlay_container = document.getElementById(ui_overlay_container_id);
 
     output_element.style.display = "none";
+}
+
+function ui_display_upload_prv() {
+    var uploads_count = active_upload_prv_objects.length;
+    var uploads_per_row = ui_calc_row_len();
+    var current_upload_column = 0;
+    var current_content_section_html = "";
+
+    for (i = 0; i < uploads_count; i++) {
+        var current_upload_prv = active_upload_prv_objects[i];
+
+        //var current_upload_id = current_upload_prv.upload_id;
+        var current_upload_prv_url = current_upload_prv.upload_prv_url;
+
+        // TODO: Open upload on click
+
+        if (typeof current_upload_prv_url == "string") {
+            if (current_upload_column === 0) {
+                current_content_section_html += "<div>"
+            }
+            else if (current_upload_column >= uploads_per_row) {
+                current_content_section_html += "</div>"
+                current_upload_column = 0;
+            }
+
+            current_content_section_html += "<a><img src=\"+" current_upload_prv_url + "\"></a>";
+            current_upload_column += 1;
+        }
+        else {
+            console.error("Failed to get prv url for the current upload");
+        }
+
+        var content_element = document.getElementById(ui_main_content_section_id);
+        content_element.innerHTML = current_content_section_html;
+    }
 }
 
 function ui_get_login_data() {
@@ -154,6 +196,10 @@ function ui_set_auth_state(btn_state) {
         document.getElementById(ui_login_btn).disabled = true;
         document.getElementById(ui_register_btn).disabled = true;
     }
+}
+
+function ui_set_uploads_prv(uploads) {
+    active_upload_prv_objects = uploads;
 }
 
 // Reload page

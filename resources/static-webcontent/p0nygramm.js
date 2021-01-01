@@ -1,18 +1,6 @@
 // Common functions called from HTML
 
 // API functions
-function js_align_uploads() {
-    var upload_data = ui_get_upload_view_data();
-
-    if (upload_data && upload_data.upload_ids) {
-        var uploads_per_row = ui_calc_row_len();
-
-        for (upload_id in upload_data.upload_ids) {
-            
-        }
-    }
-}
-
 function js_index_add_upl_prv() {
     ui_clear_content_section();
 
@@ -72,11 +60,8 @@ function js_display_uploads_prv_callback(response_code, response_content) {
         ui_report_msg(error_msg, ui_message_output_channel.content_element, ui_message_type.error);
     }
     else {
-        for (i = 0; i < uploads_count; i++) {
-            var current_upload = uploads[i];
-
-            // TODO: Add current upload to prv list
-        }
+        ui_set_uploads_prv(uploads);
+        ui_display_upload_prv();
     }
 }
 

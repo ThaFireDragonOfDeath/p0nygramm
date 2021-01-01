@@ -22,7 +22,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="comments" layer="0" collapse-mode="2" max-obj-count="7" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="180" y="300"/>
+	<position x="20" y="280"/>
 	<column name="comment_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -48,7 +48,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="tags" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="180" y="980"/>
+	<position x="20" y="960"/>
 	<column name="tag_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -65,7 +65,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="tag_upload_map" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="180" y="560"/>
+	<position x="20" y="540"/>
 	<column name="tum_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -88,7 +88,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="user_banns" layer="0" collapse-mode="2" max-obj-count="6" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="1640" y="140"/>
+	<position x="1480" y="120"/>
 	<column name="ban_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -110,17 +110,14 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="project_kvconfig" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
+<table name="project_kvconfig" layer="0" collapse-mode="2" max-obj-count="2" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="180" y="120"/>
+	<position x="20" y="100"/>
 	<column name="kv_key" not-null="true">
 		<type name="varchar" length="64"/>
 	</column>
-	<column name="kv_value_str">
+	<column name="kv_value_str" not-null="true">
 		<type name="varchar" length="64"/>
-	</column>
-	<column name="kv_value_int">
-		<type name="integer" length="0"/>
 	</column>
 	<constraint name="project_kvconfig_pk" type="pk-constr" table="p0nygramm.project_kvconfig">
 		<columns names="kv_key" ref-type="src-columns"/>
@@ -133,7 +130,7 @@ schema_version•1]]>
 
 <table name="votes_tum" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="440" y="920"/>
+	<position x="280" y="900"/>
 	<column name="vote_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -153,7 +150,7 @@ schema_version•1]]>
 
 <table name="votes_uploads" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="1480" y="620"/>
+	<position x="1320" y="600"/>
 	<column name="vote_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -173,7 +170,7 @@ schema_version•1]]>
 
 <table name="votes_comments" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="640" y="60"/>
+	<position x="480" y="40"/>
 	<column name="vote_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -193,7 +190,7 @@ schema_version•1]]>
 
 <table name="uploads" layer="0" collapse-mode="2" max-obj-count="9" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="920" y="920"/>
+	<position x="760" y="900"/>
 	<column name="upload_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -226,9 +223,9 @@ schema_version•1]]>
 	</constraint>
 </table>
 
-<table name="users" layer="0" collapse-mode="2" max-obj-count="4" z-value="0">
+<table name="users" layer="0" collapse-mode="2" max-obj-count="7" z-value="0">
 	<schema name="p0nygramm"/>
-	<position x="1240" y="140"/>
+	<position x="1080" y="120"/>
 	<column name="user_id" not-null="true">
 		<type name="serial" length="0"/>
 	</column>
@@ -239,7 +236,13 @@ schema_version•1]]>
 		<type name="varchar" length="128"/>
 		<comment><![CDATA[Hashed password]]></comment>
 	</column>
+	<column name="user_upvotes" not-null="true" default-value="0">
+		<type name="integer" length="0"/>
+	</column>
 	<column name="user_is_mod" not-null="true" default-value="false">
+		<type name="bool" length="0"/>
+	</column>
+	<column name="user_is_admin" not-null="true" default-value="false">
 		<type name="bool" length="0"/>
 	</column>
 	<constraint name="users_pk" type="pk-constr" table="p0nygramm.users">

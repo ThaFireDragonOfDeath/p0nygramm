@@ -86,8 +86,7 @@ COMMENT ON COLUMN p0nygramm.user_banns.ban_duration IS E'Ban duration in hours';
 -- DROP TABLE IF EXISTS p0nygramm.project_kvconfig CASCADE;
 CREATE TABLE p0nygramm.project_kvconfig (
 	kv_key varchar(64) NOT NULL,
-	kv_value_str varchar(64),
-	kv_value_int integer,
+	kv_value_str varchar(64) NOT NULL,
 	CONSTRAINT project_kvconfig_pk PRIMARY KEY (kv_key)
 
 );
@@ -155,7 +154,9 @@ CREATE TABLE p0nygramm.users (
 	user_id serial NOT NULL,
 	user_name varchar(40) NOT NULL,
 	user_pass varchar(128) NOT NULL,
+	user_upvotes integer NOT NULL DEFAULT 0,
 	user_is_mod bool NOT NULL DEFAULT false,
+	user_is_admin bool NOT NULL DEFAULT false,
 	CONSTRAINT users_pk PRIMARY KEY (user_id),
 	CONSTRAINT user_name_unique UNIQUE (user_name)
 
