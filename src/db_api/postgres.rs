@@ -344,7 +344,8 @@ impl PostgresConnection {
                     let upload_id = row.get(0);
                     let upload_filename = row.get(1);
                     let upload_is_nsfw = row.get(2);
-                    let upload_preview = UploadPreview::new(upload_id, upload_is_nsfw, upload_filename);
+                    let upload_type : UploadType = row.get(3);
+                    let upload_preview = UploadPreview::new(upload_id, upload_is_nsfw, upload_filename, upload_type);
                     return_vec.push(upload_preview);
                 }
             }
@@ -379,7 +380,8 @@ impl PostgresConnection {
                     let upload_id = row.get(0);
                     let upload_filename = row.get(1);
                     let upload_is_nsfw = row.get(2);
-                    let upload_preview = UploadPreview::new(upload_id, upload_is_nsfw, upload_filename);
+                    let upload_type : UploadType = row.get(3);
+                    let upload_preview = UploadPreview::new(upload_id, upload_is_nsfw, upload_filename, upload_type);
                     return_vec.push(upload_preview);
                 }
             }

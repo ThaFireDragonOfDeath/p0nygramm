@@ -53,6 +53,7 @@ const ui_message_type = {
 // Global variables
 var active_upload_prv_objects = null;
 var active_upload_object = null;
+var current_upload_rows = 0;
 
 // API Functions
 function ui_calc_row_len() {
@@ -77,30 +78,62 @@ function ui_close_overlay() {
     output_element.style.display = "none";
 }
 
+function ui_display_upload(upload_id, display_after_row) {
+    var target_row_is_last_row = false;
+
+    if (display_after_row >= current_upload_rows - 1) {
+        target_row_is_last_row = true;
+    }
+
+    var content_section_element = document.getElementById(ui_main_content_section_id);
+
+    // Display upload
+    var upload_prv_data = ui_get_upload_prv_data_by_id(upload_id);
+    var upload_url = upload_prv_data.upload_url;
+    var upload_type = upload_prv_data.upload_type;
+
+    // TODO: Implement
+
+    // Display upvotes, tags, comments, etc
+    //var get_upload_data_callback = function(response_code, response_content, callback_param) {
+    //    // Handle backend errors
+    //    if (response_code != 200) {
+    //        var error_msg = response_content.error_msg;
+    //        ui_report_msg(error_msg, ui_message_output_channel.overlay, ui_message_type.error);
+    //        return;
+    //    }
+    //}
+}
+
 function ui_display_upload_prv() {
     var uploads_count = active_upload_prv_objects.length;
     var uploads_per_row = ui_calc_row_len();
     var current_upload_column = 0;
+    var current_upload_row = 0;
     var current_content_section_html = "";
 
-    for (i = 0; i < uploads_count; i++) {
+    for (var i = 0; i < uploads_count; i++) {
         var current_upload_prv = active_upload_prv_objects[i];
 
-        //var current_upload_id = current_upload_prv.upload_id;
+        var current_upload_id = current_upload_prv.upload_id;
         var current_upload_prv_url = current_upload_prv.upload_prv_url;
-
-        // TODO: Open upload on click
 
         if (typeof current_upload_prv_url == "string") {
             if (current_upload_column === 0) {
-                current_content_section_html += "<div>"
+                current_content_section_html += "<div id=\"row_" + current_upload_row + "\">";
             }
             else if (current_upload_column >= uploads_per_row) {
-                current_content_section_html += "</div>"
+                current_content_section_html += "</div>";
                 current_upload_column = 0;
+                current_upload_row += 1;
             }
 
-            current_content_section_html += "<a><img src=\"+" current_upload_prv_url + "\"></a>";
+            current_content_section_html += "<a class=\"upload_prv\" onclick=\"ui_display_upload(";
+            current_content_section_html += current_upload_id + ", " + current_upload_row + ")\">";
+            current_content_section_html += "<img src=\"";
+            current_content_section_html += current_upload_prv_url;
+            current_content_section_html += "\"></a>";
+
             current_upload_column += 1;
         }
         else {
@@ -109,6 +142,7 @@ function ui_display_upload_prv() {
 
         var content_element = document.getElementById(ui_main_content_section_id);
         content_element.innerHTML = current_content_section_html;
+        current_upload_rows = current_upload_row;
     }
 }
 
@@ -131,37 +165,6 @@ function ui_get_register_data() {
     };
 
     return register_data;
-}
-
-// Get all displayed uploads in the upload view
-function ui_get_upload_view_data() {
-    var upload_section = document.getElementById(ui_main_content_section_id);
-
-    var upload_ids = []; // Displayed upload previews
-    var current_upload = null; // Currently displayed upload
-
-    for (node in upload_section) {
-        var tag_name = node.nodeName;
-
-        if (tag_name == "a") {
-            var upload_id = node.id;
-            upload_id = upload_id.slice(ui_prv_id_prefix.length);
-
-            upload_ids.push(upload_id);
-        }
-        else if(tag_name == "div") {
-            var upload_id = node.id;
-            upload_id = upload_id.slice(ui_upl_id_prefix.length);
-            current_upload = upload_id;
-        }
-    }
-
-    var upload_view_data = {
-        upload_ids: upload_ids,
-        current_upload: current_upload
-    };
-
-    return upload_view_data;
 }
 
 // Hide message
@@ -253,4 +256,22 @@ function ui_report_msg(message, output_channel, message_type) {
             overlay_element.style.display = "block";
         }
     }
+}
+
+// Helper functions
+function ui_get_upload_prv_data_by_id(upload_id) {
+    var uploads_count = active_upload_prv_objects.length;
+
+    for (var i = 0; i < uploads_count; i++) {
+        var current_upload_prv = active_upload_prv_objects[i];
+        var current_upload_id = current_upload_prv.upload_id;
+
+        if (current_upload_id === upload_id) {
+            return current_upload_prv;
+        }
+    }
+
+    console.error("Couldn't find wanted upload prv object in cache");
+
+    return null;
 }

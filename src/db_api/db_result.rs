@@ -222,15 +222,17 @@ pub struct UploadPreview {
     pub upload_is_nsfw: bool,
     pub upload_prv_url: String,
     pub upload_url: String,
+    pub upload_type: UploadType,
 }
 
 impl UploadPreview {
-    pub fn new(upload_id: i32, upload_is_nsfw: bool, upload_filename: String) -> UploadPreview {
+    pub fn new(upload_id: i32, upload_is_nsfw: bool, upload_filename: String, upload_type: UploadType) -> UploadPreview {
         UploadPreview {
             upload_id,
             upload_is_nsfw,
             upload_prv_url: get_preview_url_from_filename(upload_filename.as_str()),
             upload_url: get_url_from_filename(upload_filename.as_str()),
+            upload_type,
         }
     }
 }

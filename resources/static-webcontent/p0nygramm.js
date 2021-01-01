@@ -44,7 +44,7 @@ function js_register() {
 }
 
 // Callback functions
-function js_display_uploads_prv_callback(response_code, response_content) {
+function js_display_uploads_prv_callback(response_code, response_content, callback_param) {
     // Handle backend errors
     if (response_code != 200) {
         var error_msg = response_content.error_msg;
@@ -65,7 +65,7 @@ function js_display_uploads_prv_callback(response_code, response_content) {
     }
 }
 
-function js_login_callback(response_code, response_content) {
+function js_login_callback(response_code, response_content, callback_param) {
     // Handle backend errors
     if (response_code != 200) {
         var error_msg = response_content.error_msg;
@@ -83,11 +83,11 @@ function js_login_callback(response_code, response_content) {
     window.setTimeout(ui_page_reload, 2000);
 }
 
-function js_logout_callback(response_code, response_content) {
+function js_logout_callback(response_code, response_content, callback_param) {
     ui_page_reload();
 }
 
-function js_register_callback(response_code, response_content) {
+function js_register_callback(response_code, response_content, callback_param) {
     // Handle backend errors
     if (response_code != 200) {
         var error_msg = response_content.error_msg;
